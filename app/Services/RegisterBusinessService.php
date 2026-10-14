@@ -47,6 +47,10 @@ class RegisterBusinessService
                 'is_active' => true,
             ]);
 
+            if (! config('reapersventory.email_verification_required', true)) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
+
             $this->auditLogger->log(
                 action: 'business.registered',
                 auditable: $business,
@@ -58,7 +62,9 @@ class RegisterBusinessService
                 user: $user,
             );
 
-            event(new Registered($user));
+            if (! $user->hasVerifiedEmail()) {
+                event(new Registered($user));
+            }
 
             return $user;
         });

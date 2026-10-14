@@ -6,4 +6,9 @@ return [
     'payment_proof_disk' => env('PAYMENT_PROOF_DISK', 'local'),
     'payment_proof_max_kb' => (int) env('PAYMENT_PROOF_MAX_KB', 5120),
     'payment_proof_mimes' => ['jpg', 'jpeg', 'png', 'pdf', 'webp'],
+    // When false, new registrations are auto-verified (useful if hosting blocks SMTP).
+    'email_verification_required' => filter_var(
+        env('EMAIL_VERIFICATION_REQUIRED', true),
+        FILTER_VALIDATE_BOOLEAN
+    ),
 ];

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Support\EmailVerificationLink;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Throwable;
@@ -15,22 +16,25 @@ class EmailVerificationNotificationController extends Controller
             return redirect()->intended(route('business.dashboard'));
         }
 
+        $verificationUrl = EmailVerificationLink::for($request->user(), $request);
+        $mailSent = false;
+        $mailError = null;
+
         if (config('mail.default') === 'log') {
-            return back()->withErrors([
-                'email' => 'Mail is set to "log" mode. On hosting set MAIL_MAILER=smtp (or sendmail) in .env, then run php artisan config:clear.',
-            ]);
+            $mailError = 'Mailer is "log" (no inbox delivery). Use the button below to verify, or set SMTP in .env.';
+        } else {
+            try {
+                $request->user()->sendEmailVerificationNotification();
+                $mailSent = true;
+            } catch (Throwable $e) {
+                report($e);
+                $mailError = 'Email could not be delivered by the server. Use the verify button below instead.';
+            }
         }
 
-        try {
-            $request->user()->sendEmailVerificationNotification();
-        } catch (Throwable $e) {
-            report($e);
-
-            return back()->withErrors([
-                'email' => 'Could not send verification email. Check SMTP settings (MAIL_HOST, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM_ADDRESS) and that APP_URL matches your live domain.',
-            ]);
-        }
-
-        return back()->with('status', 'verification-link-sent');
+        return back()
+            ->with('status', $mailSent ? 'verification-link-sent' : 'verification-link-ready')
+            ->with('verification_url', $verificationUrl)
+            ->withErrors($mailError ? ['email' => $mailError] : []);
     }
 }
