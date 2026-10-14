@@ -27,9 +27,39 @@ Production checklist for Milestone 5 (notifications, hardening, scheduler/queue)
 | `CACHE_STORE` | `database` (or `redis`) |
 | `SESSION_DRIVER` | `database` |
 | `SESSION_SECURE_COOKIE` | `true` |
-| `MAIL_*` | Real SMTP / API mailer |
+| `MAIL_*` | Real SMTP (see below) — **`log` does not send inbox mail** |
 | `PAYMENT_PROOF_DISK` | `local` (private) or encrypted S3 |
 | `SUPER_ADMIN_*` | Change seeded admin password immediately |
+
+### Email verification on hosting
+
+If the UI says “link sent” but nothing arrives, `.env` is usually still on `MAIL_MAILER=log` (local default).
+
+1. Create an email mailbox in cPanel (e.g. `noreply@yourdomain.com`).
+2. Set in hosting `.env`:
+
+```env
+APP_URL=https://yourdomain.com
+MAIL_MAILER=smtp
+MAIL_HOST=mail.yourdomain.com
+MAIL_PORT=465
+MAIL_SCHEME=smtps
+MAIL_USERNAME=noreply@yourdomain.com
+MAIL_PASSWORD=your-mailbox-password
+MAIL_FROM_ADDRESS="noreply@yourdomain.com"
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+3. Clear cached config:
+
+```bash
+php artisan config:clear
+php artisan config:cache
+```
+
+4. Click **Resend verification email** again. Check spam folder.
+
+If SMTP is blocked by the host, try `MAIL_MAILER=sendmail` instead.
 
 2. HTTPS is forced when `APP_ENV=production`. Sit behind a reverse proxy that terminates TLS; proxies are trusted (`TrustProxies`).
 
