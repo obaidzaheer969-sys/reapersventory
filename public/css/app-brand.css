@@ -1,0 +1,98 @@
+@keyframes rv-logo-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes rv-logo-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+@keyframes rv-hero-sheen {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 0.55;
+    }
+    50% {
+        transform: translate3d(2%, -1%, 0) scale(1.04);
+        opacity: 0.85;
+    }
+}
+
+.rv-logo {
+    display: inline-block;
+    background: transparent;
+    animation:
+        rv-logo-in 0.65s ease-out both,
+        rv-logo-float 3s ease-in-out 0.65s infinite;
+    will-change: transform, opacity;
+}
+
+.rv-logo img {
+    display: block;
+    height: inherit;
+    width: auto;
+    max-width: 100%;
+}
+
+/* Home hero — light frost stage so navy logo text stays readable */
+.rv-hero {
+    background:
+        linear-gradient(125deg, #f7fafc 0%, #e8eef6 42%, #d9e4f2 72%, #f3f6fa 100%);
+    border-bottom: 1px solid rgb(10 22 40 / 0.06);
+}
+
+.rv-hero__glow {
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 70%;
+    background:
+        radial-gradient(ellipse 45% 55% at 18% 30%, rgb(241 90 36 / 0.22), transparent 60%),
+        radial-gradient(ellipse 40% 50% at 82% 20%, rgb(22 50 90 / 0.18), transparent 62%);
+    animation: rv-hero-sheen 10s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.rv-hero__grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.35;
+    background-image:
+        linear-gradient(rgb(10 22 40 / 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(10 22 40 / 0.045) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 70% 65% at 50% 40%, #000 20%, transparent 75%);
+    pointer-events: none;
+}
+
+.rv-hero__logo-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 22rem);
+    padding: 1.75rem 1.5rem;
+    border-radius: 1.5rem;
+    background:
+        linear-gradient(160deg, #ffffff 0%, #f4f8fc 55%, #eef3f9 100%);
+    border: 1px solid rgb(10 22 40 / 0.08);
+    box-shadow:
+        0 1px 0 rgb(255 255 255 / 0.9) inset,
+        0 24px 50px rgb(10 22 40 / 0.1),
+        0 0 0 1px rgb(241 90 36 / 0.08);
+}
+
+.rv-hero__brand {
+    width: 100%;
+}
