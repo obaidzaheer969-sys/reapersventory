@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Concerns;
 
+use App\Support\EnsuresNotificationsTable;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -17,6 +18,7 @@ trait UsesAppChannels
         $channels = [];
 
         try {
+            EnsuresNotificationsTable::run();
             if (Schema::hasTable('notifications')) {
                 $channels[] = 'database';
             }

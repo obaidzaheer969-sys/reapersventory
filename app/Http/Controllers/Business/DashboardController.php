@@ -11,6 +11,7 @@ use App\Models\Warehouse;
 use App\Services\InventoryService;
 use App\Services\LowStockMonitor;
 use App\Services\SubscriptionService;
+use App\Support\EnsuresNotificationsTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
@@ -32,6 +33,8 @@ class DashboardController extends Controller
         $activeSubscription = $subscriptions->currentAccessibleSubscription($business);
         $isPaid = $subscriptions->isPaid($business);
 
+        $notificationsReady = EnsuresNotificationsTable::run();
+
         $lowStock = [];
         if ($activeSubscription) {
             try {
@@ -45,7 +48,7 @@ class DashboardController extends Controller
         }
 
         $recentNotifications = collect();
-        if (Schema::hasTable('notifications')) {
+        if ($notificationsReady && Schema::hasTable('notifications')) {
             $recentNotifications = $user->notifications()->latest()->limit(5)->get();
         }
 
@@ -67,7 +70,7 @@ class DashboardController extends Controller
             'lowStock' => $lowStock,
             'recentNotifications' => $recentNotifications,
             'recentSales' => $recentSales,
-            'notificationsReady' => Schema::hasTable('notifications'),
+            'notificationsReady' => $notificationsReady && Schema::hasTable('notifications'),
         ]);
     }
 }

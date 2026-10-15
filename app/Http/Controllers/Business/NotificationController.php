@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Business;
 
 use App\Http\Controllers\Controller;
 use App\Services\LowStockMonitor;
+use App\Support\EnsuresNotificationsTable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -15,6 +16,8 @@ class NotificationController extends Controller
     public function index(Request $request, LowStockMonitor $lowStockMonitor): View
     {
         $user = $request->user();
+
+        EnsuresNotificationsTable::run();
 
         if ($user->business_id) {
             try {

@@ -210,6 +210,8 @@ if ($migrateCode !== 0) {
 }
 $run($phpQ.' artisan optimize:clear');
 $run($phpQ.' artisan db:seed --class=PlanSeeder --force');
+$run($phpQ.' artisan reapersventory:ensure-notifications');
+$run($phpQ.' artisan inventory:notify-low-stock');
 $run($phpQ.' artisan storage:link');
 
 $uploads = $base.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'uploads';
@@ -221,5 +223,5 @@ if (! is_dir($uploads)) {
 $run($phpQ.' artisan reapersventory:verify-all-users');
 
 $log[] = '[rv-update] finished '.gmdate('c');
-$log[] = '[rv-update] Site should load now. Open https://reapersventory.com/';
+$log[] = '[rv-update] Site should load now. Open https://reapersventory.com/ then Dashboard or Alerts.';
 echo implode("\n", $log)."\n";
