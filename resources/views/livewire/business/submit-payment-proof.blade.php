@@ -10,15 +10,7 @@
             @error('paymentMethodId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
         </div>
 
-        <div>
-            <label class="block text-sm font-medium" for="billingInterval">Billing interval</label>
-            <select id="billingInterval" wire:model="billingInterval" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                @foreach ($intervals as $interval)
-                    <option value="{{ $interval->value }}">{{ $interval->label() }}</option>
-                @endforeach
-            </select>
-            @error('billingInterval') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-        </div>
+        <p class="text-sm text-slate-600">Billing interval: <strong>Monthly</strong></p>
 
         <div>
             <label class="block text-sm font-medium" for="reference">Transaction reference</label>

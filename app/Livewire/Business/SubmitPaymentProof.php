@@ -43,12 +43,12 @@ class SubmitPaymentProof extends Component
 
         $this->validate([
             'paymentMethodId' => ['required', 'exists:payment_methods,id'],
-            'billingInterval' => ['required', 'in:monthly,yearly'],
             'reference' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'proof' => ['required', 'file', "mimes:{$mimes}", "max:{$maxKb}"],
         ]);
 
+        $this->billingInterval = BillingInterval::Monthly->value;
         $subscription = $this->ownedSubscription();
 
         $payments->submitManualPayment(
@@ -56,7 +56,7 @@ class SubmitPaymentProof extends Component
             Auth::user(),
             [
                 'payment_method_id' => $this->paymentMethodId,
-                'billing_interval' => $this->billingInterval,
+                'billing_interval' => BillingInterval::Monthly->value,
                 'reference' => $this->reference,
                 'notes' => $this->notes,
             ],
@@ -72,7 +72,6 @@ class SubmitPaymentProof extends Component
     {
         return view('livewire.business.submit-payment-proof', [
             'methods' => PaymentMethod::query()->active()->get(),
-            'intervals' => BillingInterval::cases(),
         ]);
     }
 

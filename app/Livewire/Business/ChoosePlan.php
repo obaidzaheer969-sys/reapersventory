@@ -28,15 +28,16 @@ class ChoosePlan extends Component
 
         $this->validate([
             'planId' => ['required', 'exists:plans,id'],
-            'billingInterval' => ['required', 'in:monthly,yearly'],
         ]);
+
+        $this->billingInterval = BillingInterval::Monthly->value;
 
         $plan = Plan::query()->active()->findOrFail($this->planId);
 
         $subscriptions->startTrialOrPending(
             $business,
             $plan,
-            BillingInterval::from($this->billingInterval),
+            BillingInterval::Monthly,
             $user,
         );
 
