@@ -252,7 +252,15 @@ class SubscriptionService
                 user: $actor,
             );
 
-            return $subscription->fresh(['plan.features', 'pendingPlan']);
+            $fresh = $subscription->fresh(['plan.features', 'pendingPlan', 'business']);
+
+            try {
+                $this->notifier->packageChangeRequested($fresh, $plan);
+            } catch (\Throwable) {
+                // never block package request
+            }
+
+            return $fresh;
         });
     }
 

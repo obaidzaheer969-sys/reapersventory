@@ -4,12 +4,15 @@ namespace App\Services;
 
 use App\Enums\UserRole;
 use App\Models\Business;
+use App\Models\Plan;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Models\User;
 use App\Notifications\LowStockAlertNotification;
+use App\Notifications\NewBusinessRegisteredAdminNotification;
+use App\Notifications\PackageChangeRequestedAdminNotification;
 use App\Notifications\PaymentSubmittedAdminNotification;
 use App\Notifications\PurchaseReceivedNotification;
 use App\Notifications\SaleCompletedNotification;
@@ -56,6 +59,7 @@ class BusinessNotifier
     public function welcome(User $owner, Business $business): void
     {
         $this->safeNotify($owner, new WelcomeBusinessNotification($business->name));
+        $this->notifyAdmins(new NewBusinessRegisteredAdminNotification($business, $owner));
     }
 
     public function paymentApproved(SubscriptionPayment $payment): void
@@ -76,13 +80,25 @@ class BusinessNotifier
 
     public function paymentSubmitted(SubscriptionPayment $payment): void
     {
+        $payment->loadMissing(['business', 'plan']);
+        $this->notifyAdmins(new PaymentSubmittedAdminNotification($payment));
+    }
+
+    public function packageChangeRequested(Subscription $subscription, Plan $pendingPlan): void
+    {
+        $subscription->loadMissing(['business', 'plan']);
+        $this->notifyAdmins(new PackageChangeRequestedAdminNotification($subscription, $pendingPlan));
+    }
+
+    private function notifyAdmins(object $notification): void
+    {
         $admins = $this->superAdmins();
         if ($admins->isEmpty()) {
             return;
         }
 
         try {
-            Notification::send($admins, new PaymentSubmittedAdminNotification($payment));
+            Notification::send($admins, $notification);
         } catch (Throwable) {
             // ignore
         }

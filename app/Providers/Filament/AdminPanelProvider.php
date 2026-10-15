@@ -74,10 +74,12 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ]);
 
-        // Requires notifications table — skip until migrate has run on hosting.
+        // Admin top-bar bell + "All notifications" (table created by migrate / ensure command).
         try {
             if (Schema::hasTable('notifications')) {
-                $panel->databaseNotifications();
+                $panel
+                    ->databaseNotifications()
+                    ->databaseNotificationsPolling('30s');
             }
         } catch (Throwable) {
             // DB unavailable during early boot / deploy
