@@ -215,12 +215,24 @@ class SaleForm extends Component
                 'items' => $this->items,
             ]);
         } catch (ValidationException $e) {
-            $this->addValidationException($e, 'items');
+            foreach ($e->errors() as $messages) {
+                foreach ($messages as $message) {
+                    $this->addError('items', $message);
+                }
+            }
 
             return;
         } catch (\Throwable $e) {
             report($e);
-            $this->addError('items', 'Sale could not be completed. Check stock/warehouse and try again.');
+
+            $message = 'Sale could not be completed. Check stock/warehouse and try again.';
+            if (str_contains($e->getMessage(), 'customer_type')) {
+                $message = 'Server update pending: run rv-update, then try this sale again.';
+            } elseif (config('app.debug')) {
+                $message = $e->getMessage();
+            }
+
+            $this->addError('items', $message);
 
             return;
         }

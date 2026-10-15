@@ -73,6 +73,41 @@ class SaleLifecycleTest extends TestCase
         ]);
     }
 
+    public function test_sale_shows_clear_error_when_warehouse_stock_is_insufficient(): void
+    {
+        $owner = $this->subscribedOwner();
+        $warehouse = Warehouse::factory()->default()->create([
+            'business_id' => $owner->business_id,
+            'name' => 'Test',
+        ]);
+        $otherWarehouse = Warehouse::factory()->create([
+            'business_id' => $owner->business_id,
+            'name' => 'Other',
+        ]);
+        $product = Product::factory()->create([
+            'business_id' => $owner->business_id,
+            'name' => 'new 7',
+            'selling_price' => 200,
+            'track_inventory' => true,
+        ]);
+
+        // Stock exists, but in a different warehouse than the sale warehouse.
+        app(InventoryService::class)->adjust($product, $otherWarehouse, StockMovementType::AdjustmentIn, 10, $owner);
+
+        try {
+            app(SaleService::class)->createCompleted($owner->business, $owner, [
+                'warehouse_id' => $warehouse->id,
+                'sale_date' => now()->toDateString(),
+                'payment_amount' => 1000,
+                'items' => [['product_id' => $product->id, 'quantity' => 5, 'unit_price' => 200]],
+            ]);
+            $this->fail('Expected insufficient stock validation.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->assertStringContainsString('Insufficient stock for new 7 in warehouse "Test"', $e->getMessage());
+            $this->assertStringContainsString('Available: 0', $e->getMessage());
+        }
+    }
+
     public function test_tax_percent_is_added_to_bill_total(): void
     {
         $owner = $this->subscribedOwner();

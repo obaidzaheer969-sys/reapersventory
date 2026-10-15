@@ -88,7 +88,13 @@ class InventoryService
 
             if (bccomp($next, '0', 3) < 0) {
                 throw ValidationException::withMessages([
-                    'quantity' => 'Insufficient stock for this movement.',
+                    'quantity' => sprintf(
+                        'Insufficient stock for %s in %s. Available: %s, requested: %s.',
+                        $product->name,
+                        $warehouse->name,
+                        rtrim(rtrim(number_format((float) $current, 3, '.', ''), '0'), '.') ?: '0',
+                        rtrim(rtrim(number_format((float) $qty, 3, '.', ''), '0'), '.') ?: '0',
+                    ),
                 ]);
             }
 

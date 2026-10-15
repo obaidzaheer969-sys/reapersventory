@@ -53,7 +53,12 @@ class Sale extends Model
 
     public function customerLabel(): string
     {
-        $type = $this->customer_type ?? SaleCustomerType::WalkIn;
+        $raw = $this->attributes['customer_type'] ?? null;
+        $type = $raw instanceof SaleCustomerType
+            ? $raw
+            : (SaleCustomerType::tryFrom((string) $raw) ?? (
+                $this->customer_id ? SaleCustomerType::Customer : SaleCustomerType::WalkIn
+            ));
 
         return match ($type) {
             SaleCustomerType::Online => SaleCustomerType::Online->label(),

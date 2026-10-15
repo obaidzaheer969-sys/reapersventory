@@ -9,6 +9,7 @@ use App\Enums\SaleStatus;
 use App\Enums\StockMovementType;
 use App\Models\Business;
 use App\Models\Customer;
+use App\Models\InventoryBalance;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Sale;
@@ -17,6 +18,7 @@ use App\Models\SalePayment;
 use App\Models\User;
 use App\Models\Warehouse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class SaleService
@@ -109,10 +111,36 @@ class SaleService
 
             $amountDue = bcsub($total, $paymentAmount, 2);
 
-            $sale = Sale::withoutGlobalScopes()->create([
+            // Fail early with a clear warehouse-specific stock message (before creating the sale).
+            foreach ($normalizedItems as $item) {
+                $product = Product::withoutGlobalScopes()->findOrFail($item['product_id']);
+                if (! $product->track_inventory) {
+                    continue;
+                }
+
+                $available = (string) (InventoryBalance::withoutGlobalScopes()
+                    ->where('business_id', $business->id)
+                    ->where('warehouse_id', $warehouse->id)
+                    ->where('product_id', $product->id)
+                    ->value('quantity') ?? '0');
+
+                if (bccomp($available, $item['quantity'], 3) < 0) {
+                    throw ValidationException::withMessages([
+                        'items' => sprintf(
+                            'Insufficient stock for %s in warehouse "%s". Available: %s %s, requested: %s.',
+                            $product->name,
+                            $warehouse->name,
+                            rtrim(rtrim(number_format((float) $available, 3, '.', ''), '0'), '.') ?: '0',
+                            $product->unit,
+                            rtrim(rtrim(number_format((float) $item['quantity'], 3, '.', ''), '0'), '.') ?: '0',
+                        ),
+                    ]);
+                }
+            }
+
+            $salePayload = [
                 'business_id' => $business->id,
                 'customer_id' => $customer?->id,
-                'customer_type' => $customerType,
                 'warehouse_id' => $warehouse->id,
                 'sale_number' => $this->nextNumber($business->id, 'sale'),
                 'status' => SaleStatus::Completed,
@@ -125,7 +153,13 @@ class SaleService
                 'amount_due' => $amountDue,
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $actor->id,
-            ]);
+            ];
+
+            if (Schema::hasColumn('sales', 'customer_type')) {
+                $salePayload['customer_type'] = $customerType;
+            }
+
+            $sale = Sale::withoutGlobalScopes()->create($salePayload);
 
             foreach ($normalizedItems as $item) {
                 SaleItem::withoutGlobalScopes()->create([
