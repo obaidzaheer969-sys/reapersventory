@@ -87,19 +87,21 @@ class SaleLifecycleTest extends TestCase
             'warehouse_id' => $warehouse->id,
             'sale_date' => now()->toDateString(),
             'tax_percent' => 10,
-            'discount' => 0,
-            'payment_amount' => 110,
+            'discount_percent' => 5,
+            'payment_amount' => 105,
             'payment_method' => 'card',
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100],
             ],
         ]);
 
+        // 100 + 10% tax - 5% discount = 110 - 5 = 105
         $this->assertSame('100.00', (string) $sale->subtotal);
         $this->assertSame('10.00', (string) $sale->tax);
-        $this->assertSame('110.00', (string) $sale->total);
+        $this->assertSame('5.00', (string) $sale->discount);
+        $this->assertSame('105.00', (string) $sale->total);
         $this->assertSame('card', $sale->payments()->value('method'));
-        $this->assertSame('110.00', (string) $sale->payments()->value('amount'));
+        $this->assertSame('105.00', (string) $sale->payments()->value('amount'));
     }
 
     public function test_historical_sale_costs_remain_stable_after_product_cost_changes(): void

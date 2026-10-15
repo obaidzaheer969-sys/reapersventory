@@ -26,14 +26,17 @@ class SaleForm extends Component
 
     public string $taxPercent = '0';
 
-    public string $discount = '0';
+    public string $discountPercent = '0';
 
     public string $paymentAmount = '0';
 
     public string $paymentMethod = 'cash';
 
-    /** @var list<int> */
-    public array $taxOptions = [0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80];
+    /** @var list<string> */
+    public array $taxOptions = ['0', '5', '10', '15', '20', '30', '40', '50', '60', '70', '80'];
+
+    /** @var list<string> */
+    public array $discountOptions = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
     public ?string $notes = null;
 
@@ -95,8 +98,8 @@ class SaleForm extends Component
                 Rule::exists('warehouses', 'id')->where(fn ($q) => $q->where('business_id', $businessId)),
             ],
             'saleDate' => ['required', 'date'],
-            'taxPercent' => ['required', 'numeric', Rule::in($this->taxOptions)],
-            'discount' => ['required', 'numeric', 'min:0'],
+            'taxPercent' => ['required', Rule::in($this->taxOptions)],
+            'discountPercent' => ['required', Rule::in($this->discountOptions)],
             'paymentAmount' => ['required', 'numeric', 'min:0'],
             'paymentMethod' => ['required', 'string', Rule::in(['cash', 'bank', 'easypaisa', 'jazzcash', 'card'])],
             'notes' => ['nullable', 'string'],
@@ -115,7 +118,7 @@ class SaleForm extends Component
                 'warehouse_id' => $this->warehouseId,
                 'sale_date' => $this->saleDate,
                 'tax_percent' => $this->taxPercent,
-                'discount' => $this->discount,
+                'discount_percent' => $this->discountPercent,
                 'payment_amount' => $this->paymentAmount,
                 'payment_method' => $this->paymentMethod,
                 'notes' => $this->notes,
@@ -123,6 +126,11 @@ class SaleForm extends Component
             ]);
         } catch (ValidationException $e) {
             $this->addValidationException($e, 'items');
+
+            return;
+        } catch (\Throwable $e) {
+            report($e);
+            $this->addError('items', 'Sale could not be completed. Check stock/warehouse and try again.');
 
             return;
         }
@@ -152,11 +160,14 @@ class SaleForm extends Component
         return bcmul($this->subtotal, bcdiv(number_format((float) $this->taxPercent, 2, '.', ''), '100', 6), 2);
     }
 
+    public function getDiscountAmountProperty(): string
+    {
+        return bcmul($this->subtotal, bcdiv(number_format((float) $this->discountPercent, 2, '.', ''), '100', 6), 2);
+    }
+
     public function getGrandTotalProperty(): string
     {
-        $afterTax = bcadd($this->subtotal, $this->taxAmount, 2);
-
-        return bcsub($afterTax, number_format((float) $this->discount, 2, '.', ''), 2);
+        return bcsub(bcadd($this->subtotal, $this->taxAmount, 2), $this->discountAmount, 2);
     }
 
     public function render(): View

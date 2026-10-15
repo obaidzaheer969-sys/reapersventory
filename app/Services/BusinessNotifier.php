@@ -19,9 +19,19 @@ use App\Notifications\SubscriptionStatusNotification;
 use App\Notifications\WelcomeBusinessNotification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
+use Throwable;
 
 class BusinessNotifier
 {
+    private function safeNotify(User $user, object $notification): void
+    {
+        try {
+            $user->notify($notification);
+        } catch (Throwable) {
+            // Do not break business actions if notifications table/mailer fails.
+        }
+    }
+
     public function ownerForBusiness(int $businessId): ?User
     {
         return User::query()
@@ -45,14 +55,14 @@ class BusinessNotifier
 
     public function welcome(User $owner, Business $business): void
     {
-        $owner->notify(new WelcomeBusinessNotification($business->name));
+        $this->safeNotify($owner, new WelcomeBusinessNotification($business->name));
     }
 
     public function paymentApproved(SubscriptionPayment $payment): void
     {
         $owner = $this->ownerForBusiness((int) $payment->business_id);
         if ($owner) {
-            $owner->notify(new SubscriptionPaymentApprovedNotification($payment));
+            $this->safeNotify($owner, new SubscriptionPaymentApprovedNotification($payment));
         }
     }
 
@@ -60,15 +70,21 @@ class BusinessNotifier
     {
         $owner = $this->ownerForBusiness((int) $payment->business_id);
         if ($owner) {
-            $owner->notify(new SubscriptionPaymentRejectedNotification($payment));
+            $this->safeNotify($owner, new SubscriptionPaymentRejectedNotification($payment));
         }
     }
 
     public function paymentSubmitted(SubscriptionPayment $payment): void
     {
         $admins = $this->superAdmins();
-        if ($admins->isNotEmpty()) {
+        if ($admins->isEmpty()) {
+            return;
+        }
+
+        try {
             Notification::send($admins, new PaymentSubmittedAdminNotification($payment));
+        } catch (Throwable) {
+            // ignore
         }
     }
 
@@ -76,7 +92,7 @@ class BusinessNotifier
     {
         $owner = $this->ownerForBusiness((int) $subscription->business_id);
         if ($owner) {
-            $owner->notify(new SubscriptionStatusNotification($subscription, $event));
+            $this->safeNotify($owner, new SubscriptionStatusNotification($subscription, $event));
         }
     }
 
@@ -91,7 +107,7 @@ class BusinessNotifier
 
         $owner = $this->ownerForBusiness((int) $business->id);
         if ($owner) {
-            $owner->notify(new LowStockAlertNotification($products));
+            $this->safeNotify($owner, new LowStockAlertNotification($products));
         }
     }
 
@@ -99,7 +115,7 @@ class BusinessNotifier
     {
         $owner = $this->ownerForBusiness((int) $sale->business_id);
         if ($owner) {
-            $owner->notify(new SaleCompletedNotification($sale));
+            $this->safeNotify($owner, new SaleCompletedNotification($sale));
         }
     }
 
@@ -107,7 +123,7 @@ class BusinessNotifier
     {
         $owner = $this->ownerForBusiness((int) $purchase->business_id);
         if ($owner) {
-            $owner->notify(new PurchaseReceivedNotification($purchase));
+            $this->safeNotify($owner, new PurchaseReceivedNotification($purchase));
         }
     }
 }

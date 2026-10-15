@@ -34,13 +34,19 @@
                     @error('taxPercent') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="block text-sm font-medium">Discount</label>
-                    <input type="number" step="0.01" wire:model.live="discount" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <label class="block text-sm font-medium">Discount %</label>
+                    <select wire:model.live="discountPercent" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        @foreach ($discountOptions as $option)
+                            <option value="{{ $option }}">{{ $option }}%</option>
+                        @endforeach
+                    </select>
+                    @error('discountPercent') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>
             <div>
                 <label class="block text-sm font-medium">Payment now</label>
                 <input type="number" step="0.01" wire:model="paymentAmount" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <p class="mt-1 text-xs text-slate-500">Bill total: {{ number_format((float) $this->grandTotal, 2) }} — payment cannot be higher than this.</p>
                 @error('paymentAmount') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
@@ -88,12 +94,13 @@
                     </div>
                 </div>
             @endforeach
+            @error('items') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
             <div class="flex justify-between gap-3"><span class="text-slate-600">Subtotal</span><span class="font-semibold">{{ number_format((float) $this->subtotal, 2) }}</span></div>
             <div class="mt-1 flex justify-between gap-3"><span class="text-slate-600">Tax ({{ $taxPercent }}%)</span><span class="font-semibold">{{ number_format((float) $this->taxAmount, 2) }}</span></div>
-            <div class="mt-1 flex justify-between gap-3"><span class="text-slate-600">Discount</span><span class="font-semibold">{{ number_format((float) $discount, 2) }}</span></div>
+            <div class="mt-1 flex justify-between gap-3"><span class="text-slate-600">Discount ({{ $discountPercent }}%)</span><span class="font-semibold">{{ number_format((float) $this->discountAmount, 2) }}</span></div>
             <div class="mt-2 flex justify-between gap-3 border-t border-slate-200 pt-2 text-base"><span class="font-semibold text-navy-900">Bill total</span><span class="font-bold text-navy-900">{{ number_format((float) $this->grandTotal, 2) }}</span></div>
         </div>
 

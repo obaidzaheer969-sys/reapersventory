@@ -35,6 +35,7 @@ class SaleService
      *   tax?: float|string,
      *   tax_percent?: float|string|null,
      *   discount?: float|string,
+     *   discount_percent?: float|string|null,
      *   notes?: string|null,
      *   payment_amount?: float|string|null,
      *   payment_method?: string|null,
@@ -46,7 +47,7 @@ class SaleService
         $this->planLimits->requireAccessibleSubscription($business);
         $this->assertMonthlyInvoiceLimit($business);
 
-        return DB::transaction(function () use ($business, $actor, $data) {
+        $sale = DB::transaction(function () use ($business, $actor, $data) {
             $warehouse = Warehouse::withoutGlobalScopes()
                 ->where('business_id', $business->id)
                 ->findOrFail($data['warehouse_id']);
@@ -66,6 +67,13 @@ class SaleService
 
             [$subtotal, $normalizedItems] = $this->normalizeItems($business->id, $data['items']);
 
+            if (array_key_exists('discount_percent', $data) && $data['discount_percent'] !== null && $data['discount_percent'] !== '') {
+                $discountPercent = number_format((float) $data['discount_percent'], 2, '.', '');
+                $discount = bcmul($subtotal, bcdiv($discountPercent, '100', 6), 2);
+            } else {
+                $discount = number_format((float) ($data['discount'] ?? 0), 2, '.', '');
+            }
+
             if (array_key_exists('tax_percent', $data) && $data['tax_percent'] !== null && $data['tax_percent'] !== '') {
                 $percent = number_format((float) $data['tax_percent'], 2, '.', '');
                 $tax = bcmul($subtotal, bcdiv($percent, '100', 6), 2);
@@ -73,7 +81,6 @@ class SaleService
                 $tax = number_format((float) ($data['tax'] ?? 0), 2, '.', '');
             }
 
-            $discount = number_format((float) ($data['discount'] ?? 0), 2, '.', '');
             $total = bcsub(bcadd($subtotal, $tax, 2), $discount, 2);
 
             if (bccomp($total, '0', 2) < 0) {
@@ -85,7 +92,7 @@ class SaleService
             $paymentAmount = number_format((float) ($data['payment_amount'] ?? 0), 2, '.', '');
             if (bccomp($paymentAmount, $total, 2) > 0) {
                 throw ValidationException::withMessages([
-                    'payment_amount' => 'Payment cannot exceed the sale total.',
+                    'payment_amount' => 'Payment cannot exceed the sale total. Bill total is '.$total.'.',
                 ]);
             }
 
@@ -109,7 +116,7 @@ class SaleService
             ]);
 
             foreach ($normalizedItems as $item) {
-                $saleItem = SaleItem::withoutGlobalScopes()->create([
+                SaleItem::withoutGlobalScopes()->create([
                     'business_id' => $business->id,
                     'sale_id' => $sale->id,
                     'product_id' => $item['product_id'],
@@ -179,11 +186,16 @@ class SaleService
                 user: $actor,
             );
 
-            $sale = $sale->load(['items.product', 'customer', 'warehouse', 'invoice', 'payments']);
-            $this->notifier->saleCompleted($sale);
-
-            return $sale;
+            return $sale->load(['items.product', 'customer', 'warehouse', 'invoice', 'payments']);
         });
+
+        try {
+            $this->notifier->saleCompleted($sale);
+        } catch (\Throwable) {
+            // Never fail the sale because notifications are unavailable.
+        }
+
+        return $sale;
     }
 
     /**
