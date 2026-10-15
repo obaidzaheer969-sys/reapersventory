@@ -124,11 +124,22 @@
                     <img src="{{ $logoDataUri }}" class="logo" alt="Logo">
                 @endif
                 <h1 class="brand">{{ $business->brandDisplayName() }}</h1>
-                @if ($business->phone)
-                    <div class="muted">{{ $business->phone }}</div>
+                @php
+                    $billPhone = filled($business->phone) && ! str_contains((string) $business->phone, '@')
+                        ? $business->phone
+                        : null;
+                    $billAddress = filled($business->address) && ! str_contains((string) $business->address, '@')
+                        ? $business->address
+                        : null;
+                    $invoiceTime = ($invoice->created_at ?? $invoice->issued_at)
+                        ->timezone($business->timezone ?: 'Asia/Karachi')
+                        ->format('d M Y h:i A');
+                @endphp
+                @if ($billPhone)
+                    <div class="muted">{{ $billPhone }}</div>
                 @endif
-                @if ($business->address)
-                    <div class="muted">{{ $business->address }}@if($business->city), {{ $business->city }}@endif</div>
+                @if ($billAddress)
+                    <div class="muted">{{ $billAddress }}@if($business->city), {{ $business->city }}@endif</div>
                 @endif
             </div>
 
@@ -137,10 +148,10 @@
             <div class="muted">
                 Invoice: {{ $invoice->invoice_number }}<br>
                 Sale: {{ $sale->sale_number }}<br>
-                Date: {{ $invoice->issued_at->format('d M Y H:i') }}<br>
+                Invoice time: {{ $invoiceTime }} PKT<br>
                 Warehouse: {{ $sale->warehouse?->name ?? '—' }}<br>
                 Customer: {{ $invoice->customer?->name ?? 'Walk-in' }}
-                @if ($invoice->customer?->phone)
+                @if ($invoice->customer?->phone && ! str_contains((string) $invoice->customer->phone, '@'))
                     <br>Phone: {{ $invoice->customer->phone }}
                 @endif
             </div>

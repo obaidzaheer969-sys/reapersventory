@@ -29,13 +29,12 @@
                     <h1><span style="color:#0a1628">Reapers</span><span class="brand">Ventory</span></h1>
                 @endif
                 <div style="margin-top:6px"><strong>{{ $business->brandDisplayName() }}</strong></div>
-                @if ($business->address)
+                @if ($business->address && ! str_contains((string) $business->address, '@'))
                     <div class="muted">{{ $business->address }}@if($business->city), {{ $business->city }}@endif</div>
                 @endif
-                <div class="muted">
-                    {{ $business->email }}
-                    @if($business->phone) · {{ $business->phone }} @endif
-                </div>
+                @if ($business->phone && ! str_contains((string) $business->phone, '@'))
+                    <div class="muted">{{ $business->phone }}</div>
+                @endif
             </td>
             <td style="width:35%" class="right">
                 <h1 style="margin-bottom:8px">Invoice</h1>
@@ -51,19 +50,21 @@
                 <td style="width:50%">
                     <strong>Bill to</strong><br>
                     {{ $invoice->customer?->name ?? 'Walk-in customer' }}<br>
-                    @if ($invoice->customer?->phone)
+                    @if ($invoice->customer?->phone && ! str_contains((string) $invoice->customer->phone, '@'))
                         <span class="muted">{{ $invoice->customer->phone }}</span><br>
-                    @endif
-                    @if ($invoice->customer?->email)
-                        <span class="muted">{{ $invoice->customer->email }}</span><br>
                     @endif
                     @if ($invoice->customer?->address)
                         <span class="muted">{{ $invoice->customer->address }}</span>
                     @endif
                 </td>
                 <td style="width:50%">
+                    @php
+                        $invoiceTime = ($invoice->created_at ?? $invoice->issued_at)
+                            ->timezone($business->timezone ?: 'Asia/Karachi')
+                            ->format('d M Y h:i A');
+                    @endphp
                     <strong>Sale:</strong> {{ $sale->sale_number }}<br>
-                    <strong>Date:</strong> {{ $invoice->issued_at->toFormattedDateString() }}<br>
+                    <strong>Invoice time:</strong> {{ $invoiceTime }} PKT<br>
                     <strong>Warehouse:</strong> {{ $sale->warehouse?->name ?? '—' }}
                 </td>
             </tr>

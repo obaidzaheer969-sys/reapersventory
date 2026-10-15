@@ -29,11 +29,18 @@
         </tr>
     </table>
 
+    @php
+        $invoiceTime = ($invoice->created_at ?? $invoice->issued_at)
+            ->timezone($business->timezone ?: 'Asia/Karachi')
+            ->format('d M Y h:i A');
+    @endphp
     <p>
         Invoice {{ $invoice->invoice_number }} · Sale {{ $sale->sale_number }}<br>
-        {{ $invoice->issued_at->toFormattedDateString() }}<br>
+        Invoice time: {{ $invoiceTime }} PKT<br>
         <strong>Customer:</strong> {{ $invoice->customer?->name ?? 'Walk-in customer' }}
-        @if ($invoice->customer?->phone) · {{ $invoice->customer->phone }} @endif
+        @if ($invoice->customer?->phone && ! str_contains((string) $invoice->customer->phone, '@'))
+            · {{ $invoice->customer->phone }}
+        @endif
         <br>
         <strong>Warehouse:</strong> {{ $sale->warehouse?->name ?? '—' }}
     </p>

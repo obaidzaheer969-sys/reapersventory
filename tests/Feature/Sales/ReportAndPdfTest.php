@@ -150,12 +150,18 @@ class ReportAndPdfTest extends TestCase
             'items' => [['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 10]],
         ]);
 
+        $owner->business->update(['email' => 'shop-owner@gmail.com', 'phone' => '03001234567']);
+
         $this->actingAs($owner)
             ->get(route('business.invoices.print', ['invoice' => $sale->invoice, 'autoprint' => 1]))
             ->assertOk()
             ->assertSee('Print bill')
             ->assertSee('Counter Store')
             ->assertSee($sale->invoice->invoice_number)
+            ->assertSee('Invoice time:')
+            ->assertSee('PKT')
+            ->assertSee('03001234567')
+            ->assertDontSee('shop-owner@gmail.com')
             ->assertSee('window.print()', false);
 
         $other = $this->subscribedOwner();

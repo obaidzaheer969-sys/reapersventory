@@ -33,7 +33,7 @@ class Invoice extends Model
     {
         return [
             'status' => InvoiceStatus::class,
-            'issued_at' => 'date',
+            'issued_at' => 'datetime',
             'due_at' => 'date',
             'subtotal' => 'decimal:2',
             'tax' => 'decimal:2',

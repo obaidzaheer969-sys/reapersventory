@@ -153,7 +153,7 @@ class SaleService
                 'customer_id' => $customer?->id,
                 'invoice_number' => $this->nextNumber($business->id, 'invoice'),
                 'status' => $invoiceStatus,
-                'issued_at' => $data['sale_date'],
+                'issued_at' => now(),
                 'due_at' => $data['sale_date'],
                 'subtotal' => $subtotal,
                 'tax' => $tax,
