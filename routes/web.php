@@ -23,6 +23,7 @@ use App\Http\Controllers\Business\SaleController;
 use App\Http\Controllers\Business\SubscriptionController;
 use App\Http\Controllers\Business\SupplierController;
 use App\Http\Controllers\Business\WarehouseController;
+use App\Http\Controllers\DeployController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PricingController;
 use App\Models\PaymentProof;
@@ -32,6 +33,11 @@ Route::bind('paymentProof', fn (string $value) => PaymentProof::withoutGlobalSco
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('/pricing', PricingController::class)->name('pricing');
+
+// Hosting one-click / webhook deploy (requires DEPLOY_SECRET in .env)
+Route::match(['get', 'post'], '/deploy', DeployController::class)
+    ->middleware('throttle:10,1')
+    ->name('deploy');
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');

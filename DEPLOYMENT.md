@@ -87,7 +87,9 @@ DEPLOY_SECRET=put-a-long-random-string-here
 
 2. Then either open once after push:
 
-`https://reapersventory.com/deploy.php?secret=put-a-long-random-string-here`
+`https://reapersventory.com/deploy?secret=put-a-long-random-string-here`
+
+> If you see **404**, pull/deploy the latest `main` once from cPanel Git first (so the new `/deploy` route exists), then open the link again.
 
 Or GitHub → repo → **Settings → Webhooks → Add webhook**
 - Payload URL: same URL as above
