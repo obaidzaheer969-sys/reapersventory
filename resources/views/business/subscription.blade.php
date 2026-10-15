@@ -48,15 +48,31 @@
                 <div class="mt-4">
                     <livewire:business.choose-plan />
                 </div>
-            @else
-                <h2 class="text-lg font-semibold text-navy-900">Submit payment proof</h2>
-                <p class="mt-1 text-sm text-slate-600">Uploading proof does not activate your plan. Super Admin approval is required.</p>
+            @elseif ($subscription->status !== \App\Enums\SubscriptionStatus::Expired)
+                <h2 class="text-lg font-semibold text-navy-900">Update package</h2>
+                <p class="mt-1 text-sm text-slate-600">Apna package upgrade ya change karein.</p>
                 <div class="mt-4">
-                    <livewire:business.submit-payment-proof :subscription-id="$subscription->id" />
+                    <livewire:business.update-plan :subscription-id="$subscription->id" />
+                </div>
+            @else
+                <h2 class="text-lg font-semibold text-navy-900">Choose a plan</h2>
+                <p class="mt-1 text-sm text-slate-600">Your previous subscription expired. Start a new package.</p>
+                <div class="mt-4">
+                    <livewire:business.choose-plan />
                 </div>
             @endif
         </div>
     </div>
+
+    @if ($subscription && $subscription->status !== \App\Enums\SubscriptionStatus::Expired)
+        <div class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="text-lg font-semibold text-navy-900">Submit payment proof</h2>
+            <p class="mt-1 text-sm text-slate-600">Uploading proof does not activate your plan. Super Admin approval is required.</p>
+            <div class="mt-4">
+                <livewire:business.submit-payment-proof :subscription-id="$subscription->id" />
+            </div>
+        </div>
+    @endif
 
     <div class="mt-8">
         <livewire:business.update-branding />

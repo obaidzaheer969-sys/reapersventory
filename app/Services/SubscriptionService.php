@@ -194,6 +194,56 @@ class SubscriptionService
         });
     }
 
+    /**
+     * Switch the business to a different plan (upgrade / downgrade / change package).
+     */
+    public function changePlan(Subscription $subscription, Plan $plan, User $actor): Subscription
+    {
+        if (! $plan->is_active) {
+            throw ValidationException::withMessages([
+                'planId' => 'This plan is not available.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($subscription, $plan, $actor) {
+            $subscription = Subscription::withoutGlobalScopes()
+                ->whereKey($subscription->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ((int) $subscription->plan_id === (int) $plan->id) {
+                throw ValidationException::withMessages([
+                    'planId' => 'You are already on this package.',
+                ]);
+            }
+
+            if ($subscription->status === SubscriptionStatus::Expired) {
+                throw ValidationException::withMessages([
+                    'planId' => 'This subscription has expired. Start a new subscription instead.',
+                ]);
+            }
+
+            $old = $subscription->only(['plan_id', 'cancelled_at']);
+
+            $subscription->fill([
+                'plan_id' => $plan->id,
+                // Changing package resumes auto-renew intent until they cancel again.
+                'cancelled_at' => null,
+                'auto_renew' => false,
+            ])->save();
+
+            $this->auditLogger->log(
+                action: 'subscription.plan_changed',
+                auditable: $subscription,
+                oldValues: $old,
+                newValues: $subscription->only(array_keys($old)),
+                user: $actor,
+            );
+
+            return $subscription->fresh(['plan.features']);
+        });
+    }
+
     public function markExpiredSubscriptions(): int
     {
         $count = 0;

@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
 use App\Livewire\Business\ChoosePlan;
 use App\Livewire\Business\SubmitPaymentProof;
+use App\Livewire\Business\UpdatePlan;
 use App\Models\PaymentMethod;
 use App\Models\Plan;
 use App\Models\Subscription;
@@ -245,5 +246,54 @@ class SubscriptionLifecycleTest extends TestCase
             ->get(route('business.subscription.index'))
             ->assertOk()
             ->assertDontSee($ownerB->business->name);
+    }
+
+    public function test_owner_can_update_package_to_another_plan(): void
+    {
+        $owner = User::factory()->create();
+        $basic = Plan::factory()->create(['name' => 'Basic Pack', 'price_monthly' => 1000, 'trial_days' => 7]);
+        $pro = Plan::factory()->create(['name' => 'Pro Pack', 'price_monthly' => 3000, 'trial_days' => 7]);
+
+        $subscription = app(SubscriptionService::class)->startTrialOrPending(
+            $owner->business,
+            $basic,
+            BillingInterval::Monthly,
+            $owner,
+        );
+
+        $this->actingAs($owner)
+            ->get(route('business.subscription.index'))
+            ->assertOk()
+            ->assertSee('Update package')
+            ->assertSee('Pro Pack');
+
+        Livewire::actingAs($owner)
+            ->test(UpdatePlan::class, ['subscriptionId' => $subscription->id])
+            ->set('planId', $pro->id)
+            ->call('update')
+            ->assertHasNoErrors();
+
+        $subscription->refresh();
+        $this->assertSame($pro->id, $subscription->plan_id);
+        $this->assertSame(SubscriptionStatus::Trial, $subscription->status);
+    }
+
+    public function test_owner_cannot_update_to_same_package(): void
+    {
+        $owner = User::factory()->create();
+        $plan = Plan::factory()->create(['trial_days' => 7]);
+
+        $subscription = app(SubscriptionService::class)->startTrialOrPending(
+            $owner->business,
+            $plan,
+            BillingInterval::Monthly,
+            $owner,
+        );
+
+        Livewire::actingAs($owner)
+            ->test(UpdatePlan::class, ['subscriptionId' => $subscription->id])
+            ->set('planId', $plan->id)
+            ->call('update')
+            ->assertHasErrors(['planId']);
     }
 }
