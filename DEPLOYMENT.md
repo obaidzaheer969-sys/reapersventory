@@ -63,18 +63,47 @@ If SMTP is blocked by the host, try `MAIL_MAILER=sendmail` instead.
 
 2. HTTPS is forced when `APP_ENV=production`. Sit behind a reverse proxy that terminates TLS; proxies are trusted (`TrustProxies`).
 
-## Quick update (after code is on GitHub)
+## Auto deploy after git push (recommended)
 
-From the project root on the server:
+### Option A — cPanel Git deploy script (best)
+
+1. cPanel → **Git™ Version Control** → your repo → **Manage**
+2. Turn on **Pull** / deploy from `main`
+3. In **Deployment Script** paste:
+
+```bash
+bash deploy.sh
+```
+
+4. Save. After every deploy/pull, hosting will run `config:clear` + related artisan commands automatically.
+
+### Option B — browser / GitHub webhook
+
+1. In hosting `.env` set a secret:
+
+```env
+DEPLOY_SECRET=put-a-long-random-string-here
+```
+
+2. Then either open once after push:
+
+`https://your-domain.com/deploy.php?secret=put-a-long-random-string-here`
+
+Or GitHub → repo → **Settings → Webhooks → Add webhook**
+- Payload URL: same URL as above
+- Content type: `application/json`
+- Events: **Just the push event**
+
+This runs `git pull origin main` + cache clears + verify stuck users.
+
+### Manual update
 
 ```bash
 chmod +x update.sh   # first time only
 ./update.sh
 ```
 
-This runs `git pull origin main` plus `php artisan config:clear` (and cache/route/view clear).
-
-On Windows locally: `update.bat`
+Windows locally: `update.bat`
 
 ## Deploy steps
 
