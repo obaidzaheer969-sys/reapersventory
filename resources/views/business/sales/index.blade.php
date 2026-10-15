@@ -27,7 +27,7 @@
                             <a href="{{ route('business.sales.show', $sale) }}" class="font-semibold text-brand-600 hover:text-brand-500">{{ $sale->sale_number }}</a>
                             <div class="text-xs text-slate-500">{{ $sale->sale_date->toFormattedDateString() }}</div>
                         </td>
-                        <td class="py-3">{{ $sale->customer?->name ?? 'Walk-in' }}</td>
+                        <td class="py-3">{{ $sale->customerLabel() }}</td>
                         <td class="py-3">{{ number_format($sale->total, 2) }}</td>
                         <td class="py-3">{{ number_format($sale->amount_due, 2) }}</td>
                         <td class="py-3">

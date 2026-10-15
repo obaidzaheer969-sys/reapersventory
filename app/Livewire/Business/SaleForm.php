@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Business;
 
+use App\Enums\SaleCustomerType;
 use App\Livewire\Concerns\RefreshesAfterSave;
 use App\Models\Customer;
 use App\Models\Product;
@@ -17,6 +18,9 @@ use Livewire\Component;
 class SaleForm extends Component
 {
     use RefreshesAfterSave;
+
+    /** walk_in | online | customer:{id} */
+    public string $customerSelection = 'walk_in';
 
     public ?int $customerId = null;
 
@@ -126,6 +130,17 @@ class SaleForm extends Component
         }
     }
 
+    public function updatedCustomerSelection(string $value): void
+    {
+        if (str_starts_with($value, 'customer:')) {
+            $this->customerId = (int) substr($value, strlen('customer:'));
+
+            return;
+        }
+
+        $this->customerId = null;
+    }
+
     public function payFullAmount(): void
     {
         $this->paymentAmount = $this->grandTotal;
@@ -148,8 +163,22 @@ class SaleForm extends Component
         abort_unless($user->can('create', Sale::class), 403);
         $businessId = $user->business_id;
 
+        $customerType = match (true) {
+            $this->customerSelection === 'online' => SaleCustomerType::Online->value,
+            str_starts_with($this->customerSelection, 'customer:') => SaleCustomerType::Customer->value,
+            default => SaleCustomerType::WalkIn->value,
+        };
+
+        if ($customerType === SaleCustomerType::Customer->value) {
+            $this->customerId = (int) substr($this->customerSelection, strlen('customer:'));
+        } else {
+            $this->customerId = null;
+        }
+
         $this->validate([
+            'customerSelection' => ['required', 'string'],
             'customerId' => [
+                Rule::requiredIf($customerType === SaleCustomerType::Customer->value),
                 'nullable',
                 Rule::exists('customers', 'id')->where(fn ($q) => $q->where('business_id', $businessId)),
             ],
@@ -175,6 +204,7 @@ class SaleForm extends Component
         try {
             $sale = $sales->createCompleted($user->business, $user, [
                 'customer_id' => $this->customerId,
+                'customer_type' => $customerType,
                 'warehouse_id' => $this->warehouseId,
                 'sale_date' => $this->saleDate,
                 'tax_percent' => $this->taxPercent,

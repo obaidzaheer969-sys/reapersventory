@@ -83,7 +83,7 @@
                     <li class="flex items-center justify-between gap-3 border-b border-slate-100 py-2">
                         <a href="{{ route('business.sales.show', $sale) }}" class="font-semibold text-navy-900 hover:text-brand-600">
                             {{ $sale->sale_number }}
-                            <span class="font-normal text-slate-500">· {{ $sale->customer?->name ?? 'Walk-in' }}</span>
+                            <span class="font-normal text-slate-500">· {{ $sale->customerLabel() }}</span>
                         </a>
                         <span class="font-semibold">{{ number_format((float) $sale->total, 2) }}</span>
                     </li>

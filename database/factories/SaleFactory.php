@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\SaleCustomerType;
 use App\Enums\SaleStatus;
 use App\Models\Business;
 use App\Models\Sale;
@@ -20,6 +21,7 @@ class SaleFactory extends Factory
         return [
             'business_id' => Business::factory(),
             'customer_id' => null,
+            'customer_type' => SaleCustomerType::WalkIn,
             'warehouse_id' => Warehouse::factory(),
             'sale_number' => 'SL-'.fake()->unique()->numerify('######'),
             'status' => SaleStatus::Completed,

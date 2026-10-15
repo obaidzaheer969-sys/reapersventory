@@ -19,12 +19,16 @@
             <div class="grid gap-3 sm:grid-cols-2">
                 <div>
                     <label class="block text-sm font-medium">Customer</label>
-                    <select wire:model="customerId" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                        <option value="">Walk-in customer</option>
+                    <select wire:model.live="customerSelection" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="walk_in">Walk-in customer</option>
+                        <option value="online">Online order</option>
                         @foreach ($customers as $customer)
-                            <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                            <option value="customer:{{ $customer->id }}">{{ $customer->name }}</option>
                         @endforeach
                     </select>
+                    <p class="mt-1 text-xs text-slate-500">Walk-in, online order, ya customer name select karo.</p>
+                    @error('customerId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @error('customerSelection') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium">Warehouse</label>

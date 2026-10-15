@@ -49,7 +49,7 @@
             <tr>
                 <td style="width:50%">
                     <strong>Bill to</strong><br>
-                    {{ $invoice->customer?->name ?? 'Walk-in customer' }}<br>
+                    {{ $sale->customerLabel() }}<br>
                     @if ($invoice->customer?->phone && ! str_contains((string) $invoice->customer->phone, '@'))
                         <span class="muted">{{ $invoice->customer->phone }}</span><br>
                     @endif

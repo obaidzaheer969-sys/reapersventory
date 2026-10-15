@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\BelongsToBusiness;
+use App\Enums\SaleCustomerType;
 use App\Enums\SaleStatus;
 use Database\Factories\SaleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'business_id',
     'customer_id',
+    'customer_type',
     'warehouse_id',
     'sale_number',
     'status',
@@ -38,6 +40,7 @@ class Sale extends Model
     {
         return [
             'status' => SaleStatus::class,
+            'customer_type' => SaleCustomerType::class,
             'sale_date' => 'date',
             'subtotal' => 'decimal:2',
             'tax' => 'decimal:2',
@@ -46,6 +49,17 @@ class Sale extends Model
             'amount_paid' => 'decimal:2',
             'amount_due' => 'decimal:2',
         ];
+    }
+
+    public function customerLabel(): string
+    {
+        $type = $this->customer_type ?? SaleCustomerType::WalkIn;
+
+        return match ($type) {
+            SaleCustomerType::Online => SaleCustomerType::Online->label(),
+            SaleCustomerType::Customer => $this->customer?->name ?? 'Customer',
+            SaleCustomerType::WalkIn => SaleCustomerType::WalkIn->label(),
+        };
     }
 
     public function customer(): BelongsTo

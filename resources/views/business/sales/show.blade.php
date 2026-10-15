@@ -3,7 +3,7 @@
 @section('title', $sale->sale_number.' — ReapersVentory')
 
 @section('content')
-<x-business-section :title="$sale->sale_number" :subtitle="'Customer: '.($sale->customer?->name ?? 'Walk-in')">
+<x-business-section :title="$sale->sale_number" :subtitle="'Customer: '.$sale->customerLabel()">
     <x-slot:actions>
         <a href="{{ route('business.sales.index') }}" class="text-sm font-semibold text-navy-800 hover:text-brand-600">Back</a>
         @if ($sale->invoice)

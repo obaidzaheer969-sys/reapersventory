@@ -37,7 +37,7 @@
     <p>
         Invoice {{ $invoice->invoice_number }} · Sale {{ $sale->sale_number }}<br>
         Invoice time: {{ $invoiceTime }} PKT<br>
-        <strong>Customer:</strong> {{ $invoice->customer?->name ?? 'Walk-in customer' }}
+        <strong>Customer:</strong> {{ $sale->customerLabel() }}
         @if ($invoice->customer?->phone && ! str_contains((string) $invoice->customer->phone, '@'))
             · {{ $invoice->customer->phone }}
         @endif

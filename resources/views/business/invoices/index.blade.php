@@ -21,7 +21,7 @@
                         <td class="py-3">
                             <a href="{{ route('business.invoices.show', $invoice) }}" class="font-semibold text-brand-600 hover:text-brand-500">{{ $invoice->invoice_number }}</a>
                         </td>
-                        <td class="py-3">{{ $invoice->customer?->name ?? 'Walk-in' }}</td>
+                        <td class="py-3">{{ $invoice->sale?->customerLabel() ?? ($invoice->customer?->name ?? 'Walk-in customer') }}</td>
                         <td class="py-3">{{ number_format($invoice->total, 2) }}</td>
                         <td class="py-3">{{ number_format($invoice->amount_due, 2) }}</td>
                         <td class="py-3">{{ $invoice->status->label() }}</td>

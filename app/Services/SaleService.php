@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\InvoiceStatus;
 use App\Enums\PlanFeatureKey;
+use App\Enums\SaleCustomerType;
 use App\Enums\SaleStatus;
 use App\Enums\StockMovementType;
 use App\Models\Business;
@@ -30,6 +31,7 @@ class SaleService
     /**
      * @param  array{
      *   customer_id?: int|null,
+     *   customer_type?: string|null,
      *   warehouse_id: int,
      *   sale_date: string,
      *   tax?: float|string,
@@ -52,8 +54,17 @@ class SaleService
                 ->where('business_id', $business->id)
                 ->findOrFail($data['warehouse_id']);
 
+            $customerType = SaleCustomerType::tryFrom((string) ($data['customer_type'] ?? ''))
+                ?? (! empty($data['customer_id']) ? SaleCustomerType::Customer : SaleCustomerType::WalkIn);
+
             $customer = null;
-            if (! empty($data['customer_id'])) {
+            if ($customerType === SaleCustomerType::Customer) {
+                if (empty($data['customer_id'])) {
+                    throw ValidationException::withMessages([
+                        'customer_id' => 'Select a customer name for this sale.',
+                    ]);
+                }
+
                 $customer = Customer::withoutGlobalScopes()
                     ->where('business_id', $business->id)
                     ->findOrFail($data['customer_id']);
@@ -101,6 +112,7 @@ class SaleService
             $sale = Sale::withoutGlobalScopes()->create([
                 'business_id' => $business->id,
                 'customer_id' => $customer?->id,
+                'customer_type' => $customerType,
                 'warehouse_id' => $warehouse->id,
                 'sale_number' => $this->nextNumber($business->id, 'sale'),
                 'status' => SaleStatus::Completed,
