@@ -34,7 +34,7 @@ class PlanLimitService
                 PlanFeatureKey::ProductsLimit => "Your plan allows only {$limit} products. Upgrade to add more.",
                 PlanFeatureKey::WarehousesLimit => "Your plan allows only {$limit} warehouse(s). Upgrade to add more.",
                 PlanFeatureKey::InvoicesLimit => "Your plan invoice limit ({$limit}) for this month has been reached.",
-                PlanFeatureKey::UsersLimit => "Your plan allows only {$limit} user(s).",
+                PlanFeatureKey::UsersLimit => "Your plan allows only {$limit} user(s). Upgrade to add more.",
             };
 
             throw ValidationException::withMessages([

@@ -94,4 +94,24 @@ class Plan extends Model
     {
         return $this->featureLimit($key) === null;
     }
+
+    /**
+     * Ensure every feature key exists so admin-created plans always enforce limits.
+     * Missing keys default to 0 (blocked) until the admin sets a value.
+     */
+    public function ensureFeatureRows(): void
+    {
+        foreach (PlanFeatureKey::cases() as $key) {
+            PlanFeature::query()->firstOrCreate(
+                [
+                    'plan_id' => $this->id,
+                    'feature_key' => $key,
+                ],
+                [
+                    'limit_value' => 0,
+                    'is_enabled' => true,
+                ],
+            );
+        }
+    }
 }

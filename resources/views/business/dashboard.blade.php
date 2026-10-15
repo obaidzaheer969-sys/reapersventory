@@ -103,6 +103,8 @@
             <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.reports.index') }}">Reports</a></li>
             <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.invoices.index') }}">Invoices</a></li>
             <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.subscription.index') }}">Billing</a></li>
+            <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.warehouses.index') }}">Warehouses</a></li>
+            <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.team-users.index') }}">Team users</a></li>
             <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.low-stock.index') }}">Low stock</a></li>
             <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.notifications.index') }}">Alerts</a></li>
             <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.profile.edit') }}">Profile</a></li>

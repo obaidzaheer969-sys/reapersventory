@@ -32,6 +32,7 @@ class PlanForm
                         Toggle::make('is_featured')->default(false),
                     ]),
                 Section::make('Feature limits')
+                    ->description('These limits control what subscribed customers can add (products, invoices, warehouses, users). Leave a limit empty for unlimited.')
                     ->schema([
                         Repeater::make('features')
                             ->relationship()
@@ -46,10 +47,21 @@ class PlanForm
                                 TextInput::make('limit_value')
                                     ->numeric()
                                     ->nullable()
-                                    ->helperText('Leave empty for unlimited'),
+                                    ->helperText('Empty = unlimited')
+                                    ->dehydrateStateUsing(fn ($state) => $state === '' || $state === null ? null : (int) $state),
                                 Toggle::make('is_enabled')->default(true),
                             ])
-                            ->defaultItems(0)
+                            ->default(fn () => collect(PlanFeatureKey::cases())->map(fn (PlanFeatureKey $key) => [
+                                'feature_key' => $key->value,
+                                'limit_value' => match ($key) {
+                                    PlanFeatureKey::ProductsLimit => 10,
+                                    PlanFeatureKey::InvoicesLimit => null,
+                                    PlanFeatureKey::WarehousesLimit => 1,
+                                    PlanFeatureKey::UsersLimit => 1,
+                                },
+                                'is_enabled' => true,
+                            ])->all())
+                            ->defaultItems(count(PlanFeatureKey::cases()))
                             ->collapsible(),
                     ]),
             ]);
