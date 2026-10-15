@@ -3,17 +3,21 @@
 namespace App\Livewire\Business;
 
 use App\Enums\StockMovementType;
+use App\Livewire\Concerns\RefreshesAfterSave;
 use App\Models\Product;
 use App\Models\Warehouse;
 use App\Services\InventoryService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class StockAdjustmentForm extends Component
 {
+    use RefreshesAfterSave;
+
     #[Url(as: 'product', except: null)]
     public ?int $productId = null;
 
@@ -59,19 +63,25 @@ class StockAdjustmentForm extends Component
 
         abort_unless($user->can('update', $product), 403);
 
-        $inventory->adjust(
-            product: $product,
-            warehouse: $warehouse,
-            type: $validated['direction'] === 'in'
-                ? StockMovementType::AdjustmentIn
-                : StockMovementType::AdjustmentOut,
-            quantity: $validated['quantity'],
-            actor: $user,
-            notes: $validated['notes'],
-        );
+        try {
+            $inventory->adjust(
+                product: $product,
+                warehouse: $warehouse,
+                type: $validated['direction'] === 'in'
+                    ? StockMovementType::AdjustmentIn
+                    : StockMovementType::AdjustmentOut,
+                quantity: $validated['quantity'],
+                actor: $user,
+                notes: $validated['notes'],
+            );
+        } catch (ValidationException $e) {
+            $this->addValidationException($e, 'quantity');
+
+            return;
+        }
 
         session()->flash('status', $validated['direction'] === 'in' ? 'Stock added.' : 'Stock removed.');
-        $this->redirect(route('business.inventory.index', ['product' => $product->id]), navigate: true);
+        $this->redirectAndRefresh(route('business.inventory.index', ['product' => $product->id]));
     }
 
     public function render(): View

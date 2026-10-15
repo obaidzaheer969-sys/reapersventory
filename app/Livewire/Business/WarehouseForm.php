@@ -2,14 +2,18 @@
 
 namespace App\Livewire\Business;
 
+use App\Livewire\Concerns\RefreshesAfterSave;
 use App\Models\Warehouse;
 use App\Services\WarehouseService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class WarehouseForm extends Component
 {
+    use RefreshesAfterSave;
+
     public string $name = '';
 
     public string $code = '';
@@ -30,16 +34,22 @@ class WarehouseForm extends Component
             'isDefault' => ['boolean'],
         ]);
 
-        $warehouses->create($user->business, $user, [
-            'name' => $validated['name'],
-            'code' => strtoupper($validated['code']),
-            'address' => $validated['address'],
-            'is_default' => $validated['isDefault'],
-            'is_active' => true,
-        ]);
+        try {
+            $warehouses->create($user->business, $user, [
+                'name' => $validated['name'],
+                'code' => strtoupper($validated['code']),
+                'address' => $validated['address'],
+                'is_default' => $validated['isDefault'],
+                'is_active' => true,
+            ]);
+        } catch (ValidationException $e) {
+            $this->addValidationException($e, 'name');
 
-        $this->reset(['name', 'code', 'address', 'isDefault']);
+            return;
+        }
+
         session()->flash('status', 'Warehouse created.');
+        $this->redirectAndRefresh(route('business.warehouses.index'));
     }
 
     public function render(): View

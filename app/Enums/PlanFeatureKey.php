@@ -12,10 +12,10 @@ enum PlanFeatureKey: string
     public function label(): string
     {
         return match ($this) {
-            self::ProductsLimit => 'Products limit',
-            self::InvoicesLimit => 'Invoices limit (per month)',
-            self::WarehousesLimit => 'Warehouses limit',
-            self::UsersLimit => 'Users limit',
+            self::ProductsLimit => 'Products',
+            self::InvoicesLimit => 'Billing / invoices',
+            self::WarehousesLimit => 'Warehouses',
+            self::UsersLimit => 'Users',
         };
     }
 }

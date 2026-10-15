@@ -16,6 +16,7 @@
     <div class="grid gap-6 lg:grid-cols-3">
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-1">
             <h2 class="font-semibold text-navy-900">Add product</h2>
+            <p class="mt-1 text-xs text-slate-500">Plan limits apply: Starter 10 · Grow 30 · Business/Grow Business unlimited.</p>
             <div class="mt-4">
                 <livewire:business.product-form />
             </div>

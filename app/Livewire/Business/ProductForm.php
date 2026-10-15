@@ -3,6 +3,7 @@
 namespace App\Livewire\Business;
 
 use App\Enums\StockMovementType;
+use App\Livewire\Concerns\RefreshesAfterSave;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Warehouse;
@@ -12,10 +13,13 @@ use App\Support\ProductUnits;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class ProductForm extends Component
 {
+    use RefreshesAfterSave;
+
     public ?int $productId = null;
 
     public string $name = '';
@@ -124,30 +128,37 @@ class ProductForm extends Component
             'is_active' => $validated['isActive'],
         ];
 
-        if ($this->productId) {
-            $product = Product::query()->findOrFail($this->productId);
-            abort_unless($user->can('update', $product), 403);
-            $products->update($product, $user, $payload);
-        } else {
-            abort_unless($user->can('create', Product::class), 403);
-            $product = $products->create($user->business, $user, $payload);
-        }
-
         $qty = (float) ($validated['stockQuantity'] ?? 0);
-        if ($qty > 0 && $validated['trackInventory'] && ! empty($validated['warehouseId'])) {
-            $warehouse = Warehouse::query()->findOrFail($validated['warehouseId']);
-            $inventory->adjust(
-                product: $product,
-                warehouse: $warehouse,
-                type: StockMovementType::AdjustmentIn,
-                quantity: $qty,
-                actor: $user,
-                notes: $this->productId ? 'Stock added from product edit' : 'Opening stock',
-            );
+
+        try {
+            if ($this->productId) {
+                $product = Product::query()->findOrFail($this->productId);
+                abort_unless($user->can('update', $product), 403);
+                $products->update($product, $user, $payload);
+            } else {
+                abort_unless($user->can('create', Product::class), 403);
+                $product = $products->create($user->business, $user, $payload);
+            }
+
+            if ($qty > 0 && $validated['trackInventory'] && ! empty($validated['warehouseId'])) {
+                $warehouse = Warehouse::query()->findOrFail($validated['warehouseId']);
+                $inventory->adjust(
+                    product: $product,
+                    warehouse: $warehouse,
+                    type: StockMovementType::AdjustmentIn,
+                    quantity: $qty,
+                    actor: $user,
+                    notes: $this->productId ? 'Stock added from product edit' : 'Opening stock',
+                );
+            }
+        } catch (ValidationException $e) {
+            $this->addValidationException($e, 'name');
+
+            return;
         }
 
         session()->flash('status', $qty > 0 ? 'Product saved and stock updated.' : 'Product saved.');
-        $this->redirect(route('business.products.index'), navigate: true);
+        $this->redirectAndRefresh(route('business.products.index'));
     }
 
     public function render(): View

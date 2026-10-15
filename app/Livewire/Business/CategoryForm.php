@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Business;
 
+use App\Livewire\Concerns\RefreshesAfterSave;
 use App\Models\Category;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,8 @@ use Livewire\Component;
 
 class CategoryForm extends Component
 {
+    use RefreshesAfterSave;
+
     public string $name = '';
 
     public ?string $description = null;
@@ -40,8 +43,8 @@ class CategoryForm extends Component
             'is_active' => true,
         ]);
 
-        $this->reset(['name', 'description']);
         session()->flash('status', 'Category created.');
+        $this->redirectAndRefresh(route('business.categories.index'));
     }
 
     public function render(): View

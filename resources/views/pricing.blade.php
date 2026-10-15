@@ -15,7 +15,7 @@
     @if ($plans->isEmpty())
         <p class="text-center text-slate-600">Plans will appear here once configured by Super Admin.</p>
     @else
-        <div class="grid gap-6 lg:grid-cols-3">
+        <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             @foreach ($plans as $plan)
                 <div @class([
                     'rounded-2xl border p-6',

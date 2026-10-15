@@ -25,6 +25,7 @@ class ProductService
 
         $currentCount = Product::withoutGlobalScopes()
             ->where('business_id', $business->id)
+            ->whereNull('deleted_at')
             ->count();
 
         $this->planLimits->assertWithinLimit($business, PlanFeatureKey::ProductsLimit, $currentCount);

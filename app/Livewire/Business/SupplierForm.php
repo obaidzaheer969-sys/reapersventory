@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Business;
 
+use App\Livewire\Concerns\RefreshesAfterSave;
 use App\Models\Supplier;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 class SupplierForm extends Component
 {
+    use RefreshesAfterSave;
+
     public string $name = '';
 
     public ?string $email = null;
@@ -38,8 +41,8 @@ class SupplierForm extends Component
             'is_active' => true,
         ]);
 
-        $this->reset();
         session()->flash('status', 'Supplier created.');
+        $this->redirectAndRefresh(route('business.suppliers.index'));
     }
 
     public function render(): View

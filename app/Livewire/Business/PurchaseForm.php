@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Business;
 
+use App\Livewire\Concerns\RefreshesAfterSave;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
@@ -10,10 +11,13 @@ use App\Services\PurchaseService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class PurchaseForm extends Component
 {
+    use RefreshesAfterSave;
+
     public ?int $supplierId = null;
 
     public ?int $warehouseId = null;
@@ -79,18 +83,24 @@ class PurchaseForm extends Component
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $purchase = $purchases->create($user->business, $user, [
-            'supplier_id' => $this->supplierId,
-            'warehouse_id' => $this->warehouseId,
-            'purchase_date' => $this->purchaseDate,
-            'tax' => $this->tax,
-            'discount' => $this->discount,
-            'notes' => $this->notes,
-            'items' => $this->items,
-        ]);
+        try {
+            $purchase = $purchases->create($user->business, $user, [
+                'supplier_id' => $this->supplierId,
+                'warehouse_id' => $this->warehouseId,
+                'purchase_date' => $this->purchaseDate,
+                'tax' => $this->tax,
+                'discount' => $this->discount,
+                'notes' => $this->notes,
+                'items' => $this->items,
+            ]);
+        } catch (ValidationException $e) {
+            $this->addValidationException($e, 'items');
+
+            return;
+        }
 
         session()->flash('status', 'Purchase created.');
-        $this->redirect(route('business.purchases.show', $purchase), navigate: true);
+        $this->redirectAndRefresh(route('business.purchases.show', $purchase));
     }
 
     public function render(): View

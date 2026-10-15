@@ -30,8 +30,15 @@ class PlanLimitService
         }
 
         if ($currentCount >= $limit) {
+            $message = match ($feature) {
+                PlanFeatureKey::ProductsLimit => "Your plan allows only {$limit} products. Upgrade to add more.",
+                PlanFeatureKey::WarehousesLimit => "Your plan allows only {$limit} warehouse(s). Upgrade to add more.",
+                PlanFeatureKey::InvoicesLimit => "Your plan invoice limit ({$limit}) for this month has been reached.",
+                PlanFeatureKey::UsersLimit => "Your plan allows only {$limit} user(s).",
+            };
+
             throw ValidationException::withMessages([
-                'limit' => "Your plan limit for {$feature->label()} ({$limit}) has been reached.",
+                'limit' => $message,
             ]);
         }
     }

@@ -7,6 +7,7 @@
     <div class="grid gap-6 lg:grid-cols-3">
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="font-semibold text-navy-900">Add warehouse</h2>
+            <p class="mt-1 text-xs text-slate-500">Plan limits: Starter/Grow 1 · Business 2 · Grow Business 3.</p>
             <div class="mt-4"><livewire:business.warehouse-form /></div>
         </div>
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 overflow-x-auto">

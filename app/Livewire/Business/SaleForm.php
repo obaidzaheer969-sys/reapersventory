@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Business;
 
+use App\Livewire\Concerns\RefreshesAfterSave;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
@@ -10,10 +11,13 @@ use App\Services\SaleService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class SaleForm extends Component
 {
+    use RefreshesAfterSave;
+
     public ?int $customerId = null;
 
     public ?int $warehouseId = null;
@@ -102,20 +106,26 @@ class SaleForm extends Component
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $sale = $sales->createCompleted($user->business, $user, [
-            'customer_id' => $this->customerId,
-            'warehouse_id' => $this->warehouseId,
-            'sale_date' => $this->saleDate,
-            'tax' => $this->tax,
-            'discount' => $this->discount,
-            'payment_amount' => $this->paymentAmount,
-            'payment_method' => $this->paymentMethod,
-            'notes' => $this->notes,
-            'items' => $this->items,
-        ]);
+        try {
+            $sale = $sales->createCompleted($user->business, $user, [
+                'customer_id' => $this->customerId,
+                'warehouse_id' => $this->warehouseId,
+                'sale_date' => $this->saleDate,
+                'tax' => $this->tax,
+                'discount' => $this->discount,
+                'payment_amount' => $this->paymentAmount,
+                'payment_method' => $this->paymentMethod,
+                'notes' => $this->notes,
+                'items' => $this->items,
+            ]);
+        } catch (ValidationException $e) {
+            $this->addValidationException($e, 'items');
+
+            return;
+        }
 
         session()->flash('status', 'Sale completed and invoice generated.');
-        $this->redirect(route('business.sales.show', $sale), navigate: true);
+        $this->redirectAndRefresh(route('business.sales.show', $sale));
     }
 
     public function render(): View

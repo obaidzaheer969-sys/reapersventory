@@ -42,7 +42,7 @@ class ChoosePlan extends Component
 
         session()->flash('status', 'Subscription created. Upload a payment proof if payment is required.');
 
-        $this->redirect(route('business.subscription.index'), navigate: true);
+        $this->redirect(route('business.subscription.index'), navigate: false);
     }
 
     public function render(): View

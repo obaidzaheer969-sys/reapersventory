@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Business;
 
+use App\Livewire\Concerns\RefreshesAfterSave;
 use App\Models\Customer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 class CustomerForm extends Component
 {
+    use RefreshesAfterSave;
+
     public string $name = '';
 
     public ?string $email = null;
@@ -38,8 +41,8 @@ class CustomerForm extends Component
             'is_active' => true,
         ]);
 
-        $this->reset();
         session()->flash('status', 'Customer created.');
+        $this->redirectAndRefresh(route('business.customers.index'));
     }
 
     public function render(): View

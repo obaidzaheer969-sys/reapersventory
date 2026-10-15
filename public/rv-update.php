@@ -209,6 +209,7 @@ if ($migrateCode !== 0) {
     $run($phpQ.' artisan migrate --force');
 }
 $run($phpQ.' artisan optimize:clear');
+$run($phpQ.' artisan db:seed --class=PlanSeeder --force');
 $run($phpQ.' artisan storage:link');
 
 $uploads = $base.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'uploads';
