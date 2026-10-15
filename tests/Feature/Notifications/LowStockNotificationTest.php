@@ -73,6 +73,35 @@ class LowStockNotificationTest extends TestCase
         Notification::assertSentTo($owner, LowStockAlertNotification::class);
     }
 
+    public function test_nav_alerts_badge_shows_low_stock_count(): void
+    {
+        $owner = $this->subscribedOwner();
+        $warehouse = Warehouse::factory()->create(['business_id' => $owner->business_id]);
+        $product = Product::factory()->create([
+            'business_id' => $owner->business_id,
+            'reorder_level' => 5,
+            'track_inventory' => true,
+        ]);
+
+        InventoryBalance::query()->create([
+            'business_id' => $owner->business_id,
+            'warehouse_id' => $warehouse->id,
+            'product_id' => $product->id,
+            'quantity' => 2,
+            'reserved_quantity' => 0,
+        ]);
+
+        Cache::flush();
+
+        $response = $this->actingAs($owner)->get(route('business.sales.index'));
+
+        $response->assertOk();
+        $this->assertMatchesRegularExpression(
+            '/data-testid="nav-alerts-count"[^>]*>1<\/span>/',
+            $response->getContent(),
+        );
+    }
+
     public function test_sale_triggers_immediate_low_stock_alert(): void
     {
         $owner = $this->subscribedOwner();

@@ -96,6 +96,7 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
             Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
             Route::get('/invoices/{invoice}/receipt', [InvoiceController::class, 'receipt'])->name('invoices.receipt');
+            Route::get('/invoices/{invoice}/print', [InvoiceController::class, 'thermal'])->name('invoices.print');
 
             Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
             Route::get('/sales/{sale}/returns/create', [ReturnController::class, 'create'])->name('returns.create');

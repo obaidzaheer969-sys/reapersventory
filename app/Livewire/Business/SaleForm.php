@@ -40,6 +40,9 @@ class SaleForm extends Component
 
     public ?string $notes = null;
 
+    /** USB / keyboard barcode scanners type into this field then send Enter. */
+    public string $barcodeScan = '';
+
     /** @var list<array{product_id: ?int, quantity: string, unit_price: string}> */
     public array $items = [];
 
@@ -50,6 +53,58 @@ class SaleForm extends Component
             ?? Warehouse::query()->value('id');
         $this->items = [
             ['product_id' => null, 'quantity' => '1', 'unit_price' => '0'],
+        ];
+    }
+
+    public function scanBarcode(): void
+    {
+        $code = trim($this->barcodeScan);
+        $this->barcodeScan = '';
+        $this->resetErrorBag('barcodeScan');
+
+        if ($code === '') {
+            return;
+        }
+
+        $user = Auth::user();
+        $product = Product::query()
+            ->where('business_id', $user->business_id)
+            ->where('is_active', true)
+            ->where(function ($query) use ($code) {
+                $query->where('barcode', $code)->orWhere('sku', $code);
+            })
+            ->first();
+
+        if (! $product) {
+            $this->addError('barcodeScan', 'No product found for barcode/SKU: '.$code);
+
+            return;
+        }
+
+        foreach ($this->items as $index => $item) {
+            if ((int) ($item['product_id'] ?? 0) === (int) $product->id) {
+                $qty = bcadd(number_format((float) ($item['quantity'] ?? 0), 3, '.', ''), '1', 3);
+                $this->items[$index]['quantity'] = $qty;
+                $this->items[$index]['unit_price'] = (string) $product->selling_price;
+
+                return;
+            }
+        }
+
+        foreach ($this->items as $index => $item) {
+            if (empty($item['product_id'])) {
+                $this->items[$index]['product_id'] = $product->id;
+                $this->items[$index]['quantity'] = '1';
+                $this->items[$index]['unit_price'] = (string) $product->selling_price;
+
+                return;
+            }
+        }
+
+        $this->items[] = [
+            'product_id' => $product->id,
+            'quantity' => '1',
+            'unit_price' => (string) $product->selling_price,
         ];
     }
 
@@ -69,6 +124,11 @@ class SaleForm extends Component
         if ($product) {
             $this->items[(int) $index]['unit_price'] = (string) $product->selling_price;
         }
+    }
+
+    public function payFullAmount(): void
+    {
+        $this->paymentAmount = $this->grandTotal;
     }
 
     public function addItem(): void
@@ -135,7 +195,17 @@ class SaleForm extends Component
             return;
         }
 
-        session()->flash('status', 'Sale completed and invoice generated.');
+        session()->flash('status', 'Sale completed. Print the small bill or start a new sale.');
+
+        if ($sale->invoice) {
+            $this->redirectAndRefresh(route('business.invoices.print', [
+                'invoice' => $sale->invoice,
+                'autoprint' => 1,
+            ]));
+
+            return;
+        }
+
         $this->redirectAndRefresh(route('business.sales.show', $sale));
     }
 

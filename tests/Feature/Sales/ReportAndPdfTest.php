@@ -133,6 +133,37 @@ class ReportAndPdfTest extends TestCase
         $this->assertStringNotContainsString('Walk-in customer', $html);
     }
 
+    public function test_thermal_print_bill_page_is_authorized_and_renders(): void
+    {
+        $owner = $this->subscribedOwner();
+        $warehouse = Warehouse::factory()->create([
+            'business_id' => $owner->business_id,
+            'name' => 'Counter Store',
+        ]);
+        $product = Product::factory()->create(['business_id' => $owner->business_id]);
+        app(InventoryService::class)->adjust($product, $warehouse, StockMovementType::AdjustmentIn, 3, $owner);
+
+        $sale = app(SaleService::class)->createCompleted($owner->business, $owner, [
+            'warehouse_id' => $warehouse->id,
+            'sale_date' => now()->toDateString(),
+            'payment_amount' => 10,
+            'items' => [['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 10]],
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('business.invoices.print', ['invoice' => $sale->invoice, 'autoprint' => 1]))
+            ->assertOk()
+            ->assertSee('Print bill')
+            ->assertSee('Counter Store')
+            ->assertSee($sale->invoice->invoice_number)
+            ->assertSee('window.print()', false);
+
+        $other = $this->subscribedOwner();
+        $this->actingAs($other)
+            ->get(route('business.invoices.print', $sale->invoice))
+            ->assertNotFound();
+    }
+
     public function test_reports_page_renders_for_subscribed_owner(): void
     {
         $owner = $this->subscribedOwner();

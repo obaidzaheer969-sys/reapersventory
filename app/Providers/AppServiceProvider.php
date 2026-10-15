@@ -28,9 +28,11 @@ use App\Policies\SubscriptionPaymentPolicy;
 use App\Policies\SubscriptionPolicy;
 use App\Policies\SupplierPolicy;
 use App\Policies\WarehousePolicy;
+use App\Services\InventoryService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
@@ -81,19 +83,37 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('access-super-admin', fn ($user) => $user->isSuperAdmin());
 
         View::composer('layouts.partials.nav', function ($view): void {
-            $count = 0;
+            $unread = 0;
+            $lowStock = 0;
             $user = Auth::user();
 
             // Hosting may not have run notifications migration yet — never 500 the whole app.
             if ($user && method_exists($user, 'unreadNotifications') && Schema::hasTable('notifications')) {
                 try {
-                    $count = $user->unreadNotifications()->count();
+                    $unread = $user->unreadNotifications()->count();
                 } catch (Throwable) {
-                    $count = 0;
+                    $unread = 0;
                 }
             }
 
+            if ($user && $user->isBusinessOwner() && $user->business_id) {
+                try {
+                    $businessId = (int) $user->business_id;
+                    $lowStock = (int) Cache::remember(
+                        "nav-low-stock-count:{$businessId}",
+                        now()->addSeconds(45),
+                        fn () => count(app(InventoryService::class)->lowStockProducts($businessId)),
+                    );
+                } catch (Throwable) {
+                    $lowStock = 0;
+                }
+            }
+
+            // Prefer the louder signal so menu Alerts matches dashboard low-stock badge.
+            $count = max($unread, $lowStock);
+
             $view->with('unreadNotificationsCount', $count);
+            $view->with('navLowStockCount', $lowStock);
         });
     }
 }

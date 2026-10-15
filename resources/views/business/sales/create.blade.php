@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'New sale — ReapersVentory')
+@section('title', 'Billing — ReapersVentory')
 
 @section('content')
-<x-business-section title="New sale" subtitle="Stock is deducted and an invoice is created when the sale is completed.">
+<x-business-section title="Billing counter" subtitle="Scan items, complete sale, then print on a small thermal roll printer.">
     <x-slot:actions>
-        <a href="{{ route('business.sales.index') }}" class="text-sm font-semibold text-navy-800 hover:text-brand-600">Back</a>
+        <a href="{{ route('business.sales.index') }}" class="text-sm font-semibold text-navy-800 hover:text-brand-600">All sales</a>
     </x-slot:actions>
-    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <livewire:business.sale-form />
     </div>
 </x-business-section>

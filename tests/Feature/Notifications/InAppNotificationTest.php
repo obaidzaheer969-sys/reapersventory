@@ -54,4 +54,18 @@ class InAppNotificationTest extends TestCase
 
         $this->assertNotNull($notification->fresh()->read_at);
     }
+
+    public function test_nav_alerts_shows_unread_badge_count(): void
+    {
+        $owner = $this->subscribedOwner();
+        $owner->notify(new WelcomeBusinessNotification('Demo Biz'));
+
+        $response = $this->actingAs($owner)->get(route('business.dashboard'));
+
+        $response->assertOk();
+        $this->assertMatchesRegularExpression(
+            '/data-testid="nav-alerts-count"[^>]*>1<\/span>/',
+            $response->getContent(),
+        );
+    }
 }

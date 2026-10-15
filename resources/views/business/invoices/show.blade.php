@@ -5,8 +5,9 @@
 @section('content')
 <x-business-section :title="$invoice->invoice_number" subtitle="Invoice details and PDF downloads.">
     <x-slot:actions>
-        <a href="{{ route('business.invoices.pdf', $invoice) }}" class="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white">Download PDF</a>
-        <a href="{{ route('business.invoices.receipt', $invoice) }}" class="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white">Receipt PDF</a>
+        <a href="{{ route('business.invoices.print', ['invoice' => $invoice, 'autoprint' => 1]) }}" target="_blank" class="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white">Print bill</a>
+        <a href="{{ route('business.invoices.pdf', $invoice) }}" class="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white">Invoice PDF</a>
+        <a href="{{ route('business.invoices.receipt', $invoice) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-navy-900">Receipt PDF</a>
         <a href="{{ route('business.sales.show', $invoice->sale) }}" class="text-sm font-semibold text-navy-800 hover:text-brand-600">View sale</a>
     </x-slot:actions>
 

@@ -7,6 +7,7 @@
     <x-slot:actions>
         <a href="{{ route('business.sales.index') }}" class="text-sm font-semibold text-navy-800 hover:text-brand-600">Back</a>
         @if ($sale->invoice)
+            <a href="{{ route('business.invoices.print', ['invoice' => $sale->invoice, 'autoprint' => 1]) }}" target="_blank" class="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white">Print bill</a>
             <a href="{{ route('business.invoices.pdf', $sale->invoice) }}" class="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white">Invoice PDF</a>
             <a href="{{ route('business.invoices.receipt', $sale->invoice) }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-navy-900">Receipt PDF</a>
         @endif
