@@ -131,22 +131,29 @@ class Business extends Model
         $path = ltrim((string) $this->logo_path, '/');
         $version = optional($this->updated_at)?->timestamp;
 
-        // New path: public/uploads/... (works without storage:link; host-relative URL)
+        // Prefer direct public path checks (no disk config required on hosting).
+        if (is_file(public_path($path))) {
+            return '/'.$path.($version ? '?v='.$version : '');
+        }
+
         if (str_starts_with($path, 'uploads/')) {
             $relative = substr($path, strlen('uploads/'));
-            if (Storage::disk('uploads')->exists($relative)) {
-                return '/'.$path.($version ? '?v='.$version : '');
+
+            try {
+                if (Storage::disk('uploads')->exists($relative)) {
+                    return '/'.$path.($version ? '?v='.$version : '');
+                }
+            } catch (\Throwable) {
+                // uploads disk may be missing from stale config cache
             }
         }
 
-        // Legacy path: storage/app/public/...
-        if (Storage::disk('public')->exists($path)) {
-            return '/storage/'.$path.($version ? '?v='.$version : '');
-        }
-
-        // Last resort: file already under public/
-        if (is_file(public_path($path))) {
-            return '/'.$path.($version ? '?v='.$version : '');
+        try {
+            if (Storage::disk('public')->exists($path)) {
+                return '/storage/'.$path.($version ? '?v='.$version : '');
+            }
+        } catch (\Throwable) {
+            // ignore
         }
 
         return null;

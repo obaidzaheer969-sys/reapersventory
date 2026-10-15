@@ -33,9 +33,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -81,9 +83,16 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.partials.nav', function ($view): void {
             $count = 0;
             $user = Auth::user();
-            if ($user && method_exists($user, 'unreadNotifications')) {
-                $count = $user->unreadNotifications()->count();
+
+            // Hosting may not have run notifications migration yet — never 500 the whole app.
+            if ($user && method_exists($user, 'unreadNotifications') && Schema::hasTable('notifications')) {
+                try {
+                    $count = $user->unreadNotifications()->count();
+                } catch (Throwable) {
+                    $count = 0;
+                }
             }
+
             $view->with('unreadNotificationsCount', $count);
         });
     }
