@@ -21,7 +21,7 @@ class BusinessBrandingTest extends TestCase
 
     public function test_paid_owner_can_save_brand_name_and_logo(): void
     {
-        Storage::fake('public');
+        Storage::fake('uploads');
 
         $owner = $this->subscribedOwner();
 
@@ -36,12 +36,14 @@ class BusinessBrandingTest extends TestCase
 
         $this->assertSame('Acme Traders', $owner->business->brand_name);
         $this->assertNotNull($owner->business->logo_path);
-        Storage::disk('public')->assertExists($owner->business->logo_path);
+        $this->assertStringStartsWith('uploads/', $owner->business->logo_path);
+        Storage::disk('uploads')->assertExists(substr($owner->business->logo_path, strlen('uploads/')));
+        $this->assertNotNull($owner->business->brandLogoUrl());
     }
 
     public function test_trial_owner_cannot_save_branding(): void
     {
-        Storage::fake('public');
+        Storage::fake('uploads');
 
         $owner = User::factory()->create();
         $plan = Plan::factory()->create();
@@ -63,14 +65,27 @@ class BusinessBrandingTest extends TestCase
         $this->assertNull($owner->business->fresh()->brand_name);
     }
 
-    public function test_dashboard_shows_paid_brand_name(): void
+    public function test_dashboard_shows_paid_brand_name_and_logo(): void
     {
+        Storage::fake('uploads');
+        Storage::disk('uploads')->put('business-logos/1/demo.png', 'fake-image');
+
         $owner = $this->subscribedOwner();
-        $owner->business->update(['brand_name' => 'Paid Brand Co']);
+        $owner->business->update([
+            'brand_name' => 'Paid Brand Co',
+            'logo_path' => 'uploads/business-logos/1/demo.png',
+        ]);
+
+        // Ensure logo file path matches business id folder used in URL helper existence check
+        Storage::disk('uploads')->put('business-logos/'.$owner->business_id.'/demo.png', 'fake-image');
+        $owner->business->update([
+            'logo_path' => 'uploads/business-logos/'.$owner->business_id.'/demo.png',
+        ]);
 
         $this->actingAs($owner)
             ->get(route('business.dashboard'))
             ->assertOk()
-            ->assertSee('Paid Brand Co');
+            ->assertSee('Paid Brand Co')
+            ->assertSee('uploads/business-logos/'.$owner->business_id.'/demo.png', false);
     }
 }

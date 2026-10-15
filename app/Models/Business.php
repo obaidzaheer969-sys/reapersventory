@@ -128,8 +128,30 @@ class Business extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->logo_path);
+        $path = ltrim((string) $this->logo_path, '/');
+        $version = optional($this->updated_at)?->timestamp;
+
+        // New path: public/uploads/... (works without storage:link; host-relative URL)
+        if (str_starts_with($path, 'uploads/')) {
+            $relative = substr($path, strlen('uploads/'));
+            if (Storage::disk('uploads')->exists($relative)) {
+                return '/'.$path.($version ? '?v='.$version : '');
+            }
+        }
+
+        // Legacy path: storage/app/public/...
+        if (Storage::disk('public')->exists($path)) {
+            return '/storage/'.$path.($version ? '?v='.$version : '');
+        }
+
+        // Last resort: file already under public/
+        if (is_file(public_path($path))) {
+            return '/'.$path.($version ? '?v='.$version : '');
+        }
+
+        return null;
     }
+
 
     public static function uniqueSlugFromName(string $name): string
     {

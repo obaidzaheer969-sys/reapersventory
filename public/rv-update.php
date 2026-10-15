@@ -120,6 +120,12 @@ $run('git clean -fd -e .env -e .env.* -e storage -e vendor -e node_modules -e pu
 
 $phpQ = escapeshellarg($php);
 $run($phpQ.' artisan migrate --force');
+$run($phpQ.' artisan storage:link');
+$uploads = $base.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'uploads';
+if (! is_dir($uploads)) {
+    mkdir($uploads, 0755, true);
+    $log[] = '[rv-update] created public/uploads';
+}
 $run($phpQ.' artisan config:clear');
 $run($phpQ.' artisan cache:clear');
 $run($phpQ.' artisan route:clear');

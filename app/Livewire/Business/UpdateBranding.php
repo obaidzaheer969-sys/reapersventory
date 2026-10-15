@@ -35,6 +35,16 @@ class UpdateBranding extends Component
         $this->currentLogoUrl = $business->brandLogoUrl();
     }
 
+    public function updatedLogo(): void
+    {
+        $this->resetErrorBag('logo');
+        $this->removeLogo = false;
+
+        $this->validateOnly('logo', [
+            'logo' => ['nullable', 'file', 'max:5120', 'mimes:jpg,jpeg,png,webp,gif,bmp'],
+        ]);
+    }
+
     public function save(BusinessBrandingService $branding): void
     {
         $user = Auth::user();
@@ -50,9 +60,15 @@ class UpdateBranding extends Component
 
         $validated = $this->validate([
             'brandName' => ['nullable', 'string', 'max:120'],
-            'logo' => ['nullable', 'image', 'max:2048', 'mimes:jpg,jpeg,png,webp'],
+            'logo' => ['nullable', 'file', 'max:5120', 'mimes:jpg,jpeg,png,webp,gif,bmp'],
             'removeLogo' => ['boolean'],
         ]);
+
+        if (! $this->logo && ! $this->removeLogo && ! filled($validated['brandName']) && ! filled($business->brand_name) && ! filled($business->logo_path)) {
+            $this->addError('brandName', 'Enter a display name or choose a logo image.');
+
+            return;
+        }
 
         $branding->update(
             business: $business,
@@ -63,12 +79,12 @@ class UpdateBranding extends Component
         );
 
         $business->refresh();
-        $this->logo = null;
+        $this->reset('logo');
         $this->removeLogo = false;
         $this->brandName = (string) ($business->brand_name ?? '');
         $this->currentLogoUrl = $business->brandLogoUrl();
 
-        session()->flash('branding_status', 'Branding saved. It appears on your dashboard while your plan is paid.');
+        session()->flash('branding_status', 'Branding saved. Your logo/name now shows on the dashboard.');
     }
 
     public function render(): View

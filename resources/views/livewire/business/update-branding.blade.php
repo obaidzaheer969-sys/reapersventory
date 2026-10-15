@@ -14,7 +14,7 @@
         </div>
     @endunless
 
-    <form wire:submit="save" class="mt-5 space-y-4">
+    <form wire:submit="save" class="mt-5 space-y-4" enctype="multipart/form-data">
         <div>
             <label class="block text-sm font-medium text-navy-900">Display name</label>
             <input
@@ -30,33 +30,53 @@
 
         <div>
             <label class="block text-sm font-medium text-navy-900">Logo</label>
-            @if ($currentLogoUrl && ! $removeLogo)
-                <div class="mt-2 flex items-center gap-3">
-                    <img src="{{ $currentLogoUrl }}" alt="Current logo" class="h-14 w-auto rounded-md border border-slate-200 bg-white object-contain p-1">
+
+            @if ($logo)
+                <div class="mt-2">
+                    <p class="mb-1 text-xs font-medium text-slate-500">New logo preview</p>
+                    @php
+                        try {
+                            $previewUrl = $logo->temporaryUrl();
+                        } catch (\Throwable) {
+                            $previewUrl = null;
+                        }
+                    @endphp
+                    @if ($previewUrl)
+                        <img src="{{ $previewUrl }}" alt="New logo preview" class="h-20 w-auto max-w-full rounded-md border border-slate-200 bg-white object-contain p-1">
+                    @else
+                        <p class="text-sm text-slate-600">Selected: {{ $logo->getClientOriginalName() }} — click Save branding to upload.</p>
+                    @endif
+                </div>
+            @elseif ($currentLogoUrl && ! $removeLogo)
+                <div class="mt-2 flex flex-wrap items-center gap-3">
+                    <img src="{{ $currentLogoUrl }}" alt="Current logo" class="h-20 w-auto max-w-full rounded-md border border-slate-200 bg-white object-contain p-1">
                     <label class="flex items-center gap-2 text-sm text-slate-700">
-                        <input type="checkbox" wire:model="removeLogo" @disabled(! $isPaid) class="rounded border-slate-300">
+                        <input type="checkbox" wire:model.live="removeLogo" @disabled(! $isPaid) class="rounded border-slate-300">
                         Remove logo
                     </label>
                 </div>
             @endif
+
             <input
                 type="file"
                 wire:model="logo"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.bmp"
                 @disabled(! $isPaid)
                 class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-navy-900 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white disabled:opacity-50"
             >
-            <p class="mt-1 text-xs text-slate-500">PNG, JPG, or WebP · max 2MB</p>
+            <p class="mt-1 text-xs text-slate-500">JPG, PNG, WebP, GIF, BMP · max 5MB</p>
             @error('logo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-            <div wire:loading wire:target="logo" class="mt-1 text-xs text-slate-500">Uploading…</div>
+            <div wire:loading wire:target="logo" class="mt-1 text-xs text-brand-600">Uploading logo…</div>
         </div>
 
         <button
             type="submit"
+            wire:loading.attr="disabled"
             @disabled(! $isPaid)
             class="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
-            Save branding
+            <span wire:loading.remove wire:target="save">Save branding</span>
+            <span wire:loading wire:target="save">Saving…</span>
         </button>
     </form>
 </div>
