@@ -3,10 +3,16 @@
 @section('title', 'Inventory — ReapersVentory')
 
 @section('content')
-<x-business-section title="Inventory" subtitle="Balances, movements, adjustments, and low-stock alerts.">
+<x-business-section title="Inventory" subtitle="See current stock, add stock (pcs/kg/etc), and track movements.">
+    <x-slot:actions>
+        <a href="{{ route('business.products.index') }}" class="rounded-lg bg-navy-900 px-3 py-2 text-sm font-semibold text-white hover:bg-navy-800">Products</a>
+        <a href="{{ route('business.warehouses.index') }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-navy-900 hover:bg-slate-50">Warehouses</a>
+    </x-slot:actions>
+
     <div class="grid gap-6 lg:grid-cols-3">
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="font-semibold text-navy-900">Adjust stock</h2>
+            <h2 class="font-semibold text-navy-900">Add / remove stock</h2>
+            <p class="mt-1 text-xs text-slate-500">Choose product, warehouse, and quantity in that product’s unit.</p>
             <div class="mt-4"><livewire:business.stock-adjustment-form /></div>
         </div>
 
@@ -40,16 +46,19 @@
                 </form>
             </div>
             <table class="min-w-full text-sm">
-                <thead class="border-b text-slate-500"><tr><th class="py-2 text-left">Product</th><th class="py-2 text-left">Warehouse</th><th class="py-2 text-left">Qty</th></tr></thead>
+                <thead class="border-b text-slate-500"><tr><th class="py-2 text-left">Product</th><th class="py-2 text-left">Warehouse</th><th class="py-2 text-left">Stock</th></tr></thead>
                 <tbody>
                     @forelse ($balances as $balance)
                         <tr class="border-b border-slate-100">
-                            <td class="py-3">{{ $balance->product->name }}</td>
+                            <td class="py-3">
+                                <div class="font-medium text-navy-900">{{ $balance->product->name }}</div>
+                                <div class="text-xs text-slate-500">{{ $balance->product->sku }}</div>
+                            </td>
                             <td class="py-3">{{ $balance->warehouse->name }}</td>
-                            <td class="py-3">{{ number_format($balance->quantity, 3) }}</td>
+                            <td class="py-3 font-semibold">{{ number_format($balance->quantity, 3) }} {{ $balance->product->unit }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="3" class="py-6 text-slate-500">No balances yet.</td></tr>
+                        <tr><td colspan="3" class="py-6 text-slate-500">No stock yet. Use Add stock on the left.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -65,8 +74,8 @@
                         <tr class="border-b border-slate-100">
                             <td class="py-3">{{ $movement->type->label() }}</td>
                             <td class="py-3">{{ $movement->product->name }}</td>
-                            <td class="py-3">{{ number_format($movement->quantity, 3) }}</td>
-                            <td class="py-3">{{ number_format($movement->balance_after, 3) }}</td>
+                            <td class="py-3">{{ number_format($movement->quantity, 3) }} {{ $movement->product->unit }}</td>
+                            <td class="py-3">{{ number_format($movement->balance_after, 3) }} {{ $movement->product->unit }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="4" class="py-6 text-slate-500">No movements yet.</td></tr>

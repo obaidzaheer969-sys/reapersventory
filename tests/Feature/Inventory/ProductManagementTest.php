@@ -3,8 +3,10 @@
 namespace Tests\Feature\Inventory;
 
 use App\Livewire\Business\ProductForm;
+use App\Livewire\Business\StockAdjustmentForm;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\Warehouse;
 use App\Services\ProductService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +27,7 @@ class ProductManagementTest extends TestCase
             ->test(ProductForm::class)
             ->set('name', 'Widget')
             ->set('sku', 'WDG-1')
+            ->set('unit', 'kg')
             ->set('sellingPrice', '250')
             ->set('costPrice', '100')
             ->call('save')
@@ -34,6 +37,64 @@ class ProductManagementTest extends TestCase
             'business_id' => $owner->business_id,
             'sku' => 'WDG-1',
             'name' => 'Widget',
+            'unit' => 'kg',
+        ]);
+    }
+
+    public function test_create_product_with_opening_stock(): void
+    {
+        $owner = $this->subscribedOwner();
+        $warehouse = Warehouse::factory()->create([
+            'business_id' => $owner->business_id,
+            'is_active' => true,
+        ]);
+
+        Livewire::actingAs($owner)
+            ->test(ProductForm::class)
+            ->set('name', 'Rice')
+            ->set('sku', 'RICE-1')
+            ->set('unit', 'kg')
+            ->set('sellingPrice', '120')
+            ->set('costPrice', '90')
+            ->set('openingStock', '25.5')
+            ->set('warehouseId', $warehouse->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $product = Product::query()->where('sku', 'RICE-1')->firstOrFail();
+
+        $this->assertDatabaseHas('inventory_balances', [
+            'product_id' => $product->id,
+            'warehouse_id' => $warehouse->id,
+            'quantity' => 25.5,
+        ]);
+    }
+
+    public function test_owner_can_add_stock_from_inventory_form(): void
+    {
+        $owner = $this->subscribedOwner();
+        $warehouse = Warehouse::factory()->create([
+            'business_id' => $owner->business_id,
+            'is_active' => true,
+        ]);
+        $product = Product::factory()->create([
+            'business_id' => $owner->business_id,
+            'track_inventory' => true,
+            'unit' => 'pcs',
+        ]);
+
+        Livewire::actingAs($owner)
+            ->test(StockAdjustmentForm::class, ['productId' => $product->id])
+            ->set('warehouseId', $warehouse->id)
+            ->set('direction', 'in')
+            ->set('quantity', '12')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('inventory_balances', [
+            'product_id' => $product->id,
+            'warehouse_id' => $warehouse->id,
+            'quantity' => 12,
         ]);
     }
 

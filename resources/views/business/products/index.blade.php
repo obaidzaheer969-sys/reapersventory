@@ -3,8 +3,9 @@
 @section('title', 'Products — ReapersVentory')
 
 @section('content')
-<x-business-section title="Products" subtitle="Manage SKUs, barcodes, and pricing for your catalog.">
+<x-business-section title="Products" subtitle="Manage SKUs, units (pcs/kg), pricing, and stock.">
     <x-slot:actions>
+        <a href="{{ route('business.inventory.index') }}" class="rounded-lg bg-brand-500 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-600">Add stock</a>
         <form method="GET" class="flex gap-2">
             <input type="search" name="q" value="{{ request('q') }}" placeholder="Search name/SKU/barcode"
                    class="rounded-lg px-3 py-2 text-sm ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
@@ -27,6 +28,7 @@
                         <th class="py-2 pr-3">Name</th>
                         <th class="py-2 pr-3">SKU</th>
                         <th class="py-2 pr-3">Price</th>
+                        <th class="py-2 pr-3">Unit</th>
                         <th class="py-2 pr-3">Stock</th>
                         <th class="py-2 pr-3">Status</th>
                         <th class="py-2">Action</th>
@@ -41,14 +43,19 @@
                             </td>
                             <td class="py-3 pr-3">{{ $product->sku }}</td>
                             <td class="py-3 pr-3">{{ number_format($product->selling_price, 2) }}</td>
-                            <td class="py-3 pr-3">{{ number_format($product->stock_on_hand ?? 0, 3) }}</td>
+                            <td class="py-3 pr-3">{{ $product->unit }}</td>
+                            <td class="py-3 pr-3 font-semibold">{{ number_format($product->stock_on_hand ?? 0, 3) }} {{ $product->unit }}</td>
                             <td class="py-3 pr-3">{{ $product->is_active ? 'Active' : 'Inactive' }}</td>
-                            <td class="py-3">
+                            <td class="py-3 whitespace-nowrap">
                                 <a href="{{ route('business.products.edit', $product) }}" class="font-semibold text-brand-600 hover:text-brand-500">Edit</a>
+                                @if ($product->track_inventory)
+                                    <span class="text-slate-300">·</span>
+                                    <a href="{{ route('business.inventory.index', ['product' => $product->id]) }}" class="font-semibold text-navy-900 hover:text-brand-600">Add stock</a>
+                                @endif
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="py-6 text-slate-500">No products yet.</td></tr>
+                        <tr><td colspan="7" class="py-6 text-slate-500">No products yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>

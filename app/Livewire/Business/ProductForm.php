@@ -2,9 +2,13 @@
 
 namespace App\Livewire\Business;
 
+use App\Enums\StockMovementType;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Warehouse;
+use App\Services\InventoryService;
 use App\Services\ProductService;
+use App\Support\ProductUnits;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -36,6 +40,10 @@ class ProductForm extends Component
 
     public bool $isActive = true;
 
+    public string $openingStock = '';
+
+    public ?int $warehouseId = null;
+
     public function mount(?Product $product = null): void
     {
         if ($product?->exists) {
@@ -57,7 +65,7 @@ class ProductForm extends Component
         }
     }
 
-    public function save(ProductService $products): void
+    public function save(ProductService $products, InventoryService $inventory): void
     {
         $user = Auth::user();
         $businessId = $user->business_id;
@@ -84,13 +92,19 @@ class ProductForm extends Component
                 'nullable',
                 Rule::exists('categories', 'id')->where(fn ($q) => $q->where('business_id', $businessId)),
             ],
-            'unit' => ['required', 'string', 'max:32'],
+            'unit' => ['required', 'string', Rule::in(array_values(array_unique([...ProductUnits::all(), $this->unit])))],
             'costPrice' => ['required', 'numeric', 'min:0'],
             'sellingPrice' => ['required', 'numeric', 'min:0'],
             'reorderLevel' => ['required', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
             'trackInventory' => ['boolean'],
             'isActive' => ['boolean'],
+            'openingStock' => ['nullable', 'numeric', 'min:0'],
+            'warehouseId' => [
+                Rule::requiredIf(fn () => filled($this->openingStock) && (float) $this->openingStock > 0),
+                'nullable',
+                Rule::exists('warehouses', 'id')->where(fn ($q) => $q->where('business_id', $businessId)),
+            ],
         ]);
 
         $payload = [
@@ -113,7 +127,20 @@ class ProductForm extends Component
             $products->update($product, $user, $payload);
         } else {
             abort_unless($user->can('create', Product::class), 403);
-            $products->create($user->business, $user, $payload);
+            $product = $products->create($user->business, $user, $payload);
+
+            $opening = (float) ($validated['openingStock'] ?? 0);
+            if ($opening > 0 && $validated['trackInventory'] && ! empty($validated['warehouseId'])) {
+                $warehouse = Warehouse::query()->findOrFail($validated['warehouseId']);
+                $inventory->adjust(
+                    product: $product,
+                    warehouse: $warehouse,
+                    type: StockMovementType::AdjustmentIn,
+                    quantity: $opening,
+                    actor: $user,
+                    notes: 'Opening stock',
+                );
+            }
         }
 
         session()->flash('status', 'Product saved.');
@@ -122,8 +149,16 @@ class ProductForm extends Component
 
     public function render(): View
     {
+        $warehouses = Warehouse::query()->where('is_active', true)->orderBy('name')->get();
+
+        if ($this->warehouseId === null && $warehouses->count() === 1) {
+            $this->warehouseId = $warehouses->first()->id;
+        }
+
         return view('livewire.business.product-form', [
             'categories' => Category::query()->orderBy('name')->get(),
+            'units' => ProductUnits::all(),
+            'warehouses' => $warehouses,
         ]);
     }
 }

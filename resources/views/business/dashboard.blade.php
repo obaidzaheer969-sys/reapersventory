@@ -59,7 +59,7 @@
                 @endforelse
             </ul>
             <div class="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
-                <a href="{{ route('business.inventory.index') }}" class="text-brand-600 hover:text-brand-500">Inventory</a>
+                <a href="{{ route('business.inventory.index') }}" class="text-brand-600 hover:text-brand-500">Inventory / Add stock</a>
                 <a href="{{ route('business.purchases.index') }}" class="text-brand-600 hover:text-brand-500">Purchases</a>
                 <a href="{{ route('business.suppliers.index') }}" class="text-brand-600 hover:text-brand-500">Suppliers</a>
                 <a href="{{ route('business.warehouses.index') }}" class="text-brand-600 hover:text-brand-500">Warehouses</a>

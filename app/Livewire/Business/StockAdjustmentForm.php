@@ -9,10 +9,12 @@ use App\Services\InventoryService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class StockAdjustmentForm extends Component
 {
+    #[Url(as: 'product', except: null)]
     public ?int $productId = null;
 
     public ?int $warehouseId = null;
@@ -22,6 +24,14 @@ class StockAdjustmentForm extends Component
     public string $quantity = '1';
 
     public ?string $notes = null;
+
+    public function mount(): void
+    {
+        $warehouses = Warehouse::query()->where('is_active', true)->orderBy('name')->get();
+        if ($warehouses->count() === 1) {
+            $this->warehouseId = $warehouses->first()->id;
+        }
+    }
 
     public function save(InventoryService $inventory): void
     {
@@ -60,15 +70,25 @@ class StockAdjustmentForm extends Component
             notes: $validated['notes'],
         );
 
-        session()->flash('status', 'Stock adjusted.');
-        $this->redirect(route('business.inventory.index'), navigate: true);
+        session()->flash('status', $validated['direction'] === 'in' ? 'Stock added.' : 'Stock removed.');
+        $this->redirect(route('business.inventory.index', ['product' => $product->id]), navigate: true);
     }
 
     public function render(): View
     {
+        $products = Product::query()
+            ->where('track_inventory', true)
+            ->withSum('inventoryBalances as stock_on_hand', 'quantity')
+            ->orderBy('name')
+            ->get();
+
+        $selected = $products->firstWhere('id', $this->productId);
+
         return view('livewire.business.stock-adjustment-form', [
-            'products' => Product::query()->where('track_inventory', true)->orderBy('name')->get(),
+            'products' => $products,
             'warehouses' => Warehouse::query()->where('is_active', true)->orderBy('name')->get(),
+            'selectedUnit' => $selected?->unit ?? 'pcs',
+            'selectedStock' => $selected?->stock_on_hand,
         ]);
     }
 }
