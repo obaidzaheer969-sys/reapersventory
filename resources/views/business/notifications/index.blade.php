@@ -25,6 +25,12 @@
         <div class="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{{ session('status') }}</div>
     @endif
 
+    @if (isset($notificationsReady) && ! $notificationsReady)
+        <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            Notifications table missing on hosting. Run deploy/update, then refresh this page.
+        </div>
+    @endif
+
     <div class="mt-8 space-y-3">
         @forelse ($notifications as $notification)
             @php

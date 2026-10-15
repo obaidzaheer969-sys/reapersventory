@@ -22,7 +22,7 @@
                 @forelse ($lowStock as $product)
                     <li class="flex justify-between gap-3">
                         <span>{{ $product->name }} ({{ $product->sku }})</span>
-                        <span class="font-semibold text-brand-600">{{ number_format($product->totalQuantity(), 3) }} / reorder {{ number_format($product->reorder_level, 3) }}</span>
+                        <span class="font-semibold text-brand-600">{{ number_format((float) $product->totalQuantity(), 3) }} / alert at {{ number_format((float) $product->effectiveReorderLevel(), 3) }}</span>
                     </li>
                 @empty
                     <li class="text-slate-600">No low-stock products.</li>

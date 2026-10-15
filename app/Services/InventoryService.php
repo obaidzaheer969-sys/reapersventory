@@ -145,14 +145,9 @@ class InventoryService
             ->where('track_inventory', true)
             ->get()
             ->filter(function (Product $product) {
-                $total = number_format(
-                    (float) $product->inventoryBalances->sum(fn ($b) => (float) $b->quantity),
-                    3,
-                    '.',
-                    ''
-                );
+                $total = (float) $product->inventoryBalances->sum(fn ($b) => (float) $b->quantity);
 
-                return bccomp($total, number_format((float) $product->reorder_level, 3, '.', ''), 3) <= 0;
+                return $product->isLowStock($total);
             })
             ->values()
             ->all();

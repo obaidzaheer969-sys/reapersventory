@@ -36,7 +36,7 @@ class ProductForm extends Component
 
     public string $sellingPrice = '0';
 
-    public string $reorderLevel = '0';
+    public string $reorderLevel = '5';
 
     public ?string $description = null;
 

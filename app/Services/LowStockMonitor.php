@@ -19,11 +19,11 @@ class LowStockMonitor
             return;
         }
 
-        $total = InventoryBalance::withoutGlobalScopes()
+        $total = (float) InventoryBalance::withoutGlobalScopes()
             ->where('product_id', $product->id)
             ->sum('quantity');
 
-        if (bccomp((string) $total, (string) $product->reorder_level, 3) > 0) {
+        if (! $product->isLowStock($total)) {
             return;
         }
 

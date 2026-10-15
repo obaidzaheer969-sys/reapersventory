@@ -48,8 +48,8 @@
             </div>
             <div>
                 <label class="block text-sm font-medium">Reorder level</label>
-                <input type="number" step="0.001" wire:model="reorderLevel" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                <p class="mt-1 text-xs text-slate-500">Alert when stock reaches this amount (in selected unit).</p>
+                <input type="number" step="0.001" min="0" wire:model="reorderLevel" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <p class="mt-1 text-xs text-slate-500">Alert when stock is at/below this (default 5). Example: reorder 5 + stock 4 = alert.</p>
             </div>
         </div>
         <label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model.live="trackInventory" class="rounded text-brand-500"> Track inventory</label>

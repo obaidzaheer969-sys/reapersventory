@@ -29,11 +29,11 @@ class LowStockAlertNotification extends Notification
 
         foreach ($this->products->take(20) as $product) {
             $mail->line(sprintf(
-                '• %s (%s): %s on hand / reorder %s',
+                '• %s (%s): %s on hand / alert at %s',
                 $product->name,
                 $product->sku,
                 number_format((float) $product->totalQuantity(), 3),
-                number_format((float) $product->reorder_level, 3),
+                number_format((float) $product->effectiveReorderLevel(), 3),
             ));
         }
 

@@ -67,6 +67,33 @@ class Product extends Model
 
     public function totalQuantity(): string
     {
-        return (string) $this->inventoryBalances()->sum('quantity');
+        return number_format(
+            (float) $this->inventoryBalances()->withoutGlobalScopes()->sum('quantity'),
+            3,
+            '.',
+            ''
+        );
+    }
+
+    /**
+     * Reorder level used for alerts. 0 / empty means "not set" → default 5.
+     */
+    public function effectiveReorderLevel(): string
+    {
+        $level = (float) $this->reorder_level;
+
+        return number_format($level > 0 ? $level : 5, 3, '.', '');
+    }
+
+    public function isLowStock(?float $quantity = null): bool
+    {
+        $total = number_format(
+            $quantity ?? (float) $this->totalQuantity(),
+            3,
+            '.',
+            ''
+        );
+
+        return bccomp($total, $this->effectiveReorderLevel(), 3) <= 0;
     }
 }

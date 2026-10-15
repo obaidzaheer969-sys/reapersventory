@@ -3,21 +3,32 @@
 namespace App\Http\Controllers\Business;
 
 use App\Http\Controllers\Controller;
+use App\Services\LowStockMonitor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
+use Throwable;
 
 class NotificationController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, LowStockMonitor $lowStockMonitor): View
     {
         $user = $request->user();
+
+        if ($user->business_id) {
+            try {
+                $lowStockMonitor->checkBusiness((int) $user->business_id);
+            } catch (Throwable) {
+                // ignore
+            }
+        }
 
         if (! Schema::hasTable('notifications')) {
             return view('business.notifications.index', [
                 'notifications' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20),
                 'unreadCount' => 0,
+                'notificationsReady' => false,
             ]);
         }
 
@@ -26,6 +37,7 @@ class NotificationController extends Controller
         return view('business.notifications.index', [
             'notifications' => $notifications,
             'unreadCount' => $user->unreadNotifications()->count(),
+            'notificationsReady' => true,
         ]);
     }
 

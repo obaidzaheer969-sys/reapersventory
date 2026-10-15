@@ -46,6 +46,33 @@ class LowStockNotificationTest extends TestCase
         Notification::assertSentToTimes($owner, LowStockAlertNotification::class, 1);
     }
 
+    public function test_zero_reorder_level_uses_default_threshold_of_five(): void
+    {
+        Notification::fake();
+
+        $owner = $this->subscribedOwner();
+        $warehouse = Warehouse::factory()->create(['business_id' => $owner->business_id]);
+        $product = Product::factory()->create([
+            'business_id' => $owner->business_id,
+            'reorder_level' => 0,
+            'track_inventory' => true,
+        ]);
+
+        InventoryBalance::query()->create([
+            'business_id' => $owner->business_id,
+            'warehouse_id' => $warehouse->id,
+            'product_id' => $product->id,
+            'quantity' => 4,
+            'reserved_quantity' => 0,
+        ]);
+
+        $this->assertTrue($product->isLowStock(4.0));
+
+        app(\App\Services\LowStockMonitor::class)->checkBusiness((int) $owner->business_id);
+
+        Notification::assertSentTo($owner, LowStockAlertNotification::class);
+    }
+
     public function test_sale_triggers_immediate_low_stock_alert(): void
     {
         $owner = $this->subscribedOwner();
