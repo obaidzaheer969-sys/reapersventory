@@ -14,6 +14,7 @@ use App\Http\Controllers\Business\DashboardController;
 use App\Http\Controllers\Business\ExpenseController;
 use App\Http\Controllers\Business\InventoryController;
 use App\Http\Controllers\Business\InvoiceController;
+use App\Http\Controllers\Business\LowStockController;
 use App\Http\Controllers\Business\NotificationController;
 use App\Http\Controllers\Business\ProductController;
 use App\Http\Controllers\Business\ProfileController;
@@ -79,6 +80,7 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
             Route::get('/warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
             Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+            Route::get('/low-stock', LowStockController::class)->name('low-stock.index');
             Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
             Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
             Route::get('/purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');

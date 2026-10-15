@@ -23,6 +23,12 @@
                     <a href="{{ route('business.products.index') }}" class="hidden text-navy-800 hover:text-brand-600 lg:inline">Products</a>
                     <a href="{{ route('business.reports.index') }}" class="hidden text-navy-800 hover:text-brand-600 lg:inline">Reports</a>
                     <a href="{{ route('business.subscription.index') }}" class="hidden text-navy-800 hover:text-brand-600 sm:inline">Billing</a>
+                    <a href="{{ route('business.low-stock.index') }}" class="inline-flex items-center gap-1.5 text-navy-800 hover:text-brand-600">
+                        Low stock
+                        @if (($navLowStockCount ?? 0) > 0)
+                            <span data-testid="nav-low-stock-count" class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1.5 text-[10px] font-bold leading-none text-white">{{ $navLowStockCount > 9 ? '9+' : $navLowStockCount }}</span>
+                        @endif
+                    </a>
                     <a href="{{ route('business.notifications.index') }}" class="inline-flex items-center gap-1.5 text-navy-800 hover:text-brand-600">
                         Alerts
                         @if (($unreadNotificationsCount ?? 0) > 0)

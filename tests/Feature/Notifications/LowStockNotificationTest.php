@@ -73,12 +73,13 @@ class LowStockNotificationTest extends TestCase
         Notification::assertSentTo($owner, LowStockAlertNotification::class);
     }
 
-    public function test_nav_alerts_badge_shows_low_stock_count(): void
+    public function test_nav_low_stock_menu_shows_count_badge(): void
     {
         $owner = $this->subscribedOwner();
         $warehouse = Warehouse::factory()->create(['business_id' => $owner->business_id]);
         $product = Product::factory()->create([
             'business_id' => $owner->business_id,
+            'name' => 'Golden Pearl',
             'reorder_level' => 5,
             'track_inventory' => true,
         ]);
@@ -95,11 +96,45 @@ class LowStockNotificationTest extends TestCase
 
         $response = $this->actingAs($owner)->get(route('business.sales.index'));
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertSee('Low stock', false)
+            ->assertSee('Alerts', false);
         $this->assertMatchesRegularExpression(
-            '/data-testid="nav-alerts-count"[^>]*>1<\/span>/',
+            '/data-testid="nav-low-stock-count"[^>]*>1<\/span>/',
             $response->getContent(),
         );
+
+        $this->actingAs($owner)
+            ->get(route('business.low-stock.index'))
+            ->assertOk()
+            ->assertSee('Golden Pearl')
+            ->assertDontSee('Low-stock alerts');
+    }
+
+    public function test_dashboard_does_not_list_low_stock_products(): void
+    {
+        $owner = $this->subscribedOwner();
+        $warehouse = Warehouse::factory()->create(['business_id' => $owner->business_id]);
+        $product = Product::factory()->create([
+            'business_id' => $owner->business_id,
+            'name' => 'Should Not List On Dashboard',
+            'reorder_level' => 5,
+            'track_inventory' => true,
+        ]);
+
+        InventoryBalance::query()->create([
+            'business_id' => $owner->business_id,
+            'warehouse_id' => $warehouse->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'reserved_quantity' => 0,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('business.dashboard'))
+            ->assertOk()
+            ->assertDontSee('Low-stock alerts')
+            ->assertDontSee('Add stock</a></li>');
     }
 
     public function test_sale_triggers_immediate_low_stock_alert(): void

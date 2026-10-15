@@ -109,10 +109,8 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
 
-            // Prefer the louder signal so menu Alerts matches dashboard low-stock badge.
-            $count = max($unread, $lowStock);
-
-            $view->with('unreadNotificationsCount', $count);
+            // Alerts = unread notifications only. Low stock has its own menu item.
+            $view->with('unreadNotificationsCount', $unread);
             $view->with('navLowStockCount', $lowStock);
         });
     }
