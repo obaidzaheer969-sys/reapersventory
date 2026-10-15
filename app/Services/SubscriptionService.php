@@ -195,7 +195,7 @@ class SubscriptionService
     }
 
     /**
-     * Switch the business to a different plan (upgrade / downgrade / change package).
+     * Request a package change. Current plan access stays until admin approves payment.
      */
     public function changePlan(Subscription $subscription, Plan $plan, User $actor): Subscription
     {
@@ -211,29 +211,64 @@ class SubscriptionService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ((int) $subscription->plan_id === (int) $plan->id) {
-                throw ValidationException::withMessages([
-                    'planId' => 'You are already on this package.',
-                ]);
-            }
-
             if ($subscription->status === SubscriptionStatus::Expired) {
                 throw ValidationException::withMessages([
                     'planId' => 'This subscription has expired. Start a new subscription instead.',
                 ]);
             }
 
-            $old = $subscription->only(['plan_id', 'cancelled_at']);
+            if ((int) $subscription->plan_id === (int) $plan->id) {
+                throw ValidationException::withMessages([
+                    'planId' => 'You are already on this package.',
+                ]);
+            }
 
+            if ((int) $subscription->pending_plan_id === (int) $plan->id) {
+                throw ValidationException::withMessages([
+                    'planId' => 'This package change is already pending admin approval. Upload payment proof if you have not yet.',
+                ]);
+            }
+
+            $old = $subscription->only(['plan_id', 'pending_plan_id']);
+
+            // Do NOT change plan_id here — limits/features stay on the current package.
             $subscription->fill([
-                'plan_id' => $plan->id,
-                // Changing package resumes auto-renew intent until they cancel again.
-                'cancelled_at' => null,
-                'auto_renew' => false,
+                'pending_plan_id' => $plan->id,
             ])->save();
 
             $this->auditLogger->log(
-                action: 'subscription.plan_changed',
+                action: 'subscription.plan_change_requested',
+                auditable: $subscription,
+                oldValues: $old,
+                newValues: $subscription->only(array_keys($old)),
+                user: $actor,
+            );
+
+            return $subscription->fresh(['plan.features', 'pendingPlan']);
+        });
+    }
+
+    /**
+     * Apply the paid plan after Super Admin approves a payment.
+     */
+    public function applyApprovedPlan(Subscription $subscription, int $planId, ?User $actor = null): Subscription
+    {
+        return DB::transaction(function () use ($subscription, $planId, $actor) {
+            $subscription = Subscription::withoutGlobalScopes()
+                ->whereKey($subscription->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $old = $subscription->only(['plan_id', 'pending_plan_id', 'cancelled_at']);
+
+            $subscription->fill([
+                'plan_id' => $planId,
+                'pending_plan_id' => null,
+                'cancelled_at' => null,
+            ])->save();
+
+            $this->auditLogger->log(
+                action: 'subscription.plan_change_approved',
                 auditable: $subscription,
                 oldValues: $old,
                 newValues: $subscription->only(array_keys($old)),

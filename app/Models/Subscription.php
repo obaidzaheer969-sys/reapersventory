@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'business_id',
     'plan_id',
+    'pending_plan_id',
     'status',
     'billing_interval',
     'trial_ends_at',
@@ -63,9 +64,22 @@ class Subscription extends Model
         return $this->belongsTo(Plan::class);
     }
 
+    public function pendingPlan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class, 'pending_plan_id');
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(SubscriptionPayment::class);
+    }
+
+    /**
+     * Plan used for payment amount when a package change is waiting for admin approval.
+     */
+    public function billablePlan(): Plan
+    {
+        return $this->pendingPlan ?? $this->plan;
     }
 
     public function allowsAccess(?Carbon $at = null): bool

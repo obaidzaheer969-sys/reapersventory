@@ -18,7 +18,7 @@ class SubscriptionController extends Controller
         $business = $request->user()->business;
 
         $subscription = Subscription::query()
-            ->with('plan.features')
+            ->with(['plan.features', 'pendingPlan'])
             ->where('business_id', $business->id)
             ->latest('id')
             ->first();

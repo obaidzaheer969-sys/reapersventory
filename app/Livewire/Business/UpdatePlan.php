@@ -23,7 +23,7 @@ class UpdatePlan extends Component
     {
         $this->subscriptionId = $subscriptionId;
         $subscription = $this->ownedSubscription();
-        $this->planId = $subscription->plan_id;
+        $this->planId = $subscription->pending_plan_id ?: $subscription->plan_id;
     }
 
     public function update(SubscriptionService $subscriptions): void
@@ -45,7 +45,7 @@ class UpdatePlan extends Component
 
         session()->flash(
             'status',
-            'Package updated to '.$plan->name.'. Upload payment proof for the new package if payment is required.'
+            'Package change requested: '.$plan->name.'. Naya package tabhi milega jab aap payment proof upload karein aur Super Admin approve kare.'
         );
 
         $this->redirectAndRefresh(route('business.subscription.index'));
@@ -53,12 +53,14 @@ class UpdatePlan extends Component
 
     public function render(): View
     {
-        $subscription = $this->ownedSubscription()->loadMissing('plan');
+        $subscription = $this->ownedSubscription()->loadMissing(['plan', 'pendingPlan']);
 
         return view('livewire.business.update-plan', [
             'plans' => Plan::query()->active()->with('features')->orderBy('sort_order')->orderBy('price_monthly')->get(),
             'currentPlanId' => $subscription->plan_id,
             'currentPlanName' => $subscription->plan?->name,
+            'pendingPlanId' => $subscription->pending_plan_id,
+            'pendingPlanName' => $subscription->pendingPlan?->name,
         ]);
     }
 

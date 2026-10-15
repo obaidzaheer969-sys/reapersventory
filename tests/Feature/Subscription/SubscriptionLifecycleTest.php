@@ -274,8 +274,54 @@ class SubscriptionLifecycleTest extends TestCase
             ->assertHasNoErrors();
 
         $subscription->refresh();
-        $this->assertSame($pro->id, $subscription->plan_id);
+        // Current package stays until admin approval.
+        $this->assertSame($basic->id, $subscription->plan_id);
+        $this->assertSame($pro->id, $subscription->pending_plan_id);
         $this->assertSame(SubscriptionStatus::Trial, $subscription->status);
+    }
+
+    public function test_pending_package_applies_only_after_admin_approves_payment(): void
+    {
+        Storage::fake('local');
+
+        $owner = User::factory()->create();
+        $admin = User::factory()->superAdmin()->create();
+        $basic = Plan::factory()->create(['name' => 'Basic Pack', 'price_monthly' => 1000, 'trial_days' => 0]);
+        $pro = Plan::factory()->create(['name' => 'Pro Pack', 'price_monthly' => 3000, 'trial_days' => 0]);
+        $method = PaymentMethod::factory()->create();
+
+        $subscription = app(SubscriptionService::class)->startTrialOrPending(
+            $owner->business,
+            $basic,
+            BillingInterval::Monthly,
+            $owner,
+        );
+
+        app(SubscriptionService::class)->changePlan($subscription, $pro, $owner);
+        $subscription->refresh();
+        $this->assertSame($basic->id, $subscription->plan_id);
+        $this->assertSame($pro->id, $subscription->pending_plan_id);
+
+        $payment = app(SubscriptionPaymentService::class)->submitManualPayment(
+            $subscription->fresh(),
+            $owner,
+            [
+                'payment_method_id' => $method->id,
+                'billing_interval' => 'monthly',
+                'reference' => 'UPGRADE-1',
+            ],
+            UploadedFile::fake()->create('proof.jpg', 120, 'image/jpeg'),
+        );
+
+        $this->assertSame($pro->id, $payment->plan_id);
+        $this->assertSame('3000.00', (string) $payment->amount);
+
+        app(PaymentApprovalService::class)->approve($payment, $admin, 'Upgrade ok');
+
+        $subscription->refresh();
+        $this->assertSame($pro->id, $subscription->plan_id);
+        $this->assertNull($subscription->pending_plan_id);
+        $this->assertSame(SubscriptionStatus::Active, $subscription->status);
     }
 
     public function test_owner_cannot_update_to_same_package(): void

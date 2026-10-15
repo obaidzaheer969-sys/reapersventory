@@ -1,7 +1,11 @@
 <div class="space-y-4">
     <p class="text-sm text-slate-600">
-        Current package: <strong>{{ $currentPlanName ?? '—' }}</strong>.
-        Select another package to upgrade or change.
+        Current package (active now): <strong>{{ $currentPlanName ?? '—' }}</strong>.
+        @if ($pendingPlanName)
+            <br>Pending package (waiting for payment + admin approval): <strong class="text-brand-600">{{ $pendingPlanName }}</strong>.
+        @else
+            Select another package to upgrade or change. New package access starts only after admin approval.
+        @endif
     </p>
 
     <div class="space-y-3">
@@ -14,6 +18,9 @@
                             {{ $plan->name }}
                             @if ((int) $plan->id === (int) $currentPlanId)
                                 <span class="ml-1 rounded-full bg-navy-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">Current</span>
+                            @endif
+                            @if ($pendingPlanId && (int) $plan->id === (int) $pendingPlanId)
+                                <span class="ml-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">Pending</span>
                             @endif
                         </span>
                         <span class="text-sm font-semibold text-brand-600">

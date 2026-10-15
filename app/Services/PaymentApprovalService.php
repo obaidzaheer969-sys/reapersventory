@@ -64,11 +64,20 @@ class PaymentApprovalService
                 'review_notes' => $reviewNotes,
             ])->save();
 
+            $subscription = $payment->subscription()->withoutGlobalScopes()->firstOrFail();
+
             $this->subscriptions->activateOrRenewForPeriod(
-                subscription: $payment->subscription()->withoutGlobalScopes()->firstOrFail(),
+                subscription: $subscription,
                 periodStart: $payment->period_start,
                 periodEnd: $payment->period_end,
                 interval: $payment->billing_interval,
+                actor: $admin,
+            );
+
+            // New package access only after admin approval.
+            $this->subscriptions->applyApprovedPlan(
+                subscription: $subscription->fresh(),
+                planId: (int) $payment->plan_id,
                 actor: $admin,
             );
 

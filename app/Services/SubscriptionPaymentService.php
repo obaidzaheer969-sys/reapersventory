@@ -41,7 +41,8 @@ class SubscriptionPaymentService
 
         $method = PaymentMethod::query()->active()->findOrFail($data['payment_method_id']);
         $interval = BillingInterval::from($data['billing_interval']);
-        $plan = Plan::query()->findOrFail($subscription->plan_id);
+        // Charge/await approval for pending package change when present.
+        $plan = $subscription->billablePlan();
 
         return DB::transaction(function () use ($subscription, $actor, $data, $proof, $method, $interval, $plan) {
             $subscription = Subscription::withoutGlobalScopes()

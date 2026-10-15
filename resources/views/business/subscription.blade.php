@@ -23,6 +23,12 @@
             @if ($subscription)
                 <dl class="mt-4 space-y-2 text-sm">
                     <div class="flex justify-between gap-4"><dt class="text-slate-500">Plan</dt><dd class="font-medium">{{ $subscription->plan->name }}</dd></div>
+                    @if ($subscription->pending_plan_id)
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-slate-500">Pending package</dt>
+                            <dd class="font-medium text-brand-600">{{ $subscription->pendingPlan?->name ?? '—' }} (awaiting admin approval)</dd>
+                        </div>
+                    @endif
                     <div class="flex justify-between gap-4"><dt class="text-slate-500">Status</dt><dd class="font-medium">{{ $subscription->status->label() }}</dd></div>
                     <div class="flex justify-between gap-4"><dt class="text-slate-500">Billing</dt><dd class="font-medium">{{ $subscription->billing_interval->label() }}</dd></div>
                     <div class="flex justify-between gap-4"><dt class="text-slate-500">Period end</dt><dd class="font-medium">{{ optional($subscription->current_period_end)->toDayDateTimeString() ?? '—' }}</dd></div>
