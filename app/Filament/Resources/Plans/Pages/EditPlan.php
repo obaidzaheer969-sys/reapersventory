@@ -20,4 +20,9 @@ class EditPlan extends EditRecord
             RestoreAction::make(),
         ];
     }
+
+    protected function afterSave(): void
+    {
+        $this->record->ensureFeatureRows();
+    }
 }

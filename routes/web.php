@@ -24,6 +24,7 @@ use App\Http\Controllers\Business\ReturnController;
 use App\Http\Controllers\Business\SaleController;
 use App\Http\Controllers\Business\SubscriptionController;
 use App\Http\Controllers\Business\SupplierController;
+use App\Http\Controllers\Business\TeamUserController;
 use App\Http\Controllers\Business\WarehouseController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PricingController;
@@ -79,6 +80,7 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
             Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
             Route::get('/warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
+            Route::get('/team-users', [TeamUserController::class, 'index'])->name('team-users.index');
             Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
             Route::get('/low-stock', LowStockController::class)->name('low-stock.index');
             Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');

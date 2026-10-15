@@ -23,7 +23,7 @@ class PlanSeeder extends Seeder
             [
                 'name' => 'Starter',
                 'slug' => 'starter',
-                'description' => '10 products, 1 warehouse, unlimited billing/invoices.',
+                'description' => '10 products, 1 user, 1 warehouse, unlimited billing/invoices.',
                 'price_monthly' => 2999,
                 'price_yearly' => 29990,
                 'trial_days' => 7,
@@ -39,7 +39,7 @@ class PlanSeeder extends Seeder
             [
                 'name' => 'Grow',
                 'slug' => 'grow',
-                'description' => '30 products, 1 warehouse, unlimited billing/invoices.',
+                'description' => '30 products, 2 users, 1 warehouse, unlimited billing/invoices.',
                 'price_monthly' => 6999,
                 'price_yearly' => 69990,
                 'trial_days' => 7,
@@ -55,7 +55,7 @@ class PlanSeeder extends Seeder
             [
                 'name' => 'Business',
                 'slug' => 'business',
-                'description' => 'Unlimited products, 2 warehouses, unlimited billing/invoices.',
+                'description' => 'Unlimited products, 2 users, 2 warehouses, unlimited billing/invoices.',
                 'price_monthly' => 12999,
                 'price_yearly' => 129990,
                 'trial_days' => 14,
@@ -65,13 +65,13 @@ class PlanSeeder extends Seeder
                     PlanFeatureKey::ProductsLimit->value => null,
                     PlanFeatureKey::InvoicesLimit->value => null,
                     PlanFeatureKey::WarehousesLimit->value => 2,
-                    PlanFeatureKey::UsersLimit->value => 5,
+                    PlanFeatureKey::UsersLimit->value => 2,
                 ],
             ],
             [
                 'name' => 'Grow Business',
                 'slug' => 'grow-business',
-                'description' => 'Unlimited products, 3 warehouses, unlimited billing/invoices.',
+                'description' => 'Unlimited products, 3 users, 3 warehouses, unlimited billing/invoices.',
                 'price_monthly' => 19999,
                 'price_yearly' => 199990,
                 'trial_days' => 14,
@@ -81,7 +81,7 @@ class PlanSeeder extends Seeder
                     PlanFeatureKey::ProductsLimit->value => null,
                     PlanFeatureKey::InvoicesLimit->value => null,
                     PlanFeatureKey::WarehousesLimit->value => 3,
-                    PlanFeatureKey::UsersLimit->value => 10,
+                    PlanFeatureKey::UsersLimit->value => 3,
                 ],
             ],
         ];
