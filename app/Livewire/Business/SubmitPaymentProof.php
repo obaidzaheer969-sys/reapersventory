@@ -8,8 +8,10 @@ use App\Models\Subscription;
 use App\Services\SubscriptionPaymentService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Throwable;
 
 class SubmitPaymentProof extends Component
 {
@@ -51,21 +53,42 @@ class SubmitPaymentProof extends Component
         $this->billingInterval = BillingInterval::Monthly->value;
         $subscription = $this->ownedSubscription();
 
-        $payments->submitManualPayment(
-            $subscription,
-            Auth::user(),
-            [
-                'payment_method_id' => $this->paymentMethodId,
-                'billing_interval' => BillingInterval::Monthly->value,
-                'reference' => $this->reference,
-                'notes' => $this->notes,
-            ],
-            $this->proof,
-        );
+        try {
+            $payments->submitManualPayment(
+                $subscription,
+                Auth::user(),
+                [
+                    'payment_method_id' => $this->paymentMethodId,
+                    'billing_interval' => BillingInterval::Monthly->value,
+                    'reference' => $this->reference,
+                    'notes' => $this->notes,
+                ],
+                $this->proof,
+            );
+        } catch (ValidationException $e) {
+            foreach ($e->errors() as $field => $messages) {
+                $target = match ($field) {
+                    'payment_method_id', 'paymentMethodId' => 'paymentMethodId',
+                    'billing_interval' => 'reference',
+                    default => in_array($field, ['reference', 'notes', 'proof'], true) ? $field : 'proof',
+                };
+
+                foreach ($messages as $message) {
+                    $this->addError($target, $message);
+                }
+            }
+
+            return;
+        } catch (Throwable $e) {
+            report($e);
+            $this->addError('proof', 'Payment could not be submitted. Please run server update and try again.');
+
+            return;
+        }
 
         session()->flash('status', 'Payment proof submitted. Your subscription will activate after Super Admin approval.');
 
-        $this->redirect(route('business.subscription.index'), navigate: true);
+        $this->redirect(route('business.subscription.index'), navigate: false);
     }
 
     public function render(): View

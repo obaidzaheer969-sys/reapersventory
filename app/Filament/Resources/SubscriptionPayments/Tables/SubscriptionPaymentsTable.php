@@ -13,6 +13,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class SubscriptionPaymentsTable
 {
@@ -65,12 +67,28 @@ class SubscriptionPaymentsTable
                         Textarea::make('review_notes')->label('Review notes')->rows(3),
                     ])
                     ->action(function (SubscriptionPayment $record, array $data, PaymentApprovalService $approver): void {
-                        $approver->approve($record, Auth::user(), $data['review_notes'] ?? null);
+                        try {
+                            $approver->approve($record, Auth::user(), $data['review_notes'] ?? null);
 
-                        Notification::make()
-                            ->title('Payment approved')
-                            ->success()
-                            ->send();
+                            Notification::make()
+                                ->title('Payment approved')
+                                ->success()
+                                ->send();
+                        } catch (ValidationException $e) {
+                            Notification::make()
+                                ->title('Cannot approve')
+                                ->body(collect($e->errors())->flatten()->first() ?: 'Approval failed.')
+                                ->danger()
+                                ->send();
+                        } catch (Throwable $e) {
+                            report($e);
+
+                            Notification::make()
+                                ->title('Approve failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
                     }),
                 Action::make('reject')
                     ->color('danger')
@@ -81,12 +99,28 @@ class SubscriptionPaymentsTable
                         Textarea::make('review_notes')->label('Rejection reason')->rows(3)->required(),
                     ])
                     ->action(function (SubscriptionPayment $record, array $data, PaymentApprovalService $approver): void {
-                        $approver->reject($record, Auth::user(), $data['review_notes'] ?? null);
+                        try {
+                            $approver->reject($record, Auth::user(), $data['review_notes'] ?? null);
 
-                        Notification::make()
-                            ->title('Payment rejected')
-                            ->danger()
-                            ->send();
+                            Notification::make()
+                                ->title('Payment rejected')
+                                ->danger()
+                                ->send();
+                        } catch (ValidationException $e) {
+                            Notification::make()
+                                ->title('Cannot reject')
+                                ->body(collect($e->errors())->flatten()->first() ?: 'Reject failed.')
+                                ->danger()
+                                ->send();
+                        } catch (Throwable $e) {
+                            report($e);
+
+                            Notification::make()
+                                ->title('Reject failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
                     }),
             ]);
     }

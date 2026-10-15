@@ -297,7 +297,19 @@ class SubscriptionLifecycleTest extends TestCase
             $owner,
         );
 
-        app(SubscriptionService::class)->changePlan($subscription, $pro, $owner);
+        // Old pending payment for previous package should not block upgrade submission.
+        app(SubscriptionPaymentService::class)->submitManualPayment(
+            $subscription->fresh(),
+            $owner,
+            [
+                'payment_method_id' => $method->id,
+                'billing_interval' => 'monthly',
+                'reference' => 'OLD-BASIC',
+            ],
+            UploadedFile::fake()->create('old.jpg', 120, 'image/jpeg'),
+        );
+
+        app(SubscriptionService::class)->changePlan($subscription->fresh(), $pro, $owner);
         $subscription->refresh();
         $this->assertSame($basic->id, $subscription->plan_id);
         $this->assertSame($pro->id, $subscription->pending_plan_id);
@@ -315,6 +327,7 @@ class SubscriptionLifecycleTest extends TestCase
 
         $this->assertSame($pro->id, $payment->plan_id);
         $this->assertSame('3000.00', (string) $payment->amount);
+        $this->assertSame(PaymentStatus::Pending, $payment->status);
 
         app(PaymentApprovalService::class)->approve($payment, $admin, 'Upgrade ok');
 

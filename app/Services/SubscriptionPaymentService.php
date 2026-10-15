@@ -50,9 +50,25 @@ class SubscriptionPaymentService
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            // Refresh billable plan after lock (pending_plan_id may have just been set).
+            $plan = $subscription->billablePlan();
+
             if (in_array($subscription->status, [SubscriptionStatus::Cancelled, SubscriptionStatus::Expired], true)
                 && ! $subscription->allowsAccess()) {
                 // Allow renewal submission for expired/cancelled by recreating period intent.
+            }
+
+            // Package change: close older pending proofs so the new package payment can be submitted.
+            if (filled($subscription->pending_plan_id)) {
+                SubscriptionPayment::withoutGlobalScopes()
+                    ->where('subscription_id', $subscription->id)
+                    ->where('status', PaymentStatus::Pending)
+                    ->where('plan_id', '!=', $plan->id)
+                    ->update([
+                        'status' => PaymentStatus::Rejected->value,
+                        'review_notes' => 'Closed automatically because a different package payment was submitted.',
+                        'reviewed_at' => now(),
+                    ]);
             }
 
             [$periodStart, $periodEnd] = $this->resolveBillingPeriod($subscription, $interval);
@@ -66,7 +82,7 @@ class SubscriptionPaymentService
 
             if ($duplicateApproved) {
                 throw ValidationException::withMessages([
-                    'billing_interval' => 'This billing period is already paid and approved.',
+                    'reference' => 'This billing period is already paid and approved. Try again after requesting a package change, or contact support.',
                 ]);
             }
 
@@ -79,7 +95,8 @@ class SubscriptionPaymentService
 
             if ($pendingExists) {
                 throw ValidationException::withMessages([
-                    'payment_method_id' => 'A payment for this billing period is already pending review.',
+                    'paymentMethodId' => 'A payment for this billing period is already pending review.',
+                    'reference' => 'A payment for this billing period is already pending review.',
                 ]);
             }
 
@@ -154,6 +171,11 @@ class SubscriptionPaymentService
      */
     private function resolveBillingPeriod(Subscription $subscription, BillingInterval $interval): array
     {
+        // Package upgrade/change: start a fresh billable period now for the pending plan.
+        if (filled($subscription->pending_plan_id)) {
+            return $this->subscriptions->calculatePeriod(now(), $interval);
+        }
+
         if (
             $subscription->status === SubscriptionStatus::Active
             && $subscription->current_period_end

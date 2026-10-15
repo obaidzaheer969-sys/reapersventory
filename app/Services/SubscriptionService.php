@@ -11,6 +11,7 @@ use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class SubscriptionService
@@ -229,6 +230,12 @@ class SubscriptionService
                 ]);
             }
 
+            if (! Schema::hasColumn('subscriptions', 'pending_plan_id')) {
+                throw ValidationException::withMessages([
+                    'planId' => 'Server update required before package changes. Run rv-update on hosting, then try again.',
+                ]);
+            }
+
             $old = $subscription->only(['plan_id', 'pending_plan_id']);
 
             // Do NOT change plan_id here — limits/features stay on the current package.
@@ -261,11 +268,16 @@ class SubscriptionService
 
             $old = $subscription->only(['plan_id', 'pending_plan_id', 'cancelled_at']);
 
-            $subscription->fill([
+            $payload = [
                 'plan_id' => $planId,
-                'pending_plan_id' => null,
                 'cancelled_at' => null,
-            ])->save();
+            ];
+
+            if (Schema::hasColumn('subscriptions', 'pending_plan_id')) {
+                $payload['pending_plan_id'] = null;
+            }
+
+            $subscription->fill($payload)->save();
 
             $this->auditLogger->log(
                 action: 'subscription.plan_change_approved',

@@ -211,6 +211,7 @@ if ($migrateCode !== 0) {
 $run($phpQ.' artisan optimize:clear');
 $run($phpQ.' artisan db:seed --class=PlanSeeder --force');
 $run($phpQ.' artisan reapersventory:ensure-notifications');
+$run($phpQ.' artisan reapersventory:ensure-pending-plan');
 $run($phpQ.' artisan inventory:notify-low-stock');
 $run($phpQ.' artisan storage:link');
 

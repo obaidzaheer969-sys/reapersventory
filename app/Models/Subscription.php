@@ -79,7 +79,17 @@ class Subscription extends Model
      */
     public function billablePlan(): Plan
     {
-        return $this->pendingPlan ?? $this->plan;
+        $plan = $this->pendingPlan ?? $this->plan;
+
+        if (! $plan && $this->plan_id) {
+            $plan = Plan::query()->find($this->plan_id);
+        }
+
+        if (! $plan) {
+            throw new \RuntimeException('Subscription has no billable plan.');
+        }
+
+        return $plan;
     }
 
     public function allowsAccess(?Carbon $at = null): bool
