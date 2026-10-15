@@ -4,7 +4,7 @@
  * One-click / webhook deploy for hosting.
  *
  * After git push, either:
- * 1) Open: https://your-domain.com/deploy.php?secret=YOUR_DEPLOY_SECRET
+ * 1) Open: https://reapersventory.com/deploy.php?secret=YOUR_DEPLOY_SECRET
  * 2) Or add a GitHub webhook (Push events) to that same URL.
  *
  * Set DEPLOY_SECRET in hosting .env (long random string).

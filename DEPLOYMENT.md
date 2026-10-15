@@ -19,7 +19,7 @@ Production checklist for Milestone 5 (notifications, hardening, scheduler/queue)
 |----------|------------------|
 | `APP_ENV` | `production` |
 | `APP_DEBUG` | `false` |
-| `APP_URL` | `https://your-domain` |
+| `APP_URL` | `https://reapersventory.com` |
 | `APP_KEY` | `php artisan key:generate` |
 | `DB_CONNECTION` | `mysql` |
 | `DB_*` | MySQL credentials |
@@ -87,7 +87,7 @@ DEPLOY_SECRET=put-a-long-random-string-here
 
 2. Then either open once after push:
 
-`https://your-domain.com/deploy.php?secret=put-a-long-random-string-here`
+`https://reapersventory.com/deploy.php?secret=put-a-long-random-string-here`
 
 Or GitHub → repo → **Settings → Webhooks → Add webhook**
 - Payload URL: same URL as above
