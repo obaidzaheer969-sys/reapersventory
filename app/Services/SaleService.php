@@ -33,6 +33,7 @@ class SaleService
      *   warehouse_id: int,
      *   sale_date: string,
      *   tax?: float|string,
+     *   tax_percent?: float|string|null,
      *   discount?: float|string,
      *   notes?: string|null,
      *   payment_amount?: float|string|null,
@@ -64,7 +65,14 @@ class SaleService
             }
 
             [$subtotal, $normalizedItems] = $this->normalizeItems($business->id, $data['items']);
-            $tax = number_format((float) ($data['tax'] ?? 0), 2, '.', '');
+
+            if (array_key_exists('tax_percent', $data) && $data['tax_percent'] !== null && $data['tax_percent'] !== '') {
+                $percent = number_format((float) $data['tax_percent'], 2, '.', '');
+                $tax = bcmul($subtotal, bcdiv($percent, '100', 6), 2);
+            } else {
+                $tax = number_format((float) ($data['tax'] ?? 0), 2, '.', '');
+            }
+
             $discount = number_format((float) ($data['discount'] ?? 0), 2, '.', '');
             $total = bcsub(bcadd($subtotal, $tax, 2), $discount, 2);
 

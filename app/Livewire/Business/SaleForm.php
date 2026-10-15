@@ -24,13 +24,16 @@ class SaleForm extends Component
 
     public string $saleDate = '';
 
-    public string $tax = '0';
+    public string $taxPercent = '0';
 
     public string $discount = '0';
 
     public string $paymentAmount = '0';
 
     public string $paymentMethod = 'cash';
+
+    /** @var list<int> */
+    public array $taxOptions = [0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80];
 
     public ?string $notes = null;
 
@@ -92,10 +95,10 @@ class SaleForm extends Component
                 Rule::exists('warehouses', 'id')->where(fn ($q) => $q->where('business_id', $businessId)),
             ],
             'saleDate' => ['required', 'date'],
-            'tax' => ['required', 'numeric', 'min:0'],
+            'taxPercent' => ['required', 'numeric', Rule::in($this->taxOptions)],
             'discount' => ['required', 'numeric', 'min:0'],
             'paymentAmount' => ['required', 'numeric', 'min:0'],
-            'paymentMethod' => ['required', 'string', 'max:32'],
+            'paymentMethod' => ['required', 'string', Rule::in(['cash', 'bank', 'easypaisa', 'jazzcash', 'card'])],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => [
@@ -111,7 +114,7 @@ class SaleForm extends Component
                 'customer_id' => $this->customerId,
                 'warehouse_id' => $this->warehouseId,
                 'sale_date' => $this->saleDate,
-                'tax' => $this->tax,
+                'tax_percent' => $this->taxPercent,
                 'discount' => $this->discount,
                 'payment_amount' => $this->paymentAmount,
                 'payment_method' => $this->paymentMethod,
@@ -126,6 +129,34 @@ class SaleForm extends Component
 
         session()->flash('status', 'Sale completed and invoice generated.');
         $this->redirectAndRefresh(route('business.sales.show', $sale));
+    }
+
+    public function getSubtotalProperty(): string
+    {
+        $subtotal = '0.00';
+
+        foreach ($this->items as $item) {
+            $line = bcmul(
+                number_format((float) ($item['quantity'] ?? 0), 3, '.', ''),
+                number_format((float) ($item['unit_price'] ?? 0), 2, '.', ''),
+                2
+            );
+            $subtotal = bcadd($subtotal, $line, 2);
+        }
+
+        return $subtotal;
+    }
+
+    public function getTaxAmountProperty(): string
+    {
+        return bcmul($this->subtotal, bcdiv(number_format((float) $this->taxPercent, 2, '.', ''), '100', 6), 2);
+    }
+
+    public function getGrandTotalProperty(): string
+    {
+        $afterTax = bcadd($this->subtotal, $this->taxAmount, 2);
+
+        return bcsub($afterTax, number_format((float) $this->discount, 2, '.', ''), 2);
     }
 
     public function render(): View

@@ -61,6 +61,7 @@
                     <option value="bank">Bank</option>
                     <option value="easypaisa">Easypaisa</option>
                     <option value="jazzcash">JazzCash</option>
+                    <option value="card">Debit or Credit card</option>
                 </select>
                 <input type="text" name="reference" placeholder="Reference" class="rounded-lg px-3 py-2 ring-1 ring-slate-300">
                 <button class="rounded-lg bg-brand-500 px-4 py-2 font-semibold text-white hover:bg-brand-600">Add payment</button>

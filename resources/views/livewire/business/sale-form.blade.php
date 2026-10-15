@@ -25,12 +25,17 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-sm font-medium">Tax</label>
-                    <input type="number" step="0.01" wire:model="tax" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <label class="block text-sm font-medium">Tax %</label>
+                    <select wire:model.live="taxPercent" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        @foreach ($taxOptions as $option)
+                            <option value="{{ $option }}">{{ $option }}%</option>
+                        @endforeach
+                    </select>
+                    @error('taxPercent') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium">Discount</label>
-                    <input type="number" step="0.01" wire:model="discount" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <input type="number" step="0.01" wire:model.live="discount" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
             </div>
             <div>
@@ -45,8 +50,9 @@
                     <option value="bank">Bank transfer</option>
                     <option value="easypaisa">Easypaisa</option>
                     <option value="jazzcash">JazzCash</option>
-                    <option value="other">Other</option>
+                    <option value="card">Debit or Credit card</option>
                 </select>
+                @error('paymentMethod') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
         </div>
 
@@ -69,12 +75,12 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium">Qty</label>
-                        <input type="number" step="0.001" wire:model="items.{{ $index }}.quantity" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300">
+                        <input type="number" step="0.001" wire:model.live="items.{{ $index }}.quantity" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300">
                     </div>
                     <div>
                         <label class="block text-xs font-medium">Unit price</label>
                         <div class="mt-1 flex gap-2">
-                            <input type="number" step="0.01" wire:model="items.{{ $index }}.unit_price" class="w-full rounded-lg px-3 py-2 ring-1 ring-slate-300">
+                            <input type="number" step="0.01" wire:model.live="items.{{ $index }}.unit_price" class="w-full rounded-lg px-3 py-2 ring-1 ring-slate-300">
                             @if (count($items) > 1)
                                 <button type="button" wire:click="removeItem({{ $index }})" class="text-sm text-red-600">✕</button>
                             @endif
@@ -82,6 +88,13 @@
                     </div>
                 </div>
             @endforeach
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
+            <div class="flex justify-between gap-3"><span class="text-slate-600">Subtotal</span><span class="font-semibold">{{ number_format((float) $this->subtotal, 2) }}</span></div>
+            <div class="mt-1 flex justify-between gap-3"><span class="text-slate-600">Tax ({{ $taxPercent }}%)</span><span class="font-semibold">{{ number_format((float) $this->taxAmount, 2) }}</span></div>
+            <div class="mt-1 flex justify-between gap-3"><span class="text-slate-600">Discount</span><span class="font-semibold">{{ number_format((float) $discount, 2) }}</span></div>
+            <div class="mt-2 flex justify-between gap-3 border-t border-slate-200 pt-2 text-base"><span class="font-semibold text-navy-900">Bill total</span><span class="font-bold text-navy-900">{{ number_format((float) $this->grandTotal, 2) }}</span></div>
         </div>
 
         <button type="submit" class="rounded-lg bg-brand-500 px-4 py-2.5 font-semibold text-white hover:bg-brand-600">Complete sale</button>

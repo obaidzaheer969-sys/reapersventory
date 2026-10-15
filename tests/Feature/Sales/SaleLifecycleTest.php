@@ -73,6 +73,35 @@ class SaleLifecycleTest extends TestCase
         ]);
     }
 
+    public function test_tax_percent_is_added_to_bill_total(): void
+    {
+        $owner = $this->subscribedOwner();
+        $warehouse = Warehouse::factory()->default()->create(['business_id' => $owner->business_id]);
+        $product = Product::factory()->create([
+            'business_id' => $owner->business_id,
+            'selling_price' => 100,
+            'track_inventory' => false,
+        ]);
+
+        $sale = app(SaleService::class)->createCompleted($owner->business, $owner, [
+            'warehouse_id' => $warehouse->id,
+            'sale_date' => now()->toDateString(),
+            'tax_percent' => 10,
+            'discount' => 0,
+            'payment_amount' => 110,
+            'payment_method' => 'card',
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100],
+            ],
+        ]);
+
+        $this->assertSame('100.00', (string) $sale->subtotal);
+        $this->assertSame('10.00', (string) $sale->tax);
+        $this->assertSame('110.00', (string) $sale->total);
+        $this->assertSame('card', $sale->payments()->value('method'));
+        $this->assertSame('110.00', (string) $sale->payments()->value('amount'));
+    }
+
     public function test_historical_sale_costs_remain_stable_after_product_cost_changes(): void
     {
         $owner = $this->subscribedOwner();
