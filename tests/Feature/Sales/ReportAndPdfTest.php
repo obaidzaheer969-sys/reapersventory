@@ -3,14 +3,15 @@
 namespace Tests\Feature\Sales;
 
 use App\Enums\StockMovementType;
+use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\Product;
 use App\Models\Warehouse;
 use App\Services\InventoryService;
-use App\Services\InvoicePdfService;
 use App\Services\ReportService;
 use App\Services\SaleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\CreatesSubscribedBusiness;
 use Tests\TestCase;
 
@@ -80,6 +81,56 @@ class ReportAndPdfTest extends TestCase
         $this->actingAs($other)
             ->get(route('business.invoices.pdf', $sale->invoice))
             ->assertNotFound();
+    }
+
+    public function test_invoice_pdf_includes_logo_customer_and_warehouse(): void
+    {
+        Storage::fake('uploads');
+
+        $owner = $this->subscribedOwner();
+        $logoRelative = 'business-logos/'.$owner->business_id.'/logo.png';
+        Storage::disk('uploads')->put($logoRelative, base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+        ));
+
+        $owner->business->update([
+            'brand_name' => 'Acme Shop',
+            'logo_path' => 'uploads/'.$logoRelative,
+        ]);
+
+        $warehouse = Warehouse::factory()->create([
+            'business_id' => $owner->business_id,
+            'name' => 'Main Warehouse',
+        ]);
+        $customer = Customer::factory()->create([
+            'business_id' => $owner->business_id,
+            'name' => 'Ali Traders',
+        ]);
+        $product = Product::factory()->create(['business_id' => $owner->business_id]);
+        app(InventoryService::class)->adjust($product, $warehouse, StockMovementType::AdjustmentIn, 3, $owner);
+
+        $sale = app(SaleService::class)->createCompleted($owner->business, $owner, [
+            'warehouse_id' => $warehouse->id,
+            'customer_id' => $customer->id,
+            'sale_date' => now()->toDateString(),
+            'payment_amount' => 10,
+            'items' => [['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 10]],
+        ]);
+
+        $invoice = $sale->invoice->load(['business', 'customer', 'sale.items.product', 'sale.warehouse']);
+
+        $html = view('pdf.invoice', [
+            'invoice' => $invoice,
+            'business' => $invoice->business,
+            'sale' => $invoice->sale,
+            'logoDataUri' => $invoice->business->brandLogoDataUri(),
+        ])->render();
+
+        $this->assertStringContainsString('Acme Shop', $html);
+        $this->assertStringContainsString('Ali Traders', $html);
+        $this->assertStringContainsString('Main Warehouse', $html);
+        $this->assertStringContainsString('data:image/png;base64,', $html);
+        $this->assertStringNotContainsString('Walk-in customer', $html);
     }
 
     public function test_reports_page_renders_for_subscribed_owner(): void

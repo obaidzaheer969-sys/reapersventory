@@ -124,24 +124,46 @@ class Business extends Model
 
     public function brandLogoUrl(): ?string
     {
-        if (! filled($this->logo_path)) {
+        $absolute = $this->brandLogoAbsolutePath();
+        if (! $absolute) {
             return null;
         }
 
         $path = ltrim((string) $this->logo_path, '/');
         $version = optional($this->updated_at)?->timestamp;
 
-        // Prefer direct public path checks (no disk config required on hosting).
-        if (is_file(public_path($path))) {
+        if (str_starts_with($path, 'uploads/') || is_file(public_path($path))) {
             return '/'.$path.($version ? '?v='.$version : '');
+        }
+
+        return '/storage/'.$path.($version ? '?v='.$version : '');
+    }
+
+    /**
+     * Absolute filesystem path for DomPDF (remote URLs are unreliable).
+     */
+    public function brandLogoAbsolutePath(): ?string
+    {
+        if (! filled($this->logo_path)) {
+            return null;
+        }
+
+        $path = ltrim((string) $this->logo_path, '/');
+
+        if (is_file(public_path($path))) {
+            return public_path($path);
         }
 
         if (str_starts_with($path, 'uploads/')) {
             $relative = substr($path, strlen('uploads/'));
+            $candidate = public_path('uploads/'.$relative);
+            if (is_file($candidate)) {
+                return $candidate;
+            }
 
             try {
                 if (Storage::disk('uploads')->exists($relative)) {
-                    return '/'.$path.($version ? '?v='.$version : '');
+                    return Storage::disk('uploads')->path($relative);
                 }
             } catch (\Throwable) {
                 // uploads disk may be missing from stale config cache
@@ -150,13 +172,32 @@ class Business extends Model
 
         try {
             if (Storage::disk('public')->exists($path)) {
-                return '/storage/'.$path.($version ? '?v='.$version : '');
+                return Storage::disk('public')->path($path);
             }
         } catch (\Throwable) {
             // ignore
         }
 
         return null;
+    }
+
+    /**
+     * Base64 data URI for embedding logos in PDFs.
+     */
+    public function brandLogoDataUri(): ?string
+    {
+        $absolute = $this->brandLogoAbsolutePath();
+        if (! $absolute || ! is_file($absolute)) {
+            return null;
+        }
+
+        $mime = mime_content_type($absolute) ?: 'image/png';
+        $contents = file_get_contents($absolute);
+        if ($contents === false) {
+            return null;
+        }
+
+        return 'data:'.$mime.';base64,'.base64_encode($contents);
     }
 
 

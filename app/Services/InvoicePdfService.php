@@ -22,6 +22,7 @@ class InvoicePdfService
             'invoice' => $invoice,
             'business' => $invoice->business,
             'sale' => $invoice->sale,
+            'logoDataUri' => $invoice->business?->brandLogoDataUri(),
         ])->setPaper('a4');
 
         return $pdf->download($invoice->invoice_number.'.pdf');
@@ -34,12 +35,14 @@ class InvoicePdfService
             'customer',
             'sale.items.product',
             'sale.payments',
+            'sale.warehouse',
         ]);
 
         $pdf = Pdf::loadView('pdf.receipt', [
             'invoice' => $invoice,
             'business' => $invoice->business,
             'sale' => $invoice->sale,
+            'logoDataUri' => $invoice->business?->brandLogoDataUri(),
         ])->setPaper('a4');
 
         return $pdf->download($invoice->invoice_number.'-receipt.pdf');
