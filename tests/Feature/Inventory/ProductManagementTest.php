@@ -37,6 +37,51 @@ class ProductManagementTest extends TestCase
         ]);
     }
 
+    public function test_subscribed_owner_can_edit_product(): void
+    {
+        $owner = $this->subscribedOwner();
+        $product = Product::factory()->create([
+            'business_id' => $owner->business_id,
+            'name' => 'Old Name',
+            'sku' => 'OLD-1',
+            'selling_price' => 100,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('business.products.edit', $product))
+            ->assertOk()
+            ->assertSee('Edit product')
+            ->assertSee('Old Name');
+
+        Livewire::actingAs($owner)
+            ->test(ProductForm::class, ['product' => $product])
+            ->set('name', 'New Name')
+            ->set('sellingPrice', '175.50')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('business.products.index'));
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'name' => 'New Name',
+            'selling_price' => 175.50,
+        ]);
+    }
+
+    public function test_owner_cannot_edit_another_tenants_product(): void
+    {
+        $ownerA = $this->subscribedOwner();
+        $ownerB = $this->subscribedOwner();
+        $product = Product::factory()->create([
+            'business_id' => $ownerB->business_id,
+            'sku' => 'OTHER-1',
+        ]);
+
+        $this->actingAs($ownerA)
+            ->get(route('business.products.edit', $product))
+            ->assertNotFound();
+    }
+
     public function test_product_limit_is_enforced_server_side(): void
     {
         $owner = $this->subscribedOwner();

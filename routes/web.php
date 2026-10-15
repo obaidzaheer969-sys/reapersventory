@@ -75,6 +75,7 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         Route::middleware('subscribed')->group(function () {
             Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+            Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
             Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
             Route::get('/warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
             Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');

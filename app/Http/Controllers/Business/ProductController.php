@@ -34,4 +34,13 @@ class ProductController extends Controller
             'categories' => Category::query()->orderBy('name')->get(),
         ]);
     }
+
+    public function edit(Product $product): View
+    {
+        $this->authorize('update', $product);
+
+        return view('business.products.edit', [
+            'product' => $product,
+        ]);
+    }
 }

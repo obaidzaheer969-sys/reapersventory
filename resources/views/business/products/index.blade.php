@@ -28,7 +28,8 @@
                         <th class="py-2 pr-3">SKU</th>
                         <th class="py-2 pr-3">Price</th>
                         <th class="py-2 pr-3">Stock</th>
-                        <th class="py-2">Status</th>
+                        <th class="py-2 pr-3">Status</th>
+                        <th class="py-2">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,10 +42,13 @@
                             <td class="py-3 pr-3">{{ $product->sku }}</td>
                             <td class="py-3 pr-3">{{ number_format($product->selling_price, 2) }}</td>
                             <td class="py-3 pr-3">{{ number_format($product->stock_on_hand ?? 0, 3) }}</td>
-                            <td class="py-3">{{ $product->is_active ? 'Active' : 'Inactive' }}</td>
+                            <td class="py-3 pr-3">{{ $product->is_active ? 'Active' : 'Inactive' }}</td>
+                            <td class="py-3">
+                                <a href="{{ route('business.products.edit', $product) }}" class="font-semibold text-brand-600 hover:text-brand-500">Edit</a>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="py-6 text-slate-500">No products yet.</td></tr>
+                        <tr><td colspan="6" class="py-6 text-slate-500">No products yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>

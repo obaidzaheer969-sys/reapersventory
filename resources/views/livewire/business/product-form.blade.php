@@ -48,6 +48,8 @@
         </div>
         <label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model="trackInventory" class="rounded text-brand-500"> Track inventory</label>
         <label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model="isActive" class="rounded text-brand-500"> Active</label>
-        <button type="submit" class="w-full rounded-lg bg-brand-500 px-4 py-2.5 font-semibold text-white hover:bg-brand-600">Save product</button>
+        <button type="submit" class="w-full rounded-lg bg-brand-500 px-4 py-2.5 font-semibold text-white hover:bg-brand-600">
+            {{ $productId ? 'Update product' : 'Save product' }}
+        </button>
     </form>
 </div>
