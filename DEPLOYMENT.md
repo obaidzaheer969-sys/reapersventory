@@ -63,6 +63,19 @@ If SMTP is blocked by the host, try `MAIL_MAILER=sendmail` instead.
 
 2. HTTPS is forced when `APP_ENV=production`. Sit behind a reverse proxy that terminates TLS; proxies are trusted (`TrustProxies`).
 
+## Quick update (after code is on GitHub)
+
+From the project root on the server:
+
+```bash
+chmod +x update.sh   # first time only
+./update.sh
+```
+
+This runs `git pull origin main` plus `php artisan config:clear` (and cache/route/view clear).
+
+On Windows locally: `update.bat`
+
 ## Deploy steps
 
 ```bash

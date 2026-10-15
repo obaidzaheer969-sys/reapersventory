@@ -1,0 +1,16 @@
+@echo off
+setlocal
+cd /d "%~dp0"
+
+echo ==> Pulling latest from origin/main
+git pull origin main
+if errorlevel 1 exit /b 1
+
+echo ==> Clearing Laravel caches
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+if errorlevel 1 exit /b 1
+
+echo ==> Done. App is updated.
