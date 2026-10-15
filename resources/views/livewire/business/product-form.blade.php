@@ -55,13 +55,27 @@
         <label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model.live="trackInventory" class="rounded text-brand-500"> Track inventory</label>
         <label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model="isActive" class="rounded text-brand-500"> Active</label>
 
-        @if (! $productId && $trackInventory)
+        @if ($trackInventory)
             <div class="rounded-lg border border-dashed border-brand-500/40 bg-brand-500/5 p-3 space-y-3">
-                <p class="text-sm font-semibold text-navy-900">Opening stock (optional)</p>
+                <div class="flex items-center justify-between gap-2">
+                    <p class="text-sm font-semibold text-navy-900">
+                        {{ $productId ? 'Add stock' : 'Opening stock' }}
+                    </p>
+                    @if ($productId)
+                        <p class="text-sm text-slate-700">
+                            Current: <strong>{{ number_format((float) $currentStock, 3) }} {{ $unit }}</strong>
+                        </p>
+                    @endif
+                </div>
                 <div>
-                    <label class="block text-sm font-medium">Quantity ({{ $unit }})</label>
-                    <input type="number" step="0.001" wire:model="openingStock" placeholder="e.g. 10" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                    @error('openingStock') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    <label class="block text-sm font-medium">
+                        {{ $productId ? 'Quantity to add' : 'Quantity' }} ({{ $unit }})
+                    </label>
+                    <input type="number" step="0.001" min="0" wire:model="stockQuantity" placeholder="e.g. 10" class="mt-1 w-full rounded-lg px-3 py-2 ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    @error('stockQuantity') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @if ($productId)
+                        <p class="mt-1 text-xs text-slate-500">Yahan jo number likho ge woh current stock mein add ho jayega.</p>
+                    @endif
                 </div>
                 <div>
                     <label class="block text-sm font-medium">Warehouse</label>
@@ -73,7 +87,7 @@
                     </select>
                     @error('warehouseId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     @if ($warehouses->isEmpty())
-                        <p class="mt-1 text-xs text-amber-700">Create a warehouse first, then you can add stock.</p>
+                        <p class="mt-1 text-xs text-amber-700">Pehle Warehouses page se warehouse banao, phir stock add karo.</p>
                     @endif
                 </div>
             </div>

@@ -56,7 +56,7 @@ class ProductManagementTest extends TestCase
             ->set('unit', 'kg')
             ->set('sellingPrice', '120')
             ->set('costPrice', '90')
-            ->set('openingStock', '25.5')
+            ->set('stockQuantity', '25.5')
             ->set('warehouseId', $warehouse->id)
             ->call('save')
             ->assertHasNoErrors();
@@ -67,6 +67,35 @@ class ProductManagementTest extends TestCase
             'product_id' => $product->id,
             'warehouse_id' => $warehouse->id,
             'quantity' => 25.5,
+        ]);
+    }
+
+    public function test_edit_product_can_add_stock(): void
+    {
+        $owner = $this->subscribedOwner();
+        $warehouse = Warehouse::factory()->create([
+            'business_id' => $owner->business_id,
+            'is_active' => true,
+        ]);
+        $product = Product::factory()->create([
+            'business_id' => $owner->business_id,
+            'track_inventory' => true,
+            'unit' => 'pcs',
+            'name' => 'Golden Pearl',
+        ]);
+
+        Livewire::actingAs($owner)
+            ->test(ProductForm::class, ['product' => $product])
+            ->assertSet('currentStock', '0.000')
+            ->set('stockQuantity', '40')
+            ->set('warehouseId', $warehouse->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('inventory_balances', [
+            'product_id' => $product->id,
+            'warehouse_id' => $warehouse->id,
+            'quantity' => 40,
         ]);
     }
 

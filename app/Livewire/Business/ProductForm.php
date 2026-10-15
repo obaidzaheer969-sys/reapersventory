@@ -40,15 +40,18 @@ class ProductForm extends Component
 
     public bool $isActive = true;
 
-    public string $openingStock = '';
+    public string $stockQuantity = '';
 
     public ?int $warehouseId = null;
+
+    public string $currentStock = '0';
 
     public function mount(?Product $product = null): void
     {
         if ($product?->exists) {
             abort_unless(Auth::user()->can('update', $product), 403);
             $this->productId = $product->id;
+            $this->currentStock = number_format((float) $product->totalQuantity(), 3, '.', '');
             $this->fill([
                 'name' => $product->name,
                 'sku' => $product->sku,
@@ -99,9 +102,9 @@ class ProductForm extends Component
             'description' => ['nullable', 'string'],
             'trackInventory' => ['boolean'],
             'isActive' => ['boolean'],
-            'openingStock' => ['nullable', 'numeric', 'min:0'],
+            'stockQuantity' => ['nullable', 'numeric', 'min:0'],
             'warehouseId' => [
-                Rule::requiredIf(fn () => filled($this->openingStock) && (float) $this->openingStock > 0),
+                Rule::requiredIf(fn () => filled($this->stockQuantity) && (float) $this->stockQuantity > 0 && $this->trackInventory),
                 'nullable',
                 Rule::exists('warehouses', 'id')->where(fn ($q) => $q->where('business_id', $businessId)),
             ],
@@ -128,22 +131,22 @@ class ProductForm extends Component
         } else {
             abort_unless($user->can('create', Product::class), 403);
             $product = $products->create($user->business, $user, $payload);
-
-            $opening = (float) ($validated['openingStock'] ?? 0);
-            if ($opening > 0 && $validated['trackInventory'] && ! empty($validated['warehouseId'])) {
-                $warehouse = Warehouse::query()->findOrFail($validated['warehouseId']);
-                $inventory->adjust(
-                    product: $product,
-                    warehouse: $warehouse,
-                    type: StockMovementType::AdjustmentIn,
-                    quantity: $opening,
-                    actor: $user,
-                    notes: 'Opening stock',
-                );
-            }
         }
 
-        session()->flash('status', 'Product saved.');
+        $qty = (float) ($validated['stockQuantity'] ?? 0);
+        if ($qty > 0 && $validated['trackInventory'] && ! empty($validated['warehouseId'])) {
+            $warehouse = Warehouse::query()->findOrFail($validated['warehouseId']);
+            $inventory->adjust(
+                product: $product,
+                warehouse: $warehouse,
+                type: StockMovementType::AdjustmentIn,
+                quantity: $qty,
+                actor: $user,
+                notes: $this->productId ? 'Stock added from product edit' : 'Opening stock',
+            );
+        }
+
+        session()->flash('status', $qty > 0 ? 'Product saved and stock updated.' : 'Product saved.');
         $this->redirect(route('business.products.index'), navigate: true);
     }
 
@@ -153,6 +156,13 @@ class ProductForm extends Component
 
         if ($this->warehouseId === null && $warehouses->count() === 1) {
             $this->warehouseId = $warehouses->first()->id;
+        }
+
+        if ($this->productId) {
+            $product = Product::query()->find($this->productId);
+            if ($product) {
+                $this->currentStock = number_format((float) $product->totalQuantity(), 3, '.', '');
+            }
         }
 
         return view('livewire.business.product-form', [
