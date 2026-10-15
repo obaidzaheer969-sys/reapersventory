@@ -18,20 +18,21 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Throwable;
 
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        $panel = $panel
             ->default()
             ->id('admin')
             ->path('admin')
             ->login()
             ->darkMode(false)
-            ->databaseNotifications()
             ->brandName('')
             ->brandLogo(asset('images/reapersventory-logo.png'))
             ->brandLogoHeight('4rem')
@@ -72,5 +73,16 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ]);
+
+        // Requires notifications table — skip until migrate has run on hosting.
+        try {
+            if (Schema::hasTable('notifications')) {
+                $panel->databaseNotifications();
+            }
+        } catch (Throwable) {
+            // DB unavailable during early boot / deploy
+        }
+
+        return $panel;
     }
 }

@@ -203,7 +203,11 @@ $run('git clean -fd -e .env -e .env.* -e storage -e vendor -e node_modules -e pu
 rv_clear_bootstrap_cache($base, $log);
 
 $phpQ = escapeshellarg($php);
-$run($phpQ.' artisan migrate --force');
+$migrateCode = $run($phpQ.' artisan migrate --force');
+if ($migrateCode !== 0) {
+    $log[] = '[rv-update] migrate failed — retrying once';
+    $run($phpQ.' artisan migrate --force');
+}
 $run($phpQ.' artisan optimize:clear');
 $run($phpQ.' artisan storage:link');
 
