@@ -50,10 +50,22 @@
 
     <div class="mt-8 grid gap-6 lg:grid-cols-2">
         <div class="rounded-xl border border-dashed border-brand-500/40 bg-brand-500/5 p-6">
-            <h2 class="font-semibold text-navy-900">Low-stock alerts</h2>
+            <h2 class="font-semibold text-navy-900">
+                Low-stock alerts
+                @if (count($lowStock) > 0)
+                    <span class="ml-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-500 px-2 text-xs font-bold text-white">{{ count($lowStock) }}</span>
+                @endif
+            </h2>
             <ul class="mt-3 space-y-2 text-sm text-slate-700">
                 @forelse ($lowStock as $product)
-                    <li>{{ $product->name }} — {{ number_format($product->totalQuantity(), 3) }} on hand</li>
+                    <li class="flex flex-wrap items-center justify-between gap-2">
+                        <span>
+                            <strong>{{ $product->name }}</strong>
+                            — {{ number_format((float) $product->inventoryBalances->sum('quantity'), 3) }} {{ $product->unit }}
+                            (reorder {{ number_format((float) $product->reorder_level, 3) }})
+                        </span>
+                        <a href="{{ route('business.inventory.index', ['product' => $product->id]) }}" class="font-semibold text-brand-600 hover:text-brand-500">Add stock</a>
+                    </li>
                 @empty
                     <li>{{ $activeSubscription ? 'No low-stock products.' : 'Activate a subscription to manage inventory.' }}</li>
                 @endforelse

@@ -30,33 +30,48 @@ class ReportService
      */
     public function financialSummary(int $businessId, Carbon $from, Carbon $to): array
     {
+        $fromDate = $from->copy()->startOfDay();
+        $toDate = $to->copy()->endOfDay();
+
         $sales = Sale::withoutGlobalScopes()
             ->where('business_id', $businessId)
-            ->where('status', SaleStatus::Completed)
-            ->whereBetween('sale_date', [$from->toDateString(), $to->toDateString()])
+            ->whereNull('deleted_at')
+            ->where('status', SaleStatus::Completed->value)
+            ->where(function ($query) use ($fromDate, $toDate) {
+                $query->whereBetween('sale_date', [$fromDate->toDateString(), $toDate->toDateString()])
+                    ->orWhereBetween('created_at', [$fromDate, $toDate]);
+            })
             ->get(['id', 'total', 'amount_paid', 'amount_due']);
 
         $salesTotal = $sales->reduce(fn ($carry, $sale) => bcadd($carry, (string) $sale->total, 2), '0.00');
         $paymentsCollected = $sales->reduce(fn ($carry, $sale) => bcadd($carry, (string) $sale->amount_paid, 2), '0.00');
         $amountDue = $sales->reduce(fn ($carry, $sale) => bcadd($carry, (string) $sale->amount_due, 2), '0.00');
 
-        $cogs = SaleItem::withoutGlobalScopes()
-            ->whereIn('sale_id', $sales->pluck('id'))
-            ->get()
-            ->reduce(
-                fn ($carry, $item) => bcadd($carry, bcmul((string) $item->quantity, (string) $item->unit_cost, 2), 2),
-                '0.00'
-            );
+        $saleIds = $sales->pluck('id');
+
+        $cogs = $saleIds->isEmpty()
+            ? '0.00'
+            : SaleItem::withoutGlobalScopes()
+                ->whereIn('sale_id', $saleIds)
+                ->get()
+                ->reduce(
+                    fn ($carry, $item) => bcadd(
+                        $carry,
+                        bcmul((string) $item->quantity, (string) $item->unit_cost, 2),
+                        2
+                    ),
+                    '0.00'
+                );
 
         $purchasesTotal = (string) Purchase::withoutGlobalScopes()
             ->where('business_id', $businessId)
             ->where('status', 'received')
-            ->whereBetween('purchase_date', [$from->toDateString(), $to->toDateString()])
+            ->whereBetween('purchase_date', [$fromDate->toDateString(), $toDate->toDateString()])
             ->sum('total');
 
         $expensesTotal = (string) Expense::withoutGlobalScopes()
             ->where('business_id', $businessId)
-            ->whereBetween('expense_date', [$from->toDateString(), $to->toDateString()])
+            ->whereBetween('expense_date', [$fromDate->toDateString(), $toDate->toDateString()])
             ->sum('amount');
 
         $purchasesTotal = number_format((float) $purchasesTotal, 2, '.', '');
@@ -65,25 +80,31 @@ class ReportService
         $grossProfit = bcsub($salesTotal, $cogs, 2);
         $netProfit = bcsub($grossProfit, $expensesTotal, 2);
 
-        $topProducts = SaleItem::withoutGlobalScopes()
-            ->selectRaw('product_id, SUM(quantity) as qty, SUM(line_total) as revenue')
-            ->whereIn('sale_id', $sales->pluck('id'))
-            ->groupBy('product_id')
-            ->orderByDesc('revenue')
-            ->limit(5)
-            ->with('product:id,name')
-            ->get()
-            ->map(fn ($row) => [
-                'product_id' => (int) $row->product_id,
-                'name' => $row->product?->name ?? 'Unknown',
-                'qty' => number_format((float) $row->qty, 3, '.', ''),
-                'revenue' => number_format((float) $row->revenue, 2, '.', ''),
-            ])
-            ->all();
+        $topProducts = $saleIds->isEmpty()
+            ? []
+            : SaleItem::withoutGlobalScopes()
+                ->selectRaw('product_id, SUM(quantity) as qty, SUM(line_total) as revenue')
+                ->whereIn('sale_id', $saleIds)
+                ->groupBy('product_id')
+                ->orderByDesc('revenue')
+                ->limit(5)
+                ->with('product:id,name')
+                ->get()
+                ->map(fn ($row) => [
+                    'product_id' => (int) $row->product_id,
+                    'name' => $row->product?->name ?? 'Unknown',
+                    'qty' => number_format((float) $row->qty, 3, '.', ''),
+                    'revenue' => number_format((float) $row->revenue, 2, '.', ''),
+                ])
+                ->all();
 
         $openInvoices = Invoice::withoutGlobalScopes()
             ->where('business_id', $businessId)
             ->whereIn('status', [InvoiceStatus::Unpaid->value, InvoiceStatus::Partial->value])
+            ->where(function ($query) use ($fromDate, $toDate) {
+                $query->whereBetween('issued_at', [$fromDate->toDateString(), $toDate->toDateString()])
+                    ->orWhereBetween('created_at', [$fromDate, $toDate]);
+            })
             ->count();
 
         return [

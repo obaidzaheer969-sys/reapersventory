@@ -19,6 +19,14 @@ class InventoryService
     ) {}
 
     /**
+     * Resolve monitor lazily to avoid circular constructor deps.
+     */
+    private function lowStockMonitor(): LowStockMonitor
+    {
+        return app(LowStockMonitor::class);
+    }
+
+    /**
      * Adjust stock transactionally and write an immutable movement row.
      */
     public function adjust(
@@ -50,7 +58,7 @@ class InventoryService
             ]);
         }
 
-        return DB::transaction(function () use ($product, $warehouse, $type, $qty, $actor, $reference, $notes) {
+        $movement = DB::transaction(function () use ($product, $warehouse, $type, $qty, $actor, $reference, $notes) {
             $balance = InventoryBalance::withoutGlobalScopes()
                 ->where('business_id', $product->business_id)
                 ->where('warehouse_id', $warehouse->id)
@@ -114,6 +122,14 @@ class InventoryService
 
             return $movement;
         });
+
+        try {
+            $this->lowStockMonitor()->checkProduct($product->fresh() ?? $product);
+        } catch (\Throwable) {
+            // never block stock movements
+        }
+
+        return $movement;
     }
 
     /**
@@ -122,15 +138,21 @@ class InventoryService
     public function lowStockProducts(int $businessId): array
     {
         return Product::withoutGlobalScopes()
-            ->with(['inventoryBalances'])
+            ->with(['inventoryBalances' => fn ($q) => $q->withoutGlobalScopes()])
             ->where('business_id', $businessId)
+            ->whereNull('deleted_at')
             ->where('is_active', true)
             ->where('track_inventory', true)
             ->get()
             ->filter(function (Product $product) {
-                $total = (string) $product->inventoryBalances->sum(fn ($b) => (float) $b->quantity);
+                $total = number_format(
+                    (float) $product->inventoryBalances->sum(fn ($b) => (float) $b->quantity),
+                    3,
+                    '.',
+                    ''
+                );
 
-                return bccomp($total, (string) $product->reorder_level, 3) <= 0;
+                return bccomp($total, number_format((float) $product->reorder_level, 3, '.', ''), 3) <= 0;
             })
             ->values()
             ->all();
