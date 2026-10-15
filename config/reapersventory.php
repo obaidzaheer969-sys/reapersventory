@@ -8,6 +8,6 @@ return [
     'payment_proof_mimes' => ['jpg', 'jpeg', 'png', 'pdf', 'webp'],
     // Email verification flow is disabled; registrations are auto-verified.
     'email_verification_required' => false,
-    // Secret for public/deploy.php (GitHub webhook or browser one-click deploy).
+    // Secret for public/rv-update.php (browser / webhook one-click deploy).
     'deploy_secret' => (string) env('DEPLOY_SECRET', ''),
 ];
