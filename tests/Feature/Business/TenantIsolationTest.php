@@ -46,12 +46,12 @@ class TenantIsolationTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_unverified_users_cannot_access_business_dashboard(): void
+    public function test_unverified_users_can_access_business_dashboard_without_email_activation(): void
     {
         $user = User::factory()->unverified()->create();
 
         $this->actingAs($user)
             ->get(route('business.dashboard'))
-            ->assertRedirect(route('verification.notice'));
+            ->assertOk();
     }
 }

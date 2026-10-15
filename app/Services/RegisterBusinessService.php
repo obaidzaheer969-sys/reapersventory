@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\UserRole;
 use App\Models\Business;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +18,7 @@ class RegisterBusinessService
     /**
      * Register a business owner and their business in one transaction.
      * Public registration can never create a Super Admin.
+     * Email verification is not required (hosting mail is unreliable).
      *
      * @param  array{name: string, email: string, password: string, business_name: string, phone?: string|null}  $data
      */
@@ -47,9 +47,7 @@ class RegisterBusinessService
                 'is_active' => true,
             ]);
 
-            if (! config('reapersventory.email_verification_required', true)) {
-                $user->forceFill(['email_verified_at' => now()])->save();
-            }
+            $user->forceFill(['email_verified_at' => now()])->save();
 
             $this->auditLogger->log(
                 action: 'business.registered',
@@ -61,10 +59,6 @@ class RegisterBusinessService
                 ],
                 user: $user,
             );
-
-            if (! $user->hasVerifiedEmail()) {
-                event(new Registered($user));
-            }
 
             return $user;
         });

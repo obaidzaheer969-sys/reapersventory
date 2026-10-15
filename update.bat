@@ -13,4 +13,8 @@ php artisan route:clear
 php artisan view:clear
 if errorlevel 1 exit /b 1
 
+echo ==> Verifying any stuck unverified users
+php artisan reapersventory:verify-all-users
+if errorlevel 1 exit /b 1
+
 echo ==> Done. App is updated.

@@ -12,4 +12,7 @@ php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
 
+echo "==> Verifying any stuck unverified users"
+php artisan reapersventory:verify-all-users
+
 echo "==> Done. App is updated."

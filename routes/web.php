@@ -64,7 +64,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         ->middleware('throttle:6,1')
         ->name('verification.send');
 
-    Route::middleware(['verified', 'business.owner'])->prefix('business')->name('business.')->group(function () {
+    Route::middleware(['business.owner'])->prefix('business')->name('business.')->group(function () {
         Route::get('/dashboard', DashboardController::class)->name('dashboard');
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
