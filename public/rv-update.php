@@ -8,13 +8,27 @@
 
 declare(strict_types=1);
 
+set_time_limit(300);
+ini_set('display_errors', '1');
+error_reporting(E_ALL);
 header('Content-Type: text/plain; charset=UTF-8');
+
+set_exception_handler(static function (Throwable $e): void {
+    http_response_code(500);
+    echo "rv-update EXCEPTION\n";
+    echo $e->getMessage()."\n";
+    echo $e->getFile().':'.$e->getLine()."\n";
+});
+
+set_error_handler(static function (int $severity, string $message, string $file, int $line): bool {
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
 
 function rv_project_root(): ?string
 {
     $candidates = [
-        dirname(__DIR__), // normal: public/rv-update.php → project root
-        __DIR__,          // if document root is the project root
+        dirname(__DIR__),
+        __DIR__,
         dirname(dirname(__DIR__)),
     ];
 
@@ -107,6 +121,24 @@ function rv_secrets_match(string $expected, string $provided): bool
     return hash_equals($expected, $provided);
 }
 
+/** Clear Laravel bootstrap caches without booting the app (fixes 500 after deleted routes/controllers). */
+function rv_clear_bootstrap_cache(string $base, array &$log): void
+{
+    $dir = $base.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'cache';
+
+    if (! is_dir($dir)) {
+        $log[] = '[rv-update] bootstrap/cache missing';
+
+        return;
+    }
+
+    foreach (glob($dir.DIRECTORY_SEPARATOR.'*.php') ?: [] as $file) {
+        if (@unlink($file)) {
+            $log[] = '[rv-update] deleted '.basename($file);
+        }
+    }
+}
+
 $base = rv_project_root();
 $envPath = $base ? $base.DIRECTORY_SEPARATOR.'.env' : null;
 $env = $base ? rv_load_env($base) : [];
@@ -144,6 +176,9 @@ $log = [];
 $log[] = '[rv-update] started '.gmdate('c');
 $log[] = '[rv-update] base '.$base;
 
+// Clear stale caches FIRST so site does not 500 on missing DeployController etc.
+rv_clear_bootstrap_cache($base, $log);
+
 $php = rv_find_php();
 $log[] = '[rv-update] php '.$php;
 
@@ -164,8 +199,12 @@ $run('git fetch origin main');
 $run('git reset --hard origin/main');
 $run('git clean -fd -e .env -e .env.* -e storage -e vendor -e node_modules -e public/uploads -e public/rv-update.php');
 
+// Clear again after pull (new commit may still leave old cache files)
+rv_clear_bootstrap_cache($base, $log);
+
 $phpQ = escapeshellarg($php);
 $run($phpQ.' artisan migrate --force');
+$run($phpQ.' artisan optimize:clear');
 $run($phpQ.' artisan storage:link');
 
 $uploads = $base.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'uploads';
@@ -174,11 +213,8 @@ if (! is_dir($uploads)) {
     $log[] = '[rv-update] created public/uploads';
 }
 
-$run($phpQ.' artisan config:clear');
-$run($phpQ.' artisan cache:clear');
-$run($phpQ.' artisan route:clear');
-$run($phpQ.' artisan view:clear');
 $run($phpQ.' artisan reapersventory:verify-all-users');
 
 $log[] = '[rv-update] finished '.gmdate('c');
+$log[] = '[rv-update] Site should load now. Open https://reapersventory.com/';
 echo implode("\n", $log)."\n";
