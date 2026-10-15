@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Services\SubscriptionService;
+use App\Support\EnsuresPendingPlanColumn;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -15,6 +16,8 @@ class SubscriptionController extends Controller
 {
     public function index(Request $request, SubscriptionService $subscriptions): View
     {
+        EnsuresPendingPlanColumn::run();
+
         $business = $request->user()->business;
 
         $subscription = Subscription::query()

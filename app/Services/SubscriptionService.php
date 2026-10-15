@@ -9,6 +9,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Support\EnsuresPendingPlanColumn;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -230,9 +231,9 @@ class SubscriptionService
                 ]);
             }
 
-            if (! Schema::hasColumn('subscriptions', 'pending_plan_id')) {
+            if (! EnsuresPendingPlanColumn::run()) {
                 throw ValidationException::withMessages([
-                    'planId' => 'Server update required before package changes. Run rv-update on hosting, then try again.',
+                    'planId' => 'Could not prepare package change on the server. Contact support or run rv-update.',
                 ]);
             }
 
