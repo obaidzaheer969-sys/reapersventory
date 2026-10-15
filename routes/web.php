@@ -22,6 +22,7 @@ use App\Http\Controllers\Business\PurchaseController;
 use App\Http\Controllers\Business\ReportController;
 use App\Http\Controllers\Business\ReturnController;
 use App\Http\Controllers\Business\SaleController;
+use App\Http\Controllers\Business\ScanBarcodeController;
 use App\Http\Controllers\Business\SubscriptionController;
 use App\Http\Controllers\Business\SupplierController;
 use App\Http\Controllers\Business\WarehouseController;
@@ -93,6 +94,8 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('/sales/create', [SaleController::class, 'create'])->name('sales.create');
             Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
             Route::post('/sales/{sale}/pay', [SaleController::class, 'pay'])->name('sales.pay');
+            Route::post('/sales/scan-barcode', [ScanBarcodeController::class, '__invoke'])
+                ->name('sales.scan-barcode');
 
             Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
             Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');

@@ -12,7 +12,7 @@
                     placeholder="Scan barcode / SKU then Enter"
                     class="mt-1 w-full rounded-lg px-3 py-3 text-base ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
                 >
-                <p class="mt-1 text-xs text-slate-500">USB scanner = keyboard. Sale complete pe chhoti bill print screen khulegi.</p>
+                <p class="mt-1 text-xs text-slate-500">USB scanner = keyboard (type barcode then Enter). Mobile app: camera barcode scanner bhi same sale form mein add ho jayega.</p>
                 @error('barcodeScan') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
@@ -141,3 +141,43 @@
         </aside>
     </form>
 </div>
+@push('scripts')
+<script>
+  (function () {
+    // Receive barcode scanned from the Expo mobile app camera and feed it into
+    // the same Livewire sale-form scanner that the USB keyboard scanner uses.
+    window.addEventListener('message', function (event) {
+      var data = event.data;
+      if (!data || data.type !== 'rv-mobile-barcode') {
+        return;
+      }
+      var code = data.code;
+      if (!code || typeof Livewire === 'undefined') {
+        return;
+      }
+      var root = document.querySelector('[wire\\:id]');
+      if (!root) {
+        return;
+      }
+      var component = Livewire.find(root.getAttribute('wire:id'));
+      if (!component) {
+        return;
+      }
+      component.set('barcodeScan', code).then(function () {
+        return component.callMethod('scanBarcode');
+      }).catch(function () {
+        // Fallback: type into the input and press Enter (USB scanner behaviour).
+        var input = document.querySelector('input[wire\\:model="barcodeScan"]');
+        if (!input) {
+          return;
+        }
+        input.value = code;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new KeyboardEvent('keydown', {
+          key: 'Enter', code: 'Enter', bubbles: true, cancelable: true
+        }));
+      });
+    });
+  })();
+</script>
+@endpush
