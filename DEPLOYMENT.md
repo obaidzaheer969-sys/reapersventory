@@ -87,9 +87,20 @@ DEPLOY_SECRET=put-a-long-random-string-here
 
 2. Then either open once after push:
 
-`https://reapersventory.com/deploy?secret=put-a-long-random-string-here`
+`https://reapersventory.com/rv-update.php?secret=put-a-long-random-string-here`
 
-> If you see **404**, pull/deploy the latest `main` once from cPanel Git first (so the new `/deploy` route exists), then open the link again.
+(also works: `https://reapersventory.com/deploy.php?secret=...`)
+
+### If you see **404**
+
+Laravel `route:cache` on hosting is stale, or new files were not copied into the live web root.
+
+**Fix (once):**
+1. cPanel → **File Manager**
+2. Open the folder that contains `index.php` (usually `public_html`)
+3. Upload `public/rv-update.php` from this repo into that folder
+4. Ensure `.env` has `DEPLOY_SECRET=...`
+5. Open the `rv-update.php` URL above — it will `git pull` + clear caches
 
 Or GitHub → repo → **Settings → Webhooks → Add webhook**
 - Payload URL: same URL as above
