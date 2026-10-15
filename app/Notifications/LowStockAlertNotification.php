@@ -2,27 +2,23 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\UsesAppChannels;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 
-class LowStockAlertNotification extends Notification implements ShouldQueue
+class LowStockAlertNotification extends Notification
 {
     use Queueable;
+    use UsesAppChannels;
 
     /**
-     * @param  Collection<int, \App\Models\Product>|\Illuminate\Support\Collection  $products
+     * @param  Collection<int, \App\Models\Product>  $products
      */
     public function __construct(
         public Collection $products,
     ) {}
-
-    public function via(object $notifiable): array
-    {
-        return ['mail'];
-    }
 
     public function toMail(object $notifiable): MailMessage
     {
@@ -46,5 +42,20 @@ class LowStockAlertNotification extends Notification implements ShouldQueue
         }
 
         return $mail->action('Review inventory', url('/business/inventory'));
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        $count = $this->products->count();
+        $first = $this->products->first();
+
+        return [
+            'title' => 'Low-stock alert',
+            'body' => $count === 1 && $first
+                ? "{$first->name} is at or below reorder level."
+                : "{$count} products are at or below reorder level.",
+            'url' => url('/business/inventory'),
+            'level' => 'warning',
+        ];
     }
 }

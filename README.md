@@ -66,7 +66,8 @@ Public registration **never** creates Super Admin users.
 
 ## Milestone 5 highlights
 
-- Queued mail notifications: payment approved/rejected, subscription expiring/grace/expired, low-stock alerts
+- In-app + mail notification system: welcome, payment submitted/approved/rejected, subscription status, low stock, sales, purchases
+- Business **Alerts** page + unread badge; Filament admin database notifications
 - Scheduler: `subscriptions:expire` (hourly), `subscriptions:notify-expiring` (daily), `inventory:notify-low-stock` (daily)
 - Security headers middleware, auth rate limits, HTTPS forced in production, private disk `serve => false`
 - `DEPLOYMENT.md` + `php artisan reapersventory:health` + HTTP `/up`

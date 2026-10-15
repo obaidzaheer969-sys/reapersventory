@@ -119,6 +119,7 @@ $run('git reset --hard origin/main');
 $run('git clean -fd -e .env -e .env.* -e storage -e vendor -e node_modules -e public/rv-update.php');
 
 $phpQ = escapeshellarg($php);
+$run($phpQ.' artisan migrate --force');
 $run($phpQ.' artisan config:clear');
 $run($phpQ.' artisan cache:clear');
 $run($phpQ.' artisan route:clear');

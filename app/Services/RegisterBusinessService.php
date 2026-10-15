@@ -13,12 +13,12 @@ class RegisterBusinessService
 {
     public function __construct(
         private readonly AuditLogger $auditLogger,
+        private readonly BusinessNotifier $notifier,
     ) {}
 
     /**
      * Register a business owner and their business in one transaction.
      * Public registration can never create a Super Admin.
-     * Email verification is not required (hosting mail is unreliable).
      *
      * @param  array{name: string, email: string, password: string, business_name: string, phone?: string|null}  $data
      */
@@ -59,6 +59,8 @@ class RegisterBusinessService
                 ],
                 user: $user,
             );
+
+            $this->notifier->welcome($user, $business);
 
             return $user;
         });

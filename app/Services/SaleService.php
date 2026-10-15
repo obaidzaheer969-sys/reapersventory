@@ -24,6 +24,7 @@ class SaleService
         private readonly InventoryService $inventory,
         private readonly PlanLimitService $planLimits,
         private readonly AuditLogger $auditLogger,
+        private readonly BusinessNotifier $notifier,
     ) {}
 
     /**
@@ -170,7 +171,10 @@ class SaleService
                 user: $actor,
             );
 
-            return $sale->load(['items.product', 'customer', 'warehouse', 'invoice', 'payments']);
+            $sale = $sale->load(['items.product', 'customer', 'warehouse', 'invoice', 'payments']);
+            $this->notifier->saleCompleted($sale);
+
+            return $sale;
         });
     }
 

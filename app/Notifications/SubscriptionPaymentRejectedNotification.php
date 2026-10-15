@@ -3,23 +3,19 @@
 namespace App\Notifications;
 
 use App\Models\SubscriptionPayment;
+use App\Notifications\Concerns\UsesAppChannels;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class SubscriptionPaymentRejectedNotification extends Notification implements ShouldQueue
+class SubscriptionPaymentRejectedNotification extends Notification
 {
     use Queueable;
+    use UsesAppChannels;
 
     public function __construct(
         public SubscriptionPayment $payment,
     ) {}
-
-    public function via(object $notifiable): array
-    {
-        return ['mail'];
-    }
 
     public function toMail(object $notifiable): MailMessage
     {
@@ -33,8 +29,18 @@ class SubscriptionPaymentRejectedNotification extends Notification implements Sh
             $mail->line('Reason: '.$this->payment->review_notes);
         }
 
-        return $mail
-            ->action('Submit a new payment', url('/business/subscription'))
-            ->line('If you need help, reply to this email or contact support.');
+        return $mail->action('Submit a new payment', url('/business/subscription'));
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'title' => 'Payment rejected',
+            'body' => $this->payment->review_notes
+                ? 'Payment rejected: '.$this->payment->review_notes
+                : 'Your subscription payment proof was rejected.',
+            'url' => url('/business/subscription'),
+            'level' => 'danger',
+        ];
     }
 }

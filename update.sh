@@ -6,6 +6,9 @@ cd "$(dirname "$0")"
 echo "==> Pulling latest from origin/main"
 git pull origin main
 
+echo "==> Running migrations"
+php artisan migrate --force
+
 echo "==> Clearing Laravel caches"
 php artisan config:clear
 php artisan cache:clear

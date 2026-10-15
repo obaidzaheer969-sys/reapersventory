@@ -6,6 +6,10 @@ echo ==> Pulling latest from origin/main
 git pull origin main
 if errorlevel 1 exit /b 1
 
+echo ==> Running migrations
+php artisan migrate --force
+if errorlevel 1 exit /b 1
+
 echo ==> Clearing Laravel caches
 php artisan config:clear
 php artisan cache:clear

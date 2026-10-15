@@ -21,6 +21,7 @@ class SubscriptionPaymentService
     public function __construct(
         private readonly SubscriptionService $subscriptions,
         private readonly AuditLogger $auditLogger,
+        private readonly BusinessNotifier $notifier,
     ) {}
 
     /**
@@ -120,7 +121,10 @@ class SubscriptionPaymentService
                 user: $actor,
             );
 
-            return $payment->load('proofs', 'paymentMethod');
+            $payment = $payment->load('proofs', 'paymentMethod');
+            $this->notifier->paymentSubmitted($payment);
+
+            return $payment;
         });
     }
 

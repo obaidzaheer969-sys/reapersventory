@@ -20,6 +20,7 @@ class PurchaseService
         private readonly InventoryService $inventory,
         private readonly PlanLimitService $planLimits,
         private readonly AuditLogger $auditLogger,
+        private readonly BusinessNotifier $notifier,
     ) {}
 
     /**
@@ -164,7 +165,10 @@ class PurchaseService
                 user: $actor,
             );
 
-            return $purchase->refresh()->load('items.product', 'supplier', 'warehouse');
+            $purchase = $purchase->refresh()->load('items.product', 'supplier', 'warehouse');
+            $this->notifier->purchaseReceived($purchase);
+
+            return $purchase;
         });
     }
 

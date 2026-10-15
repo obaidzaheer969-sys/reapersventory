@@ -14,6 +14,7 @@ use App\Http\Controllers\Business\DashboardController;
 use App\Http\Controllers\Business\ExpenseController;
 use App\Http\Controllers\Business\InventoryController;
 use App\Http\Controllers\Business\InvoiceController;
+use App\Http\Controllers\Business\NotificationController;
 use App\Http\Controllers\Business\ProductController;
 use App\Http\Controllers\Business\ProfileController;
 use App\Http\Controllers\Business\PurchaseController;
@@ -74,6 +75,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/dashboard', DashboardController::class)->name('dashboard');
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+        Route::get('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
 
         Route::middleware('subscribed')->group(function () {
             Route::get('/products', [ProductController::class, 'index'])->name('products.index');

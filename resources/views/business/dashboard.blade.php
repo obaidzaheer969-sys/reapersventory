@@ -73,6 +73,7 @@
                 <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.sales.index') }}">Sales & invoices</a></li>
                 <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.reports.index') }}">Financial reports</a></li>
                 <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.subscription.index') }}">Billing & branding</a></li>
+                <li><a class="text-brand-600 hover:text-brand-500" href="{{ route('business.notifications.index') }}">Notifications / alerts</a></li>
             </ul>
         </div>
     </div>

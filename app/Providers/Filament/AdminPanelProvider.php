@@ -31,6 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->darkMode(false)
+            ->databaseNotifications()
             ->brandName('')
             ->brandLogo(asset('images/reapersventory-logo.png'))
             ->brandLogoHeight('4rem')

@@ -23,6 +23,14 @@
                     <a href="{{ route('business.products.index') }}" class="hidden text-navy-800 hover:text-brand-600 lg:inline">Products</a>
                     <a href="{{ route('business.reports.index') }}" class="hidden text-navy-800 hover:text-brand-600 lg:inline">Reports</a>
                     <a href="{{ route('business.subscription.index') }}" class="hidden text-navy-800 hover:text-brand-600 sm:inline">Billing</a>
+                    <a href="{{ route('business.notifications.index') }}" class="relative text-navy-800 hover:text-brand-600">
+                        Alerts
+                        @if (($unreadNotificationsCount ?? 0) > 0)
+                            <span class="absolute -right-2 -top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-bold text-white">
+                                {{ $unreadNotificationsCount > 9 ? '9+' : $unreadNotificationsCount }}
+                            </span>
+                        @endif
+                    </a>
                 @endif
 
                 <form method="POST" action="{{ route('logout') }}">

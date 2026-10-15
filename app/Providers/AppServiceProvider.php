@@ -30,9 +30,11 @@ use App\Policies\SupplierPolicy;
 use App\Policies\WarehousePolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -75,5 +77,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ProductReturn::class, ProductReturnPolicy::class);
 
         Gate::define('access-super-admin', fn ($user) => $user->isSuperAdmin());
+
+        View::composer('layouts.partials.nav', function ($view): void {
+            $count = 0;
+            $user = Auth::user();
+            if ($user && method_exists($user, 'unreadNotifications')) {
+                $count = $user->unreadNotifications()->count();
+            }
+            $view->with('unreadNotificationsCount', $count);
+        });
     }
 }
