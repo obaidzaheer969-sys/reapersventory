@@ -52,6 +52,9 @@
         @include('layouts.partials.footer')
     </div>
 
+    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+        @vite('resources/js/app.js')
+    @endif
     @livewireScripts
     @stack('scripts')
 </body>

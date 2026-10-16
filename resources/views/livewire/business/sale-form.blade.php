@@ -157,19 +157,14 @@
         var cameraPanel = document.getElementById('sale-camera-panel');
         var cameraVideo = document.getElementById('sale-camera-video');
         var cameraStatus = document.getElementById('sale-camera-status');
-        var cameraStream = null;
-        var barcodeDetector = null;
-        var scanTimer = null;
+        var cameraControls = null;
         var isScanning = false;
 
         function stopCamera() {
             isScanning = false;
-            window.clearTimeout(scanTimer);
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(function (track) {
-                    track.stop();
-                });
-                cameraStream = null;
+            if (cameraControls) {
+                cameraControls.stop();
+                cameraControls = null;
             }
             if (cameraVideo) {
                 cameraVideo.srcObject = null;
@@ -213,63 +208,36 @@
         }
 
         async function startCamera() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof window.BarcodeDetector === 'undefined') {
-                cameraStatus.textContent = 'Camera barcode scanning is not supported in this browser. Use a USB scanner or enter the code.';
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.ReapersVentoryBarcodeScanner) {
+                cameraStatus.textContent = 'Camera scanning is unavailable here. Use a USB scanner or enter the code.';
                 return;
             }
 
             cameraStatus.textContent = 'Starting camera...';
+            cameraPanel.hidden = false;
+            cameraStart.hidden = true;
+            cameraStop.hidden = false;
+            isScanning = true;
             try {
-                var formats = await window.BarcodeDetector.getSupportedFormats();
-                if (!formats.length) {
-                    throw new Error('No barcode formats are supported.');
-                }
-                barcodeDetector = new window.BarcodeDetector({ formats: formats });
-                cameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { ideal: 'environment' } },
-                    audio: false
-                });
-                cameraVideo.srcObject = cameraStream;
-                await cameraVideo.play();
-                cameraPanel.hidden = false;
-                cameraStart.hidden = true;
-                cameraStop.hidden = false;
-                cameraStatus.textContent = 'Point the camera at a product barcode.';
-                isScanning = true;
-
-                async function detectBarcode() {
+                cameraControls = await window.ReapersVentoryBarcodeScanner.start(cameraVideo, function (code) {
                     if (!isScanning) {
                         return;
                     }
-                    try {
-                        var barcodes = await barcodeDetector.detect(cameraVideo);
-                            if (!isScanning) {
-                                return;
-                            }
-                        var match = barcodes.find(function (barcode) {
-                            return barcode.rawValue;
-                        });
-                        if (match) {
-                            stopCamera();
-                            cameraStatus.textContent = 'Barcode detected. Adding product...';
-                            sendBarcodeToSale(match.rawValue);
-                            return;
-                        }
-                    } catch (error) {
-                            if (!isScanning) {
-                                return;
-                            }
-                        stopCamera();
-                        cameraStatus.textContent = 'Camera scan failed. Use a USB scanner or enter the code.';
-                        return;
+                    stopCamera();
+                    cameraStatus.textContent = 'Barcode detected. Adding product...';
+                    sendBarcodeToSale(code);
+                });
+                if (!isScanning) {
+                    if (cameraControls) {
+                        cameraControls.stop();
                     }
-                    scanTimer = window.setTimeout(detectBarcode, 200);
+                    cameraControls = null;
+                    return;
                 }
-
-                detectBarcode();
+                cameraStatus.textContent = 'Point the camera at a product barcode.';
             } catch (error) {
                 stopCamera();
-                cameraStatus.textContent = 'Could not open the camera. Allow camera access and use HTTPS, or use a USB scanner.';
+                cameraStatus.textContent = 'Could not start scanning. Allow camera access and use HTTPS, or use a USB scanner.';
             }
         }
 
