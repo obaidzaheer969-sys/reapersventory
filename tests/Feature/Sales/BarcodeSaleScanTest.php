@@ -17,6 +17,16 @@ class BarcodeSaleScanTest extends TestCase
     use CreatesSubscribedBusiness;
     use RefreshDatabase;
 
+    public function test_sale_form_shows_camera_and_usb_scanning_options(): void
+    {
+        $owner = $this->subscribedOwner();
+
+        Livewire::actingAs($owner)
+            ->test(SaleForm::class)
+            ->assertSee('Scan with phone camera')
+            ->assertSee('USB scanner');
+    }
+
     public function test_barcode_scan_adds_product_line_on_sale_form(): void
     {
         $owner = $this->subscribedOwner();

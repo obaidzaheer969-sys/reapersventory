@@ -12,7 +12,15 @@
                     placeholder="Scan barcode / SKU then Enter"
                     class="mt-1 w-full rounded-lg px-3 py-3 text-base ring-1 ring-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
                 >
-                <p class="mt-1 text-xs text-slate-500">USB scanner = keyboard (type barcode then Enter). Mobile app: camera barcode scanner bhi same sale form mein add ho jayega.</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <button type="button" id="sale-camera-start" class="rounded-lg border border-brand-300 px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-100">Scan with phone camera</button>
+                    <button type="button" id="sale-camera-stop" hidden class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Stop camera</button>
+                </div>
+                <div id="sale-camera-panel" hidden class="mt-3">
+                    <video id="sale-camera-video" autoplay playsinline class="w-full max-w-md rounded-lg bg-black"></video>
+                </div>
+                <p id="sale-camera-status" class="mt-2 text-xs text-slate-600" role="status" aria-live="polite"></p>
+                <p class="mt-1 text-xs text-slate-500">USB scanner: connect it, focus this field, then scan; it sends Enter automatically. Phone camera scanning requires browser camera support.</p>
                 @error('barcodeScan') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
@@ -141,43 +149,157 @@
         </aside>
     </form>
 </div>
-@push('scripts')
+@pushOnce('scripts')
 <script>
   (function () {
+        var cameraStart = document.getElementById('sale-camera-start');
+        var cameraStop = document.getElementById('sale-camera-stop');
+        var cameraPanel = document.getElementById('sale-camera-panel');
+        var cameraVideo = document.getElementById('sale-camera-video');
+        var cameraStatus = document.getElementById('sale-camera-status');
+        var cameraStream = null;
+        var barcodeDetector = null;
+        var scanTimer = null;
+        var isScanning = false;
+
+        function stopCamera() {
+            isScanning = false;
+            window.clearTimeout(scanTimer);
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(function (track) {
+                    track.stop();
+                });
+                cameraStream = null;
+            }
+            if (cameraVideo) {
+                cameraVideo.srcObject = null;
+            }
+            if (cameraPanel) {
+                cameraPanel.hidden = true;
+            }
+            if (cameraStart) {
+                cameraStart.hidden = false;
+            }
+            if (cameraStop) {
+                cameraStop.hidden = true;
+            }
+        }
+
+        function sendBarcodeToSale(code) {
+            if (!code || typeof Livewire === 'undefined') {
+                return;
+            }
+            var root = document.querySelector('[wire\\:id]');
+            if (!root) {
+                return;
+            }
+            var component = Livewire.find(root.getAttribute('wire:id'));
+            if (!component) {
+                return;
+            }
+            component.set('barcodeScan', code).then(function () {
+                return component.callMethod('scanBarcode');
+            }).catch(function () {
+                var input = document.querySelector('input[wire\\:model="barcodeScan"]');
+                if (!input) {
+                    return;
+                }
+                input.value = code;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new KeyboardEvent('keydown', {
+                    key: 'Enter', code: 'Enter', bubbles: true, cancelable: true
+                }));
+            });
+        }
+
+        async function startCamera() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof window.BarcodeDetector === 'undefined') {
+                cameraStatus.textContent = 'Camera barcode scanning is not supported in this browser. Use a USB scanner or enter the code.';
+                return;
+            }
+
+            cameraStatus.textContent = 'Starting camera...';
+            try {
+                var formats = await window.BarcodeDetector.getSupportedFormats();
+                if (!formats.length) {
+                    throw new Error('No barcode formats are supported.');
+                }
+                barcodeDetector = new window.BarcodeDetector({ formats: formats });
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' } },
+                    audio: false
+                });
+                cameraVideo.srcObject = cameraStream;
+                await cameraVideo.play();
+                cameraPanel.hidden = false;
+                cameraStart.hidden = true;
+                cameraStop.hidden = false;
+                cameraStatus.textContent = 'Point the camera at a product barcode.';
+                isScanning = true;
+
+                async function detectBarcode() {
+                    if (!isScanning) {
+                        return;
+                    }
+                    try {
+                        var barcodes = await barcodeDetector.detect(cameraVideo);
+                            if (!isScanning) {
+                                return;
+                            }
+                        var match = barcodes.find(function (barcode) {
+                            return barcode.rawValue;
+                        });
+                        if (match) {
+                            stopCamera();
+                            cameraStatus.textContent = 'Barcode detected. Adding product...';
+                            sendBarcodeToSale(match.rawValue);
+                            return;
+                        }
+                    } catch (error) {
+                            if (!isScanning) {
+                                return;
+                            }
+                        stopCamera();
+                        cameraStatus.textContent = 'Camera scan failed. Use a USB scanner or enter the code.';
+                        return;
+                    }
+                    scanTimer = window.setTimeout(detectBarcode, 200);
+                }
+
+                detectBarcode();
+            } catch (error) {
+                stopCamera();
+                cameraStatus.textContent = 'Could not open the camera. Allow camera access and use HTTPS, or use a USB scanner.';
+            }
+        }
+
+        if (cameraStart) {
+            cameraStart.addEventListener('click', startCamera);
+        }
+        if (cameraStop) {
+            cameraStop.addEventListener('click', function () {
+                stopCamera();
+                cameraStatus.textContent = 'Camera stopped.';
+            });
+        }
+        document.addEventListener('livewire:navigating', stopCamera);
+
     // Receive barcode scanned from the Expo mobile app camera and feed it into
     // the same Livewire sale-form scanner that the USB keyboard scanner uses.
     window.addEventListener('message', function (event) {
       var data = event.data;
+            if (typeof data === 'string') {
+                try {
+                    data = JSON.parse(data);
+                } catch (error) {
+                    return;
+                }
+            }
       if (!data || data.type !== 'rv-mobile-barcode') {
         return;
       }
-      var code = data.code;
-      if (!code || typeof Livewire === 'undefined') {
-        return;
-      }
-      var root = document.querySelector('[wire\\:id]');
-      if (!root) {
-        return;
-      }
-      var component = Livewire.find(root.getAttribute('wire:id'));
-      if (!component) {
-        return;
-      }
-      component.set('barcodeScan', code).then(function () {
-        return component.callMethod('scanBarcode');
-      }).catch(function () {
-        // Fallback: type into the input and press Enter (USB scanner behaviour).
-        var input = document.querySelector('input[wire\\:model="barcodeScan"]');
-        if (!input) {
-          return;
-        }
-        input.value = code;
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new KeyboardEvent('keydown', {
-          key: 'Enter', code: 'Enter', bubbles: true, cancelable: true
-        }));
-      });
+            sendBarcodeToSale(data.code);
     });
   })();
 </script>
-@endpush
+@endPushOnce
