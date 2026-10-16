@@ -108,6 +108,27 @@ function rv_find_php(): string
     return 'php';
 }
 
+function rv_find_npm(): ?string
+{
+    $candidates = [
+        '/usr/local/bin/npm',
+        '/usr/bin/npm',
+        'npm',
+    ];
+
+    foreach ($candidates as $bin) {
+        $out = [];
+        $code = 0;
+        exec(escapeshellarg($bin).' --version 2>&1', $out, $code);
+
+        if ($code === 0 && isset($out[0])) {
+            return $bin;
+        }
+    }
+
+    return null;
+}
+
 function rv_secrets_match(string $expected, string $provided): bool
 {
     if ($expected === '' || $provided === '') {
@@ -198,6 +219,21 @@ $run = static function (string $cmd) use (&$log): int {
 $run('git fetch origin main');
 $run('git reset --hard origin/main');
 $run('git clean -fd -e .env -e .env.* -e storage -e vendor -e node_modules -e public/uploads -e public/rv-update.php');
+
+// Rebuild Vite assets so production loads the scanner module from the manifest.
+$npm = rv_find_npm();
+if ($npm === null) {
+    http_response_code(500);
+    echo "npm is required to build frontend assets. Enable Node.js/npm for the hosting account, then retry.\n";
+    exit;
+}
+
+$npmQ = escapeshellarg($npm);
+if ($run($npmQ.' ci') !== 0 || $run($npmQ.' run build') !== 0) {
+    http_response_code(500);
+    echo "Frontend asset build failed. Check the deployment log and Node.js version.\n";
+    exit;
+}
 
 // Clear again after pull (new commit may still leave old cache files)
 rv_clear_bootstrap_cache($base, $log);

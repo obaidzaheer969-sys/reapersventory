@@ -11,6 +11,15 @@ PHP_BIN="${PHP_BIN:-php}"
 
 echo "[deploy] $(date -u '+%Y-%m-%dT%H:%M:%SZ') starting in $(pwd)"
 
+if ! command -v npm >/dev/null 2>&1; then
+  echo "[deploy] npm is required to build the frontend assets"
+  exit 1
+fi
+
+echo "[deploy] installing frontend dependencies and building assets"
+npm ci
+npm run build
+
 if [ -f artisan ]; then
   "$PHP_BIN" artisan migrate --force || true
   "$PHP_BIN" artisan db:seed --class=PlanSeeder --force || true

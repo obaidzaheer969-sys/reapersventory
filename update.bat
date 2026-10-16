@@ -6,6 +6,12 @@ echo ==> Pulling latest from origin/main
 git pull origin main
 if errorlevel 1 exit /b 1
 
+echo ==> Building frontend assets
+call npm.cmd ci
+if errorlevel 1 exit /b 1
+call npm.cmd run build
+if errorlevel 1 exit /b 1
+
 echo ==> Running migrations
 php artisan migrate --force
 if errorlevel 1 exit /b 1

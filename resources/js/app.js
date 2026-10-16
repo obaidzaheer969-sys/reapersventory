@@ -1,15 +1,12 @@
 window.ReapersVentoryBarcodeScanner = {
-	async start(video, onDetected) {
+	async start(video, stream, onDetected) {
 		const { BrowserMultiFormatReader } = await import('@zxing/browser');
 		const reader = new BrowserMultiFormatReader();
 		let controls;
 		let detected = false;
 
-		controls = await reader.decodeFromConstraints(
-			{
-				video: { facingMode: { ideal: 'environment' } },
-				audio: false,
-			},
+		controls = await reader.decodeFromStream(
+			stream,
 			video,
 			(result) => {
 				if (!result || detected) {

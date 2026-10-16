@@ -17,7 +17,7 @@
                     <button type="button" id="sale-camera-stop" hidden class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">Stop camera</button>
                 </div>
                 <div id="sale-camera-panel" hidden class="mt-3">
-                    <video id="sale-camera-video" autoplay playsinline class="w-full max-w-md rounded-lg bg-black"></video>
+                    <video id="sale-camera-video" autoplay muted playsinline class="w-full max-w-md rounded-lg bg-black"></video>
                 </div>
                 <p id="sale-camera-status" class="mt-2 text-xs text-slate-600" role="status" aria-live="polite"></p>
                 <p class="mt-1 text-xs text-slate-500">USB scanner: connect it, focus this field, then scan; it sends Enter automatically. Phone camera scanning requires browser camera support.</p>
@@ -158,6 +158,7 @@
         var cameraVideo = document.getElementById('sale-camera-video');
         var cameraStatus = document.getElementById('sale-camera-status');
         var cameraControls = null;
+        var cameraStream = null;
         var isScanning = false;
 
         function stopCamera() {
@@ -165,6 +166,12 @@
             if (cameraControls) {
                 cameraControls.stop();
                 cameraControls = null;
+            }
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(function (track) {
+                    track.stop();
+                });
+                cameraStream = null;
             }
             if (cameraVideo) {
                 cameraVideo.srcObject = null;
@@ -207,38 +214,66 @@
             });
         }
 
-        async function startCamera() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.ReapersVentoryBarcodeScanner) {
-                cameraStatus.textContent = 'Camera scanning is unavailable here. Use a USB scanner or enter the code.';
+        function startCamera() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                cameraStatus.textContent = 'Camera is unavailable. Open this page over HTTPS, or use a USB scanner.';
                 return;
             }
 
-            cameraStatus.textContent = 'Starting camera...';
+            cameraStatus.textContent = 'Requesting camera access...';
             cameraPanel.hidden = false;
             cameraStart.hidden = true;
             cameraStop.hidden = false;
             isScanning = true;
+            var streamRequest;
             try {
-                cameraControls = await window.ReapersVentoryBarcodeScanner.start(cameraVideo, function (code) {
-                    if (!isScanning) {
-                        return;
-                    }
-                    stopCamera();
-                    cameraStatus.textContent = 'Barcode detected. Adding product...';
-                    sendBarcodeToSale(code);
+                streamRequest = navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' } },
+                    audio: false
                 });
+            } catch (error) {
+                stopCamera();
+                cameraStatus.textContent = 'Could not request the camera. Allow camera access and try again.';
+                return;
+            }
+
+            streamRequest.then(function (stream) {
+                cameraStream = stream;
                 if (!isScanning) {
-                    if (cameraControls) {
-                        cameraControls.stop();
-                    }
-                    cameraControls = null;
+                    stopCamera();
+                    return null;
+                }
+                if (!window.ReapersVentoryBarcodeScanner) {
+                    throw new Error('Scanner module is not loaded.');
+                }
+                cameraVideo.srcObject = stream;
+                return cameraVideo.play().then(function () {
+                    return window.ReapersVentoryBarcodeScanner.start(cameraVideo, stream, function (code) {
+                        if (!isScanning) {
+                            return;
+                        }
+                        stopCamera();
+                        cameraStatus.textContent = 'Barcode detected. Adding product...';
+                        sendBarcodeToSale(code);
+                    });
+                });
+            }).then(function (controls) {
+                if (!controls) {
+                    return;
+                }
+                cameraControls = controls;
+                if (!isScanning) {
+                    stopCamera();
                     return;
                 }
                 cameraStatus.textContent = 'Point the camera at a product barcode.';
-            } catch (error) {
+            }).catch(function () {
+                var wasScanning = isScanning;
                 stopCamera();
-                cameraStatus.textContent = 'Could not start scanning. Allow camera access and use HTTPS, or use a USB scanner.';
-            }
+                if (wasScanning) {
+                    cameraStatus.textContent = 'Could not start scanning. Allow camera access and use HTTPS.';
+                }
+            });
         }
 
         if (cameraStart) {

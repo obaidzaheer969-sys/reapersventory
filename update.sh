@@ -6,6 +6,10 @@ cd "$(dirname "$0")"
 echo "==> Pulling latest from origin/main"
 git pull origin main
 
+echo "==> Building frontend assets"
+npm ci
+npm run build
+
 echo "==> Running migrations"
 php artisan migrate --force
 
