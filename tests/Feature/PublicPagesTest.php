@@ -13,7 +13,7 @@ class PublicPagesTest extends TestCase
     {
         $this->get(route('home'))
             ->assertOk()
-            ->assertSee('ReapersVentory', false);
+            ->assertSee(config('earning.brand'), false);
 
         $this->get(route('pricing'))
             ->assertOk()

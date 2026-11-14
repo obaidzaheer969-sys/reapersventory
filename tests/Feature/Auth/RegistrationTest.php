@@ -16,55 +16,61 @@ class RegistrationTest extends TestCase
         $this->get(route('register'))->assertOk();
     }
 
-    public function test_new_users_can_register_as_business_owners_with_a_business(): void
+    public function test_new_users_register_as_earners(): void
     {
         $response = $this->post(route('register'), [
-            'name' => 'Ali Khan',
+            'first_name' => 'Ali',
+            'last_name' => 'Khan',
             'email' => 'ali@example.com',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
-            'business_name' => 'Ali Traders',
-            'phone' => '03001234567',
+            'terms' => '1',
         ]);
 
-        $response->assertRedirect(route('business.dashboard'));
+        $response->assertRedirect(route('dashboard'));
         $this->assertAuthenticated();
 
         $user = User::query()->where('email', 'ali@example.com')->first();
         $this->assertNotNull($user);
-        $this->assertSame(UserRole::BusinessOwner, $user->role);
-        $this->assertNotNull($user->business_id);
+        $this->assertSame('Ali Khan', $user->name);
+        $this->assertSame(UserRole::Earner, $user->role);
+        $this->assertNull($user->business_id);
         $this->assertNotNull($user->email_verified_at);
-        $this->assertDatabaseHas('businesses', [
-            'id' => $user->business_id,
-            'name' => 'Ali Traders',
+        $this->assertSame(0.0, (float) $user->wallet_balance);
+    }
+
+    public function test_registration_requires_terms_acceptance(): void
+    {
+        $this->post(route('register'), [
+            'first_name' => 'Ali',
+            'last_name' => 'Khan',
             'email' => 'ali@example.com',
-        ]);
-        $this->assertDatabaseHas('audit_logs', [
-            'action' => 'business.registered',
-            'business_id' => $user->business_id,
-            'user_id' => $user->id,
-        ]);
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ])->assertSessionHasErrors('terms');
+
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'ali@example.com']);
     }
 
     public function test_public_registration_never_grants_super_admin_even_if_role_is_injected(): void
     {
         $response = $this->post(route('register'), [
-            'name' => 'Hacker',
+            'first_name' => 'Hacker',
+            'last_name' => 'Ali',
             'email' => 'hacker@example.com',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
-            'business_name' => 'Evil Corp',
+            'terms' => '1',
             'role' => UserRole::SuperAdmin->value,
             'business_id' => 999,
         ]);
 
-        $response->assertRedirect(route('business.dashboard'));
+        $response->assertRedirect(route('dashboard'));
 
         $user = User::query()->where('email', 'hacker@example.com')->firstOrFail();
-        $this->assertSame(UserRole::BusinessOwner, $user->role);
-        $this->assertNotNull($user->business_id);
-        $this->assertNotSame(999, $user->business_id);
+        $this->assertSame(UserRole::Earner, $user->role);
+        $this->assertNull($user->business_id);
         $this->assertSame(0, User::query()->where('role', UserRole::SuperAdmin)->count());
     }
 
@@ -73,11 +79,12 @@ class RegistrationTest extends TestCase
         User::factory()->create(['email' => 'taken@example.com']);
 
         $this->post(route('register'), [
-            'name' => 'Someone',
+            'first_name' => 'Some',
+            'last_name' => 'One',
             'email' => 'taken@example.com',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
-            'business_name' => 'Another Biz',
+            'terms' => '1',
         ])->assertSessionHasErrors('email');
     }
 }

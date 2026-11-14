@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\NewBusinessRegisteredAdminNotification;
 use App\Notifications\PackageChangeRequestedAdminNotification;
 use App\Notifications\PaymentSubmittedAdminNotification;
+use App\Services\RegisterBusinessService;
 use App\Services\SubscriptionPaymentService;
 use App\Services\SubscriptionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,19 +24,18 @@ class AdminNotificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_notifies_super_admins(): void
+    public function test_business_registration_notifies_super_admins(): void
     {
         Notification::fake();
 
         $admin = User::factory()->superAdmin()->create();
 
-        $this->post(route('register'), [
+        app(RegisterBusinessService::class)->register([
             'name' => 'Sara Ali',
             'email' => 'sara@example.com',
             'password' => 'Password123!',
-            'password_confirmation' => 'Password123!',
             'business_name' => 'Sara Shop',
-        ])->assertRedirect(route('business.dashboard'));
+        ]);
 
         Notification::assertSentTo($admin, NewBusinessRegisteredAdminNotification::class);
     }

@@ -27,6 +27,13 @@ use App\Http\Controllers\Business\SubscriptionController;
 use App\Http\Controllers\Business\SupplierController;
 use App\Http\Controllers\Business\TeamUserController;
 use App\Http\Controllers\Business\WarehouseController;
+use App\Http\Controllers\Earning\AnnouncementController as EarningAnnouncementController;
+use App\Http\Controllers\Earning\DashboardController as EarningDashboardController;
+use App\Http\Controllers\Earning\EarningsController as EarningEarningsController;
+use App\Http\Controllers\Earning\NotificationController as EarningNotificationController;
+use App\Http\Controllers\Earning\PayoutController as EarningPayoutController;
+use App\Http\Controllers\Earning\ProfileController as EarningProfileController;
+use App\Http\Controllers\Earning\TaskController as EarningTaskController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PricingController;
 use App\Models\PaymentProof;
@@ -59,6 +66,27 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+    Route::get('/dashboard', EarningDashboardController::class)->name('dashboard');
+    Route::get('/tasks', [EarningTaskController::class, 'index'])->name('tasks.index');
+    Route::post('/tasks/{task}/start', [EarningTaskController::class, 'start'])->name('tasks.start');
+    Route::get('/tasks/{task}/run', [EarningTaskController::class, 'run'])->name('tasks.run');
+    Route::post('/tasks/{task}/complete', [EarningTaskController::class, 'complete'])->name('tasks.complete');
+
+    Route::get('/earnings', [EarningEarningsController::class, 'index'])->name('earnings.index');
+    Route::get('/wallet', [EarningPayoutController::class, 'index'])->name('wallet.index');
+    Route::post('/wallet/accounts', [EarningPayoutController::class, 'storeAccount'])->name('wallet.accounts.store');
+    Route::put('/wallet/accounts/{account}', [EarningPayoutController::class, 'updateAccount'])->name('wallet.accounts.update');
+    Route::delete('/wallet/accounts/{account}', [EarningPayoutController::class, 'destroyAccount'])->name('wallet.accounts.destroy');
+    Route::post('/wallet/payouts', [EarningPayoutController::class, 'storePayout'])->name('wallet.payouts.store');
+
+    Route::get('/announcements', [EarningAnnouncementController::class, 'index'])->name('announcements.index');
+    Route::get('/notifications', [EarningNotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{notification}/read', [EarningNotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [EarningNotificationController::class, 'markAllRead'])->name('notifications.read-all');
+
+    Route::get('/profile', [EarningProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [EarningProfileController::class, 'update'])->name('profile.update');
 
     Route::get('/email/verify', EmailVerificationPromptController::class)->name('verification.notice');
     Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)

@@ -15,11 +15,28 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email', 'unique:businesses,email'],
+            'first_name' => ['required', 'string', 'max:127'],
+            'last_name' => ['required', 'string', 'max:127'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'business_name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'terms' => ['accepted'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'first_name.required' => 'Pehla naam likhein.',
+            'last_name.required' => 'Akhri naam likhein.',
+            'email.required' => 'Gmail address likhein.',
+            'email.email' => 'Sahi Gmail address likhein.',
+            'email.unique' => 'Yeh Gmail pehle se registered hai.',
+            'password.required' => 'Password likhein.',
+            'password.confirmed' => 'Dono passwords match nahi kar rahe.',
+            'terms.accepted' => 'Register karne ke liye Terms and Conditions accept karein.',
         ];
     }
 
@@ -31,5 +48,6 @@ class RegisterRequest extends FormRequest
         $this->request->remove('role');
         $this->request->remove('business_id');
         $this->request->remove('is_active');
+        $this->request->remove('wallet_balance');
     }
 }

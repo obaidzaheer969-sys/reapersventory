@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\PayoutStatus;
+use App\Enums\TaskAttemptStatus;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
@@ -14,7 +16,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'business_id', 'is_active'])]
+#[Fillable([
+    'name',
+    'email',
+    'password',
+    'role',
+    'business_id',
+    'is_active',
+    'google_id',
+    'avatar',
+    'wallet_balance',
+])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -28,6 +40,7 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_active' => 'boolean',
+            'wallet_balance' => 'decimal:2',
         ];
     }
 
@@ -41,6 +54,32 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(AuditLog::class);
     }
 
+    public function taskAttempts(): HasMany
+    {
+        return $this->hasMany(TaskAttempt::class);
+    }
+
+    public function completedTaskAttempts(): HasMany
+    {
+        return $this->hasMany(TaskAttempt::class)
+            ->where('status', TaskAttemptStatus::Completed->value);
+    }
+
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
+
+    public function payoutAccounts(): HasMany
+    {
+        return $this->hasMany(PayoutAccount::class);
+    }
+
+    public function payoutRequests(): HasMany
+    {
+        return $this->hasMany(PayoutRequest::class);
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->role === UserRole::SuperAdmin;
@@ -51,9 +90,34 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === UserRole::BusinessOwner;
     }
 
+    public function isEarner(): bool
+    {
+        return $this->role === UserRole::Earner;
+    }
+
     public function belongsToBusiness(?int $businessId): bool
     {
         return $this->business_id !== null && $this->business_id === $businessId;
+    }
+
+    public function totalEarned(): float
+    {
+        return (float) $this->completedTaskAttempts()->sum('reward_amount');
+    }
+
+    public function totalWatchedSeconds(): int
+    {
+        return (int) $this->completedTaskAttempts()->sum('watched_seconds');
+    }
+
+    public function totalWithdrawn(): float
+    {
+        return (float) $this->payoutRequests()->where('status', PayoutStatus::Paid->value)->sum('amount');
+    }
+
+    public function pendingPayoutTotal(): float
+    {
+        return (float) $this->payoutRequests()->where('status', PayoutStatus::Pending->value)->sum('amount');
     }
 
     public function canAccessPanel(Panel $panel): bool

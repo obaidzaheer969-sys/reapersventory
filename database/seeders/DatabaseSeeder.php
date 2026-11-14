@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             PlanSeeder::class,
             PaymentMethodSeeder::class,
             SystemSettingSeeder::class,
+            EarningTaskSeeder::class,
         ]);
     }
 }

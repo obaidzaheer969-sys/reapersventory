@@ -26,6 +26,7 @@ class UserFactory extends Factory
             'role' => UserRole::BusinessOwner,
             'business_id' => Business::factory(),
             'is_active' => true,
+            'wallet_balance' => 0,
             'remember_token' => Str::random(10),
         ];
     }
@@ -50,6 +51,15 @@ class UserFactory extends Factory
         return $this->state(fn () => [
             'role' => UserRole::BusinessOwner,
             'business_id' => $business?->id ?? Business::factory(),
+        ]);
+    }
+
+    public function earner(): static
+    {
+        return $this->state(fn () => [
+            'role' => UserRole::Earner,
+            'business_id' => null,
+            'wallet_balance' => 0,
         ]);
     }
 
