@@ -9,11 +9,10 @@ class PublicPagesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_home_and_pricing_pages_render(): void
+    public function test_home_redirects_to_login_and_pricing_page_renders(): void
     {
         $this->get(route('home'))
-            ->assertOk()
-            ->assertSee(config('earning.brand'), false);
+            ->assertRedirect(route('login'));
 
         $this->get(route('pricing'))
             ->assertOk()

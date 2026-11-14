@@ -34,6 +34,15 @@
     <div class="pointer-events-none fixed inset-0 -z-10 glow-a"></div>
     <div class="pointer-events-none fixed inset-0 -z-10 glow-b"></div>
 
+    <header class="absolute right-4 top-4 z-20 flex items-center gap-2 sm:right-8 sm:top-6" aria-label="Account navigation">
+        <a href="{{ route('login') }}" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white">
+            Login
+        </a>
+        <a href="{{ route('register') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20 transition hover:from-mint-300 hover:to-mint-400">
+            Register
+        </a>
+    </header>
+
     <div class="grid min-h-screen lg:grid-cols-2">
         <aside class="relative hidden flex-col justify-between overflow-hidden border-r border-white/10 p-10 lg:flex xl:p-14">
             <a href="{{ route('home') }}" class="flex items-center gap-3">

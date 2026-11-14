@@ -13,7 +13,10 @@ class AuthenticationTest extends TestCase
 
     public function test_login_screen_can_be_rendered(): void
     {
-        $this->get(route('login'))->assertOk();
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('href="'.route('login').'"', false)
+            ->assertSee('href="'.route('register').'"', false);
     }
 
     public function test_business_owners_can_authenticate(): void
