@@ -242,7 +242,12 @@ $phpQ = escapeshellarg($php);
 $migrateCode = $run($phpQ.' artisan migrate --force');
 if ($migrateCode !== 0) {
     $log[] = '[rv-update] migrate failed — retrying once';
-    $run($phpQ.' artisan migrate --force');
+    if ($run($phpQ.' artisan migrate --force') !== 0) {
+        $log[] = '[rv-update] migration failed; update aborted';
+        http_response_code(500);
+        echo implode("\n", $log)."\n";
+        exit;
+    }
 }
 $run($phpQ.' artisan optimize:clear');
 $run($phpQ.' artisan db:seed --class=PlanSeeder --force');

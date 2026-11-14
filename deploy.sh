@@ -21,7 +21,7 @@ npm ci
 npm run build
 
 if [ -f artisan ]; then
-  "$PHP_BIN" artisan migrate --force || true
+  "$PHP_BIN" artisan migrate --force
   "$PHP_BIN" artisan db:seed --class=PlanSeeder --force || true
   "$PHP_BIN" artisan reapersventory:ensure-notifications || true
   "$PHP_BIN" artisan inventory:notify-low-stock || true

@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('notifications')) {
+            return;
+        }
+
         Schema::create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('type');
@@ -22,10 +26,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * The table may predate this migration, so preserve it on rollback.
      */
-    public function down(): void
-    {
-        Schema::dropIfExists('notifications');
-    }
+    public function down(): void {}
 };
