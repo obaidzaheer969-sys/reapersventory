@@ -16,8 +16,10 @@ use Illuminate\Support\Carbon;
     'earning_task_id',
     'status',
     'started_at',
+    'opened_at',
     'expires_at',
     'completed_at',
+    'failed_at',
     'watched_seconds',
     'reward_amount',
     'ip_address',
@@ -32,8 +34,10 @@ class TaskAttempt extends Model
         return [
             'status' => TaskAttemptStatus::class,
             'started_at' => 'datetime',
+            'opened_at' => 'datetime',
             'expires_at' => 'datetime',
             'completed_at' => 'datetime',
+            'failed_at' => 'datetime',
             'watched_seconds' => 'integer',
             'reward_amount' => 'decimal:2',
         ];
@@ -68,6 +72,16 @@ class TaskAttempt extends Model
     public function isCompleted(): bool
     {
         return $this->status === TaskAttemptStatus::Completed;
+    }
+
+    public function isFailed(): bool
+    {
+        return $this->status === TaskAttemptStatus::Failed;
+    }
+
+    public function hasOpenedRealPage(): bool
+    {
+        return $this->opened_at !== null;
     }
 
     public function isReadyToClaim(): bool

@@ -143,6 +143,46 @@ class TaskService
         });
     }
 
+    public function markRealPageOpened(User $user, TaskAttempt $attempt): TaskAttempt
+    {
+        if ($attempt->user_id !== $user->id) {
+            abort(403, 'This task does not belong to you.');
+        }
+
+        if ($attempt->opened_at === null && ! $attempt->isCompleted() && ! $attempt->isFailed()) {
+            $attempt->forceFill(['opened_at' => now()])->save();
+        }
+
+        return $attempt->refresh();
+    }
+
+    public function failAttempt(User $user, TaskAttempt $attempt): TaskAttempt
+    {
+        return DB::transaction(function () use ($user, $attempt) {
+            /** @var TaskAttempt $attempt */
+            $attempt = TaskAttempt::query()->whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+
+            if ($attempt->user_id !== $user->id) {
+                abort(403, 'This task does not belong to you.');
+            }
+
+            if ($attempt->isCompleted() || $attempt->isFailed()) {
+                return $attempt;
+            }
+
+            if (! now()->lt($attempt->expires_at)) {
+                return $attempt;
+            }
+
+            $attempt->forceFill([
+                'status' => TaskAttemptStatus::Failed,
+                'failed_at' => now(),
+            ])->save();
+
+            return $attempt->refresh();
+        });
+    }
+
     public function completeAttempt(User $user, TaskAttempt $attempt): TaskAttempt
     {
         return DB::transaction(function () use ($user, $attempt) {
@@ -155,6 +195,18 @@ class TaskService
 
             if ($attempt->isCompleted()) {
                 return $attempt;
+            }
+
+            if ($attempt->isFailed() || $attempt->failed_at !== null) {
+                throw ValidationException::withMessages([
+                    'task' => 'Task fail ho gaya tha — real page timer poora hone se pehle band hua. Task dobara start karein.',
+                ]);
+            }
+
+            if (! $attempt->hasOpenedRealPage()) {
+                throw ValidationException::withMessages([
+                    'task' => 'Pehle task ka real page kholein — bina task dekhe reward nahi milega.',
+                ]);
             }
 
             if (now()->lt($attempt->expires_at)) {

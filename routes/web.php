@@ -71,6 +71,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/tasks', [EarningTaskController::class, 'index'])->name('tasks.index');
     Route::post('/tasks/{task}/start', [EarningTaskController::class, 'start'])->name('tasks.start');
     Route::get('/tasks/{task}/run', [EarningTaskController::class, 'run'])->name('tasks.run');
+    Route::post('/tasks/{task}/opened', [EarningTaskController::class, 'opened'])->name('tasks.opened');
+    Route::post('/tasks/{task}/fail', [EarningTaskController::class, 'fail'])->name('tasks.fail');
     Route::post('/tasks/{task}/complete', [EarningTaskController::class, 'complete'])->name('tasks.complete');
 
     Route::get('/earnings', [EarningEarningsController::class, 'index'])->name('earnings.index');

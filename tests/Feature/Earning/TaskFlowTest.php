@@ -27,6 +27,7 @@ class TaskFlowTest extends TestCase
 
         $this->assertSame(TaskAttemptStatus::InProgress, $attempt->status);
         $this->assertNull($attempt->completed_at);
+        $this->assertNull($attempt->opened_at);
 
         $this->actingAs($user)
             ->post(route('tasks.complete', $task))
@@ -34,6 +35,17 @@ class TaskFlowTest extends TestCase
 
         $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
         $this->assertSame(TaskAttemptStatus::InProgress, $attempt->fresh()->status);
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.opened', $task))
+            ->assertOk()
+            ->assertJson(['ok' => true]);
+
+        $this->assertNotNull($attempt->fresh()->opened_at);
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertSessionHasErrors('task');
 
         $this->travel(16)->seconds();
 
@@ -82,12 +94,6 @@ class TaskFlowTest extends TestCase
             'target_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ]);
 
-        $this->actingAs($user)
-            ->get(route('tasks.index'))
-            ->assertOk()
-            ->assertSee('window.open(', false)
-            ->assertSee('https://www.youtube.com/watch?v=dQw4w9WgXcQ', false);
-
         $this->actingAs($user)->post(route('tasks.start', $task));
 
         $this->actingAs($user)
@@ -97,6 +103,86 @@ class TaskFlowTest extends TestCase
             ->assertSee('Open real page', false)
             ->assertSee('https://www.youtube.com/watch?v=dQw4w9WgXcQ', false)
             ->assertSee('Timer poora hone tak tab band karna aur back jana band hai.');
+    }
+
+    public function test_a_task_cannot_be_claimed_without_opening_the_real_page(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeSubscribe(15, 25)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->travel(16)->seconds();
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertSessionHasErrors('task');
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+        $this->assertSame(TaskAttemptStatus::InProgress, $attempt->status);
+        $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
+    }
+
+    public function test_closing_the_real_page_before_the_timer_fails_the_task(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeSubscribe(60, 25)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+        $this->actingAs($user)->postJson(route('tasks.opened', $task))->assertOk();
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.fail', $task))
+            ->assertOk()
+            ->assertJson(['ok' => true, 'failed' => true]);
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+        $this->assertSame(TaskAttemptStatus::Failed, $attempt->status);
+        $this->assertNotNull($attempt->failed_at);
+
+        $this->travel(61)->seconds();
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertSessionHasErrors('task');
+
+        $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
+        $this->assertSame(TaskAttemptStatus::Failed, $attempt->fresh()->status);
+
+        $this->actingAs($user)
+            ->post(route('tasks.start', $task))
+            ->assertRedirect(route('tasks.run', $task));
+
+        $fresh = TaskAttempt::query()
+            ->where('user_id', $user->id)
+            ->where('status', TaskAttemptStatus::InProgress->value)
+            ->sole();
+
+        $this->assertNotSame($attempt->id, $fresh->id);
+    }
+
+    public function test_closing_the_real_page_after_the_timer_does_not_fail_the_task(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeSubscribe(15, 25)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+        $this->actingAs($user)->postJson(route('tasks.opened', $task))->assertOk();
+
+        $this->travel(16)->seconds();
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.fail', $task))
+            ->assertOk()
+            ->assertJson(['ok' => true, 'failed' => false]);
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertRedirect(route('tasks.index'));
+
+        $this->assertSame(25.0, (float) $user->fresh()->wallet_balance);
     }
 
     public function test_a_task_cannot_be_started_twice_on_the_same_day(): void

@@ -42,4 +42,15 @@ class TaskAttemptFactory extends Factory
             'reward_amount' => 0,
         ]);
     }
+
+    public function failed(): static
+    {
+        return $this->state(fn () => [
+            'status' => TaskAttemptStatus::Failed,
+            'failed_at' => now(),
+            'completed_at' => null,
+            'watched_seconds' => 0,
+            'reward_amount' => 0,
+        ]);
+    }
 }

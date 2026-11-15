@@ -29,7 +29,11 @@ class TaskAttemptsTable
                 TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn (TaskAttemptStatus $state) => $state->label())
-                    ->color(fn (TaskAttemptStatus $state) => $state === TaskAttemptStatus::Completed ? 'success' : 'warning')
+                    ->color(fn (TaskAttemptStatus $state) => match ($state) {
+                        TaskAttemptStatus::Completed => 'success',
+                        TaskAttemptStatus::Failed => 'danger',
+                        default => 'warning',
+                    })
                     ->sortable(),
                 TextColumn::make('watched_seconds')
                     ->label('Watched')

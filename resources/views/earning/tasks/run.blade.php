@@ -7,6 +7,7 @@
         $totalSeconds = max(1, (int) $task->duration_seconds);
         $remaining = max(0, (int) $remainingSeconds);
         $ready = $remaining === 0;
+        $claimable = $ready && $realPageOpened;
     @endphp
 
     <div class="mx-auto max-w-5xl {{ $ready ? '' : 'pb-40' }}">
@@ -30,9 +31,9 @@
             <div class="bg-ink-950/70 px-5 py-5 sm:px-6">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
-                        <p class="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-400">
-                            <span class="h-2 w-2 rounded-full {{ $ready ? 'bg-mint-400' : 'animate-pulse bg-gold-400' }}"></span>
-                            {{ $ready ? 'Timer complete — ab claim karein' : 'Real page naye tab me chal raha hai' }}
+                        <p class="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-300">
+                            <span class="h-2 w-2 rounded-full {{ $ready ? 'bg-mint-400' : 'animate-pulse bg-gold-400' }}" data-real-dot></span>
+                            <span data-real-status>{{ $ready ? 'Timer complete — ab claim karein' : 'Real page kholein — timer chalu hai' }}</span>
                         </p>
                         <p class="mt-2 max-w-xl text-sm leading-relaxed text-slate-300">
                             Task ka asli page naye tab me khulta hai. Wahan video play karein, like ya subscribe karein — YouTube/Facebook par views, watch time, likes aur subscribes real time count hote hain.
@@ -40,10 +41,22 @@
                         <p class="mt-1.5 truncate text-[11px] text-slate-500" title="{{ $task->target_url }}">{{ $task->target_url }}</p>
                     </div>
 
-                    <a href="{{ $task->target_url }}" target="_blank" rel="noopener noreferrer"
-                       class="shrink-0 rounded-xl bg-white px-4 py-2.5 text-center text-sm font-bold text-ink-950 hover:bg-slate-200">
+                    <button type="button" data-open-real
+                            class="shrink-0 rounded-xl bg-white px-4 py-2.5 text-center text-sm font-bold text-ink-950 hover:bg-slate-200">
                         Open real page ↗
-                    </a>
+                    </button>
+                </div>
+
+                <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90" data-real-hint>
+                    🔒 Real page ka tab timer poora hone se pehle band kiya to task <span class="font-bold">FAIL</span> ho jayega aur reward nahi milega. Us tab ko khula rakhein.
+                </p>
+
+                <div data-fail-banner class="mt-3 hidden rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-3">
+                    <p class="text-sm font-bold text-rose-200">❌ Task fail ho gaya</p>
+                    <p class="mt-1 text-[11px] leading-relaxed text-rose-100/80">
+                        Real page ka tab timer poora hone se pehle band kar diya gaya. Is task ka reward nahi milega — dobara start karein.
+                    </p>
+                    <a href="{{ route('tasks.index') }}" class="mt-2.5 inline-flex rounded-lg bg-rose-500 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-rose-400">Dobara start karein →</a>
                 </div>
             </div>
 
@@ -61,15 +74,15 @@
                     <form method="POST" action="{{ route('tasks.complete', $task) }}" class="w-full sm:w-auto sm:min-w-[220px]">
                         @csrf
                         <button type="submit" data-claim-button
-                                class="w-full rounded-xl px-5 py-2.5 text-sm font-bold transition {{ $ready ? 'bg-gradient-to-r from-mint-400 to-mint-500 text-ink-950 shadow-lg shadow-mint-500/20' : 'cursor-not-allowed bg-white/5 text-slate-500' }}"
-                                @disabled(! $ready)>
-                            {{ $ready ? 'Claim '.config('earning.currency').' '.number_format((float) $expectedReward, 2) : 'Please wait…' }}
+                                class="w-full rounded-xl px-5 py-2.5 text-sm font-bold transition {{ $claimable ? 'bg-gradient-to-r from-mint-400 to-mint-500 text-ink-950 shadow-lg shadow-mint-500/20' : 'cursor-not-allowed bg-white/5 text-slate-500' }}"
+                                @disabled(! $claimable)>
+                            {{ $claimable ? 'Claim '.config('earning.currency').' '.number_format((float) $expectedReward, 2) : ($ready ? 'Pehle real page kholein' : 'Please wait…') }}
                         </button>
                     </form>
                 </div>
 
                 <p class="mt-4 text-xs leading-relaxed text-slate-500">
-                    Is tab me timer chal raha hai. Timer poora hone tak yeh tab band karna aur back jana band rahega — time poora hone par khud unlock ho jayega. Task ka real page alag tab me hai, wahan kaam karte rahein.
+                    Is tab me timer chal raha hai aur isi tab ka title bar seconds dikhata hai. Timer poora hone tak yeh tab band karna aur back jana band rahega — real page alag tab me hai, use bhi band na karein.
                 </p>
             </div>
 
@@ -140,12 +153,31 @@
             var total = {{ $totalSeconds }};
             var currency = @json(config('earning.currency'));
             var reward = @json(number_format((float) $expectedReward, 2));
+            var brand = @json(config('earning.brand'));
+            var targetUrl = @json($task->target_url);
+            var openedUrl = @json(route('tasks.opened', $task));
+            var failUrl = @json(route('tasks.fail', $task));
+            var csrf = @json(csrf_token());
+            var opened = @json((bool) $realPageOpened);
+
             var locked = remaining > 0;
+            var finished = remaining === 0;
+            var failed = false;
+            var popup = null;
+            var deadline = Date.now() + remaining * 1000;
+            var ticker = null;
+            var watcher = null;
 
             var display = document.querySelector('[data-timer-display]');
             var bar = document.querySelector('[data-timer-bar]');
             var status = document.querySelector('[data-timer-status]');
             var button = document.querySelector('[data-claim-button]');
+
+            var openButton = document.querySelector('[data-open-real]');
+            var realStatus = document.querySelector('[data-real-status]');
+            var realDot = document.querySelector('[data-real-dot]');
+            var realHint = document.querySelector('[data-real-hint]');
+            var failBanner = document.querySelector('[data-fail-banner]');
 
             var lockBar = document.querySelector('[data-task-lock]');
             var lockInner = document.querySelector('[data-lock-inner]');
@@ -156,6 +188,7 @@
 
             var originalHint = lockHint ? lockHint.textContent.trim() : '';
             var warnTimeout = null;
+            var pageTitle = 'Task — ' + brand;
 
             function pad(value) {
                 return String(value).padStart(2, '0');
@@ -167,6 +200,69 @@
 
             function progress() {
                 return Math.min(100, Math.round(((total - remaining) / total) * 100));
+            }
+
+            function post(url) {
+                try {
+                    fetch(url, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: '{}'
+                    }).catch(function () {});
+                } catch (error) {}
+            }
+
+            function setRealStatus(text, tone) {
+                if (realStatus) {
+                    realStatus.textContent = text;
+                }
+
+                if (!realDot) {
+                    return;
+                }
+
+                var dotClasses = {
+                    gold: 'h-2 w-2 rounded-full animate-pulse bg-gold-400',
+                    mint: 'h-2 w-2 rounded-full bg-mint-400',
+                    rose: 'h-2 w-2 rounded-full bg-rose-400'
+                };
+
+                realDot.className = dotClasses[tone] || dotClasses.gold;
+            }
+
+            function updateClaim() {
+                if (!button) {
+                    return;
+                }
+
+                var claimable = !failed && finished && opened;
+
+                button.disabled = !claimable;
+                button.classList.toggle('cursor-not-allowed', !claimable);
+                button.classList.toggle('bg-white/5', !claimable);
+                button.classList.toggle('text-slate-500', !claimable);
+                button.classList.toggle('bg-gradient-to-r', claimable);
+                button.classList.toggle('from-mint-400', claimable);
+                button.classList.toggle('to-mint-500', claimable);
+                button.classList.toggle('text-ink-950', claimable);
+                button.classList.toggle('shadow-lg', claimable);
+                button.classList.toggle('shadow-mint-500/20', claimable);
+
+                if (failed) {
+                    button.textContent = 'Task failed';
+                } else if (finished && opened) {
+                    button.textContent = 'Claim ' + currency + ' ' + reward;
+                } else if (finished) {
+                    button.textContent = 'Pehle real page kholein';
+                } else {
+                    button.textContent = 'Please wait…';
+                }
             }
 
             function render() {
@@ -187,6 +283,147 @@
                 if (lockFill) {
                     lockFill.style.width = percent + '%';
                 }
+
+                document.title = locked ? clock(remaining) + ' ⏳ ' + brand : pageTitle;
+            }
+
+            function setOpenUi() {
+                if (openButton) {
+                    openButton.textContent = popup ? 'Real page khula hai ↗' : 'Real page dobara kholein ↗';
+                }
+
+                if (realHint) {
+                    realHint.textContent = '🔒 Real page ka tab band mat karein — timer poora hone se pehle band karne par task FAIL ho jayega.';
+                }
+
+                setRealStatus(
+                    finished ? 'Timer complete — ab claim karein' : 'Real page khula hai — timer chal raha hai',
+                    'mint'
+                );
+
+                updateClaim();
+            }
+
+            function openReal() {
+                if (failed) {
+                    return;
+                }
+
+                if (popup && popup.closed === false) {
+                    try {
+                        popup.focus();
+                    } catch (error) {}
+
+                    return;
+                }
+
+                var win = window.open(targetUrl, '_blank');
+
+                if (!win) {
+                    setRealStatus('Popup block ho gaya — "Open real page" dobara dabaein', 'gold');
+
+                    if (realHint) {
+                        realHint.textContent = '⚠️ Browser ne naya tab block kiya. Address bar ke popup icon se allow karein, phir "Open real page" dobara dabaein.';
+                    }
+
+                    return;
+                }
+
+                popup = win;
+
+                try {
+                    win.opener = null;
+                } catch (error) {}
+
+                opened = true;
+                post(openedUrl);
+                setOpenUi();
+                startWatcher();
+            }
+
+            function checkPopup() {
+                if (!popup) {
+                    return;
+                }
+
+                if (!popup.closed) {
+                    return;
+                }
+
+                popup = null;
+                stopWatcher();
+
+                if (!finished && !failed) {
+                    failTask();
+
+                    return;
+                }
+
+                setRealStatus('Real page band ho gaya — task mukammal', 'mint');
+                if (openButton) {
+                    openButton.textContent = 'Open real page ↗';
+                }
+            }
+
+            function startWatcher() {
+                if (watcher) {
+                    return;
+                }
+
+                watcher = window.setInterval(checkPopup, 1500);
+            }
+
+            function stopWatcher() {
+                if (!watcher) {
+                    return;
+                }
+
+                window.clearInterval(watcher);
+                watcher = null;
+            }
+
+            function failTask() {
+                if (failed) {
+                    return;
+                }
+
+                failed = true;
+                locked = false;
+
+                if (ticker) {
+                    window.clearInterval(ticker);
+                    ticker = null;
+                }
+
+                stopWatcher();
+
+                if (lockBar) {
+                    lockBar.hidden = true;
+                }
+
+                if (failBanner) {
+                    failBanner.classList.remove('hidden');
+                }
+
+                if (inlineBack) {
+                    inlineBack.removeAttribute('aria-disabled');
+                    inlineBack.removeAttribute('tabindex');
+                    inlineBack.style.cursor = '';
+                    inlineBack.style.opacity = '1';
+                }
+
+                if (openButton) {
+                    openButton.disabled = true;
+                }
+
+                if (status) {
+                    status.textContent = 'Task failed';
+                }
+
+                setRealStatus('Task fail — real page tab timer se pehle band hua', 'rose');
+                document.title = '❌ Task failed — ' + brand;
+                updateClaim();
+                post(failUrl);
             }
 
             function showUnlockedToast() {
@@ -202,14 +439,9 @@
 
             function unlock() {
                 locked = false;
+                finished = true;
                 window.clearTimeout(warnTimeout);
-
-                if (button) {
-                    button.disabled = false;
-                    button.classList.remove('cursor-not-allowed', 'bg-white/5', 'text-slate-500');
-                    button.classList.add('bg-gradient-to-r', 'from-mint-400', 'to-mint-500', 'text-ink-950', 'shadow-lg', 'shadow-mint-500/20');
-                    button.textContent = 'Claim ' + currency + ' ' + reward;
-                }
+                stopWatcher();
 
                 if (status) {
                     status.textContent = 'Ready to claim';
@@ -226,6 +458,15 @@
                     inlineBack.style.opacity = '1';
                 }
 
+                document.title = pageTitle;
+
+                if (opened) {
+                    setRealStatus('Timer complete — ab claim karein', 'mint');
+                } else {
+                    setRealStatus('Timer complete — claim se pehle real page kholein', 'gold');
+                }
+
+                updateClaim();
                 showUnlockedToast();
             }
 
@@ -248,6 +489,36 @@
                     }, 3500);
                 }
             }
+
+            if (openButton) {
+                openButton.addEventListener('click', openReal);
+            }
+
+            if (button) {
+                var claimForm = button.closest('form');
+
+                if (claimForm) {
+                    claimForm.addEventListener('submit', function (event) {
+                        if (locked || failed) {
+                            event.preventDefault();
+
+                            return;
+                        }
+
+                        checkPopup();
+
+                        if (failed) {
+                            event.preventDefault();
+                        }
+                    });
+                }
+            }
+
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden && popup) {
+                    checkPopup();
+                }
+            });
 
             document.addEventListener('click', function (event) {
                 if (!locked) {
@@ -305,8 +576,19 @@
             });
 
             render();
+            updateClaim();
+
+            if (opened) {
+                setOpenUi();
+            }
 
             if (!locked) {
+                if (opened) {
+                    setRealStatus('Timer complete — ab claim karein', 'mint');
+                } else {
+                    setRealStatus('Timer complete — claim se pehle real page kholein', 'gold');
+                }
+
                 return;
             }
 
@@ -314,18 +596,15 @@
                 history.pushState({ earningTaskLock: true }, '', window.location.href);
             } catch (error) {}
 
-            var timer = window.setInterval(function () {
-                remaining -= 1;
+            ticker = window.setInterval(function () {
+                remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+                render();
 
                 if (remaining <= 0) {
-                    remaining = 0;
-                    window.clearInterval(timer);
-                    render();
+                    window.clearInterval(ticker);
+                    ticker = null;
                     unlock();
-                    return;
                 }
-
-                render();
             }, 1000);
         })();
     </script>
