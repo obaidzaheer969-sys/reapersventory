@@ -57,23 +57,29 @@ function rv_load_env(string $base): array
     }
 
     foreach (file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
-        $line = trim($line);
+        $line = trim($line, " \t\n\r\0\x0B");
+
+        if (str_starts_with($line, 'export ')) {
+            $line = trim(substr($line, 7));
+        }
 
         if ($line === '' || str_starts_with($line, '#') || ! str_contains($line, '=')) {
             continue;
         }
 
         [$k, $v] = explode('=', $line, 2);
-        $v = trim($v);
+        $v = trim($v, " \t\n\r\0\x0B");
 
-        if (
-            (str_starts_with($v, '"') && str_ends_with($v, '"')) ||
-            (str_starts_with($v, "'") && str_ends_with($v, "'"))
-        ) {
+        $quoted = (str_starts_with($v, '"') && str_ends_with($v, '"'))
+            || (str_starts_with($v, "'") && str_ends_with($v, "'"));
+
+        if ($quoted) {
             $v = substr($v, 1, -1);
+        } elseif (($hash = strpos($v, ' #')) !== false) {
+            $v = rtrim(substr($v, 0, $hash));
         }
 
-        $vars[trim($k)] = $v;
+        $vars[trim($k, " \t\n\r\0\x0B")] = $v;
     }
 
     return $vars;
@@ -191,9 +197,14 @@ function rv_clear_bootstrap_cache(string $base, array &$log): void
 
 $base = rv_project_root();
 $env = $base ? rv_load_env($base) : [];
-$expected = (string) ($env['DEPLOY_SECRET'] ?? '');
-$secret = (string) ($_GET['secret'] ?? $_POST['secret'] ?? '');
-$mode = (string) ($_POST['mode'] ?? 'full-update');
+$expected = trim((string) ($env['DEPLOY_SECRET'] ?? ''));
+
+if ($expected === '') {
+    $expected = trim((string) (getenv('DEPLOY_SECRET') ?: ($_SERVER['DEPLOY_SECRET'] ?? ($_ENV['DEPLOY_SECRET'] ?? ''))));
+}
+
+$secret = trim((string) ($_GET['secret'] ?? $_POST['secret'] ?? ''));
+$mode = (string) ($_POST['mode'] ?? $_GET['mode'] ?? 'full-update');
 
 if ($base === null || ! is_file($base.DIRECTORY_SEPARATOR.'artisan')) {
     http_response_code(500);
@@ -204,7 +215,16 @@ if ($base === null || ! is_file($base.DIRECTORY_SEPARATOR.'artisan')) {
 if ($secret === '' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
     if (strlen($expected) < 32) {
         http_response_code(503);
-        echo "Set DEPLOY_SECRET to a new random value of at least 32 characters in the project .env.\n";
+        header('Content-Type: text/html; charset=UTF-8');
+        echo '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
+        echo '<title>Deployment secret required</title>';
+        echo '<body style="font:16px/1.6 system-ui,sans-serif;max-width:560px;margin:4rem auto;padding:0 1rem">';
+        echo '<h1>Set a deployment secret first</h1>';
+        echo '<p>Set <code>DEPLOY_SECRET</code> to a new random value of at least 32 characters in the project <code>.env</code> file (the folder that contains <code>artisan</code>), then reload this page.</p>';
+        echo '<p>Generate one locally, for example:</p>';
+        echo '<pre style="background:#f3f4f6;padding:1rem;border-radius:8px;overflow:auto">php -r "echo bin2hex(random_bytes(24));"</pre>';
+        echo '<p>After saving the file, open <code>/rv-update.php</code> again and submit that exact secret.</p>';
+        echo '</body></html>';
         exit;
     }
 
@@ -215,7 +235,9 @@ if ($secret === '' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
     echo '<form method="post"><input type="hidden" name="mode" value="migrate-only">';
     echo '<label for="secret">Deployment secret</label><br>';
     echo '<input id="secret" name="secret" type="password" required autocomplete="off" style="box-sizing:border-box;width:100%;margin:0.5rem 0 1rem;padding:0.75rem">';
-    echo '<button type="submit" style="padding:0.75rem 1rem">Run migrations</button></form></body></html>';
+    echo '<button type="submit" style="padding:0.75rem 1rem">Run migrations</button></form>';
+    echo '<p style="margin-top:1.5rem;font-size:14px;color:#4b5563">Tip: you can also call <code>/rv-update.php?secret=YOUR_SECRET&amp;mode=migrate-only</code> directly.</p>';
+    echo '</body></html>';
     exit;
 }
 
@@ -232,6 +254,13 @@ if (strlen($expected) < 32 || ! rv_secrets_match($expected, $secret)) {
 }
 
 chdir($base);
+
+if (! function_exists('exec')) {
+    http_response_code(500);
+    echo "The PHP exec() function is disabled on this hosting account, so the updater cannot run Artisan.\n";
+    echo "Ask the host to enable exec(), or run this from a terminal instead: php artisan migrate --force\n";
+    exit;
+}
 
 $log = [];
 $log[] = '[rv-update] started '.gmdate('c');
@@ -278,28 +307,27 @@ if ($mode === 'migrate-only') {
     exit;
 }
 
-$run('git fetch origin main');
-$run('git reset --hard origin/main');
+$fetchCode = $run('git fetch origin main');
+if ($fetchCode !== 0) {
+    $log[] = '[rv-update] git fetch failed; update aborted';
+    http_response_code(500);
+    echo implode("\n", $log)."\n";
+    exit;
+}
+
+if ($run('git reset --hard origin/main') !== 0) {
+    $log[] = '[rv-update] git reset failed; update aborted';
+    http_response_code(500);
+    echo implode("\n", $log)."\n";
+    exit;
+}
+
 $run('git clean -fd -e .env -e .env.* -e storage -e vendor -e node_modules -e public/uploads -e public/rv-update.php');
-
-// Rebuild Vite assets so production loads the scanner module from the manifest.
-$npm = rv_find_npm();
-if ($npm === null) {
-    http_response_code(500);
-    echo "npm is required to build frontend assets. Enable Node.js/npm for the hosting account, then retry.\n";
-    exit;
-}
-
-$npmQ = escapeshellarg($npm);
-if ($run($npmQ.' ci') !== 0 || $run($npmQ.' run build') !== 0) {
-    http_response_code(500);
-    echo "Frontend asset build failed. Check the deployment log and Node.js version.\n";
-    exit;
-}
 
 // Clear again after pull (new commit may still leave old cache files)
 rv_clear_bootstrap_cache($base, $log);
 
+// Migrate BEFORE the asset build: the database fix must not depend on npm.
 $phpQ = escapeshellarg($php);
 $migrateCode = $run($phpQ.' artisan migrate --force');
 if ($migrateCode !== 0) {
@@ -311,6 +339,18 @@ if ($migrateCode !== 0) {
         exit;
     }
 }
+
+// Rebuild Vite assets so production loads the scanner module from the manifest.
+$npm = rv_find_npm();
+if ($npm === null) {
+    $log[] = '[rv-update] npm not found — skipped asset build; code and database are already updated';
+} else {
+    $npmQ = escapeshellarg($npm);
+    if ($run($npmQ.' ci') !== 0 || $run($npmQ.' run build') !== 0) {
+        $log[] = '[rv-update] asset build failed — code and database are already updated';
+    }
+}
+
 $run($phpQ.' artisan optimize:clear');
 $run($phpQ.' artisan db:seed --class=PlanSeeder --force');
 $run($phpQ.' artisan reapersventory:ensure-notifications');
