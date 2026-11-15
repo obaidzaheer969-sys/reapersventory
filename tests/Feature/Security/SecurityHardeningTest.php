@@ -3,6 +3,7 @@
 namespace Tests\Feature\Security;
 
 use App\Models\PaymentProof;
+use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,7 +19,7 @@ class SecurityHardeningTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertOk();
+        $response->assertRedirect(route('login'));
         $response->assertHeader('X-Content-Type-Options', 'nosniff');
         $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
         $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -46,7 +47,7 @@ class SecurityHardeningTest extends TestCase
         $owner = User::factory()->create();
         $payment = SubscriptionPayment::factory()->create([
             'business_id' => $owner->business_id,
-            'subscription_id' => \App\Models\Subscription::factory()->create([
+            'subscription_id' => Subscription::factory()->create([
                 'business_id' => $owner->business_id,
             ])->id,
             'submitted_by' => $owner->id,

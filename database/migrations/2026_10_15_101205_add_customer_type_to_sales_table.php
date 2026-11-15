@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('sales', 'customer_type')) {
+            return;
+        }
+
         Schema::table('sales', function (Blueprint $table) {
             $table->string('customer_type', 32)->default('walk_in')->after('customer_id');
         });

@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('subscriptions', 'pending_plan_id')) {
+            return;
+        }
+
         Schema::table('subscriptions', function (Blueprint $table) {
             $table->foreignId('pending_plan_id')
                 ->nullable()
