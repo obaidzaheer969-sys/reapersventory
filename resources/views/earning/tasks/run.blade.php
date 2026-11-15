@@ -7,64 +7,82 @@
         $totalSeconds = max(1, (int) $task->duration_seconds);
         $remaining = max(0, (int) $remainingSeconds);
         $ready = $remaining === 0;
+        $embedUrl = $task->embedUrl();
     @endphp
 
-    <div class="mx-auto max-w-3xl {{ $ready ? '' : 'pb-40' }}">
+    <div class="mx-auto max-w-5xl {{ $ready ? '' : 'pb-40' }}">
         <a href="{{ route('tasks.index') }}" data-lock-inline-back
            class="inline-flex items-center gap-1.5 text-xs font-semibold {{ $ready ? 'text-slate-400 hover:text-white' : 'cursor-not-allowed text-slate-600' }}"
            @if (! $ready) aria-disabled="true" @endif>← Back to tasks</a>
 
         <div class="mt-4 overflow-hidden rounded-3xl border border-white/10 bg-white/5">
-            <div class="border-b border-white/10 bg-gradient-to-r from-ink-850 via-ink-900 to-ink-850 px-6 py-6">
+            <div class="border-b border-white/10 bg-gradient-to-r from-ink-850 via-ink-900 to-ink-850 px-5 py-4 sm:px-6">
                 <div class="flex items-center gap-3">
-                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl text-xl font-black"
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg font-black"
                           style="background: {{ $task->task_type->color() }}22; color: {{ $task->task_type->color() }}">{{ $task->task_type->icon() }}</span>
                     <div class="min-w-0">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ $task->platform() }} · {{ $task->task_type->label() }}</p>
-                        <h1 class="truncate font-display text-xl font-bold text-white">{{ $task->title }}</h1>
+                        <h1 class="truncate font-display text-lg font-bold text-white sm:text-xl">{{ $task->title }}</h1>
                     </div>
                     <span class="ml-auto shrink-0 rounded-xl bg-mint-500/15 px-3 py-1.5 text-sm font-bold text-mint-300">{{ \App\Support\Currency::format($expectedReward) }}</span>
                 </div>
             </div>
 
-            <div class="px-6 py-8 text-center">
-                <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">{{ $ready ? 'Timer complete' : 'Stay on the task' }}</p>
+            <div class="bg-ink-950/70">
+                <div class="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-2">
+                    <span class="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-400">
+                        <span class="h-2 w-2 rounded-full {{ $ready ? 'bg-mint-400' : 'animate-pulse bg-gold-400' }}"></span>
+                        {{ $ready ? 'Timer complete — claim karein' : 'Task content — timer chal raha hai' }}
+                    </span>
+                    <a href="{{ $task->target_url }}" target="_blank" rel="noopener noreferrer" class="text-[11px] font-bold text-mint-300 hover:text-mint-200">Open in new tab ↗</a>
+                </div>
 
-                <div class="mx-auto mt-4 flex h-48 w-48 items-center justify-center rounded-full border border-white/10 bg-ink-950/60"
-                     data-timer-ring style="--progress: {{ $ready ? 100 : round((($totalSeconds - $remaining) / $totalSeconds) * 100) }}%">
-                    <div>
-                        <p class="font-display text-5xl font-bold tabular-nums text-white" data-timer-display>{{ gmdate('i:s', $remaining) }}</p>
-                        <p class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">{{ $ready ? 'Ready to claim' : 'seconds remaining' }}</p>
+                <div class="relative w-full" style="height: clamp(300px, 58vh, 640px);">
+                    <iframe src="{{ $embedUrl }}" title="{{ $task->title }}" loading="eager" allowfullscreen
+                            class="absolute inset-0 h-full w-full border-0"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"></iframe>
+                </div>
+
+                <p class="border-t border-white/10 px-4 py-2 text-[11px] leading-relaxed text-slate-500">
+                    Agar content load na ho (kuch sites embedding block karti hain) to neeche <span class="font-semibold text-slate-300">Open link ↗</span> dabaein — yeh tab lock rahega.
+                </p>
+            </div>
+
+            <div class="px-5 py-5 sm:px-6">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-mint-300" data-timer-status>{{ $ready ? 'Ready to claim' : 'Seconds remaining' }}</p>
+                        <p class="mt-1 font-display text-4xl font-bold tabular-nums text-white" data-timer-display>{{ gmdate('i:s', $remaining) }}</p>
+                        <div class="mt-3 h-2 w-full max-w-xs overflow-hidden rounded-full bg-white/10">
+                            <div class="h-full rounded-full bg-gradient-to-r from-mint-400 to-mint-500 transition-[width] duration-1000 ease-linear"
+                                 data-timer-bar style="width: {{ $ready ? 100 : round((($totalSeconds - $remaining) / $totalSeconds) * 100) }}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[220px]">
+                        <a href="{{ $task->target_url }}" target="_blank" rel="noopener noreferrer"
+                           class="w-full rounded-xl px-4 py-2.5 text-center text-sm font-bold {{ $ready ? 'border border-white/15 bg-white/5 text-white hover:bg-white/10' : 'bg-white text-ink-950 hover:bg-slate-200' }}">
+                            Open link ↗
+                        </a>
+                        <form method="POST" action="{{ route('tasks.complete', $task) }}" class="w-full">
+                            @csrf
+                            <button type="submit" data-claim-button
+                                    class="w-full rounded-xl px-5 py-2.5 text-sm font-bold transition {{ $ready ? 'bg-gradient-to-r from-mint-400 to-mint-500 text-ink-950 shadow-lg shadow-mint-500/20' : 'cursor-not-allowed bg-white/5 text-slate-500' }}"
+                                    @disabled(! $ready)>
+                                {{ $ready ? 'Claim '.config('earning.currency').' '.number_format((float) $expectedReward, 2) : 'Please wait…' }}
+                            </button>
+                        </form>
                     </div>
                 </div>
 
-                <div class="mx-auto mt-6 h-2 w-full max-w-sm overflow-hidden rounded-full bg-white/10">
-                    <div class="h-full rounded-full bg-gradient-to-r from-mint-400 to-mint-500 transition-[width] duration-1000 ease-linear"
-                         data-timer-bar style="width: {{ $ready ? 100 : round((($totalSeconds - $remaining) / $totalSeconds) * 100) }}%"></div>
-                </div>
-
-                <div class="mt-6 flex flex-col items-center justify-center gap-2 sm:flex-row">
-                    <a href="{{ $task->target_url }}" target="_blank" rel="noopener noreferrer"
-                       class="w-full rounded-xl px-4 py-2.5 text-sm font-bold sm:w-auto {{ $ready ? 'border border-white/15 bg-white/5 text-white hover:bg-white/10' : 'bg-white text-ink-950 hover:bg-slate-200' }}">
-                        Open task link ↗
-                    </a>
-                    <form method="POST" action="{{ route('tasks.complete', $task) }}" class="w-full sm:w-auto">
-                        @csrf
-                        <button type="submit" data-claim-button
-                                class="w-full rounded-xl px-5 py-2.5 text-sm font-bold transition {{ $ready ? 'bg-gradient-to-r from-mint-400 to-mint-500 text-ink-950 shadow-lg shadow-mint-500/20' : 'cursor-not-allowed bg-white/5 text-slate-500' }}"
-                                @disabled(! $ready)>
-                            {{ $ready ? 'Claim '.config('earning.currency').' '.number_format((float) $expectedReward, 2) : 'Please wait…' }}
-                        </button>
-                    </form>
-                </div>
-
-                <p class="mx-auto mt-5 max-w-md text-xs leading-relaxed text-slate-500">
-                    Task link kholein aur neeche wale lock bar ka timer poora karein. Timer ke dauran yeh tab band karna aur back jana band rahega — time poora hone par khud unlock ho jayega.
+                <p class="mt-4 text-xs leading-relaxed text-slate-500">
+                    Task ka link isi tab me neeche khud load hota hai. Timer poora hone tak yeh tab band karna aur back jana band rahega — time poora hone par khud unlock ho jayega.
                 </p>
             </div>
 
             @if (filled($task->instructions))
-                <div class="border-t border-white/10 bg-ink-900/40 px-6 py-5">
+                <div class="border-t border-white/10 bg-ink-900/40 px-5 py-4 sm:px-6">
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Instructions</p>
                     <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-300">{{ $task->instructions }}</p>
                 </div>
@@ -134,7 +152,7 @@
 
             var display = document.querySelector('[data-timer-display]');
             var bar = document.querySelector('[data-timer-bar]');
-            var ring = document.querySelector('[data-timer-ring]');
+            var status = document.querySelector('[data-timer-status]');
             var button = document.querySelector('[data-claim-button]');
 
             var lockBar = document.querySelector('[data-task-lock]');
@@ -170,10 +188,6 @@
                     bar.style.width = percent + '%';
                 }
 
-                if (ring) {
-                    ring.style.setProperty('--progress', percent + '%');
-                }
-
                 if (lockCountdown) {
                     lockCountdown.textContent = clock(remaining);
                 }
@@ -205,7 +219,6 @@
                     button.textContent = 'Claim ' + currency + ' ' + reward;
                 }
 
-                var status = display && display.parentElement ? display.parentElement.querySelector('p:last-child') : null;
                 if (status) {
                     status.textContent = 'Ready to claim';
                 }

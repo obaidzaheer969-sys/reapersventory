@@ -75,6 +75,29 @@ class TaskFlowTest extends TestCase
             ->assertDontSee('Timer poora hone tak tab band karna aur back jana band hai.');
     }
 
+    public function test_the_locked_tab_embeds_the_task_link(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeSubscribe(30, 20)->create([
+            'target_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        ]);
+
+        $this->assertSame('https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0', $task->embedUrl());
+        $this->assertSame(
+            'https://example.com/ad',
+            EarningTask::factory()->make(['target_url' => 'https://example.com/ad'])->embedUrl(),
+        );
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertSee('<iframe', false)
+            ->assertSee('https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0', false)
+            ->assertSee('Timer poora hone tak tab band karna aur back jana band hai.');
+    }
+
     public function test_a_task_cannot_be_started_twice_on_the_same_day(): void
     {
         $user = User::factory()->earner()->create();
