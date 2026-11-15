@@ -42,7 +42,7 @@ class TaskController extends Controller
 
         return redirect()
             ->route('tasks.run', $task)
-            ->with('status', 'Task shuru ho gaya. Link new tab me khul gaya hai — timer poora hone tak wapas na aayen.');
+            ->with('status', 'Task shuru ho gaya. Naya tab timer lock ke saath khul gaya hai — time poora hone tak us tab ko band na karein.');
     }
 
     public function run(Request $request, EarningTask $task): View|RedirectResponse

@@ -55,6 +55,26 @@ class TaskFlowTest extends TestCase
         ]);
     }
 
+    public function test_the_task_tab_stays_locked_until_the_timer_finishes(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeSubscribe(30, 20)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertSee('Timer poora hone tak tab band karna aur back jana band hai.');
+
+        $this->travel(31)->seconds();
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertDontSee('Timer poora hone tak tab band karna aur back jana band hai.');
+    }
+
     public function test_a_task_cannot_be_started_twice_on_the_same_day(): void
     {
         $user = User::factory()->earner()->create();
