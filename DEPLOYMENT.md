@@ -4,7 +4,7 @@ Production checklist for Milestone 5 (notifications, hardening, scheduler/queue)
 
 ## Requirements
 
-- PHP 8.3+ with extensions: `bcmath`, `ctype`, `curl`, `dom`, `fileinfo`, `gd` or `imagick`, `intl`, `json`, `mbstring`, `openssl`, `pdo_mysql`, `tokenizer`, `xml`, `zip`
+- PHP 8.4.1+ CLI and web SAPI with extensions: `bcmath`, `ctype`, `curl`, `dom`, `fileinfo`, `gd` or `imagick`, `intl`, `json`, `mbstring`, `openssl`, `pdo_mysql`, `tokenizer`, `xml`, `zip`
 - Composer 2
 - MySQL 8+
 - Redis optional (cache/queue); database queue works out of the box
@@ -21,6 +21,7 @@ Production checklist for Milestone 5 (notifications, hardening, scheduler/queue)
 | `APP_DEBUG` | `false` |
 | `APP_URL` | `https://reapersventory.com` |
 | `APP_KEY` | `php artisan key:generate` |
+| `PHP_BIN` | Optional path to PHP 8.4.1+ CLI when the default `php` is older |
 | `DB_CONNECTION` | `mysql` |
 | `DB_*` | MySQL credentials |
 | `QUEUE_CONNECTION` | `database` (or `redis`) |
@@ -82,8 +83,10 @@ bash deploy.sh
 1. In hosting `.env` set a secret:
 
 ```env
-DEPLOY_SECRET=put-a-long-random-string-here
+DEPLOY_SECRET=<new-random-secret-at-least-32-characters>
 ```
+
+Use a unique random secret; do not use the example text as the actual value.
 
 2. After each `git push` to `main`, open this **same** URL:
 

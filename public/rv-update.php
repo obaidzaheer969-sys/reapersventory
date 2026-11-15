@@ -79,33 +79,62 @@ function rv_load_env(string $base): array
     return $vars;
 }
 
-function rv_find_php(): string
+function rv_find_php(?string $preferredBinary = null): ?string
 {
     $candidates = [
+        $preferredBinary,
+        '/opt/cpanel/ea-php85/root/usr/bin/php',
+        '/opt/cpanel/ea-php84/root/usr/bin/php',
+        '/opt/alt/php85/usr/bin/php',
+        '/opt/alt/php84/usr/bin/php',
+        '/usr/local/bin/ea-php85',
+        '/usr/bin/ea-php85',
+        '/usr/local/bin/ea-php84',
+        '/usr/bin/ea-php84',
+        'ea-php85',
+        'ea-php84',
+        '/usr/local/bin/php8.5',
+        '/usr/bin/php8.5',
+        'php8.5',
+        '/usr/local/bin/php85',
+        '/usr/bin/php85',
+        'php85',
+        '/usr/local/bin/php8.4',
+        '/usr/bin/php8.4',
+        'php8.4',
+        '/usr/local/bin/php84',
+        '/usr/bin/php84',
+        'php84',
         '/usr/local/bin/php',
         '/usr/bin/php',
         'php',
-        'php8.5',
-        'php85',
-        'php8.4',
-        'php8.3',
     ];
 
-    if (defined('PHP_BINARY') && PHP_BINARY && ! str_contains(strtolower(PHP_BINARY), 'fpm')) {
+    if (
+        defined('PHP_BINARY') &&
+        PHP_BINARY &&
+        ! str_contains(strtolower(PHP_BINARY), 'fpm') &&
+        ! str_contains(strtolower(PHP_BINARY), 'cgi')
+    ) {
         array_unshift($candidates, PHP_BINARY);
     }
 
-    foreach ($candidates as $bin) {
+    foreach (array_unique(array_filter($candidates)) as $bin) {
         $out = [];
         $code = 0;
-        exec(escapeshellarg($bin).' -v 2>&1', $out, $code);
+        exec(escapeshellarg($bin).' -r '.escapeshellarg('echo PHP_VERSION;').' 2>&1', $out, $code);
+        $version = trim(implode("\n", $out));
 
-        if ($code === 0 && isset($out[0]) && str_contains(strtolower($out[0]), 'php')) {
+        if (
+            $code === 0 &&
+            preg_match('/^(\d+\.\d+\.\d+)/', $version, $matches) === 1 &&
+            version_compare($matches[1], '8.4.1', '>=')
+        ) {
             return $bin;
         }
     }
 
-    return 'php';
+    return null;
 }
 
 function rv_find_npm(): ?string
@@ -173,9 +202,9 @@ if ($base === null || ! is_file($base.DIRECTORY_SEPARATOR.'artisan')) {
 }
 
 if ($secret === '' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
-    if ($expected === '') {
+    if (strlen($expected) < 32) {
         http_response_code(503);
-        echo "DEPLOY_SECRET is not configured in the project .env.\n";
+        echo "Set DEPLOY_SECRET to a new random value of at least 32 characters in the project .env.\n";
         exit;
     }
 
@@ -196,7 +225,7 @@ if (! in_array($mode, ['migrate-only', 'full-update'], true)) {
     exit;
 }
 
-if ($expected === '' || ! rv_secrets_match($expected, $secret)) {
+if (strlen($expected) < 32 || ! rv_secrets_match($expected, $secret)) {
     http_response_code(403);
     echo "Forbidden. Check that DEPLOY_SECRET is configured and matches.\n";
     exit;
@@ -213,7 +242,13 @@ if ($mode === 'full-update') {
     rv_clear_bootstrap_cache($base, $log);
 }
 
-$php = rv_find_php();
+$php = rv_find_php((string) ($env['PHP_BIN'] ?? ''));
+if ($php === null) {
+    http_response_code(500);
+    echo "PHP CLI 8.4.1 or later was not found. Set PHP_BIN in the project .env to the hosting PHP CLI binary.\n";
+    exit;
+}
+
 $log[] = '[rv-update] php '.$php;
 
 $run = static function (string $cmd) use (&$log): int {
