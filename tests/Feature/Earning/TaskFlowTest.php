@@ -75,26 +75,27 @@ class TaskFlowTest extends TestCase
             ->assertDontSee('Timer poora hone tak tab band karna aur back jana band hai.');
     }
 
-    public function test_the_locked_tab_embeds_the_task_link(): void
+    public function test_the_task_opens_the_real_page_in_a_new_tab(): void
     {
         $user = User::factory()->earner()->create();
         $task = EarningTask::factory()->youtubeSubscribe(30, 20)->create([
             'target_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ]);
 
-        $this->assertSame('https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0', $task->embedUrl());
-        $this->assertSame(
-            'https://example.com/ad',
-            EarningTask::factory()->make(['target_url' => 'https://example.com/ad'])->embedUrl(),
-        );
+        $this->actingAs($user)
+            ->get(route('tasks.index'))
+            ->assertOk()
+            ->assertSee('window.open(', false)
+            ->assertSee('https://www.youtube.com/watch?v=dQw4w9WgXcQ', false);
 
         $this->actingAs($user)->post(route('tasks.start', $task));
 
         $this->actingAs($user)
             ->get(route('tasks.run', $task))
             ->assertOk()
-            ->assertSee('<iframe', false)
-            ->assertSee('https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0', false)
+            ->assertDontSee('<iframe', false)
+            ->assertSee('Open real page', false)
+            ->assertSee('https://www.youtube.com/watch?v=dQw4w9WgXcQ', false)
             ->assertSee('Timer poora hone tak tab band karna aur back jana band hai.');
     }
 

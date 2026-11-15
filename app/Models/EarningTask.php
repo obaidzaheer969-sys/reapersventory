@@ -63,29 +63,4 @@ class EarningTask extends Model
     {
         return $this->duration_seconds.' sec';
     }
-
-    /**
-     * Return a URL that can be shown inside the locked task tab.
-     *
-     * YouTube watch/short links are converted to their embeddable player URL;
-     * everything else is returned unchanged and rendered as-is in the frame.
-     */
-    public function embedUrl(): string
-    {
-        $url = (string) $this->target_url;
-
-        $patterns = [
-            '~^https?://(?:www\.|m\.)?youtube\.com/watch\?(?:[^#]*&)?v=([A-Za-z0-9_-]{6,})~i',
-            '~^https?://(?:www\.)?youtube\.com/shorts/([A-Za-z0-9_-]{6,})~i',
-            '~^https?://(?:www\.)?youtu\.be/([A-Za-z0-9_-]{6,})~i',
-        ];
-
-        foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $url, $matches) === 1) {
-                return 'https://www.youtube.com/embed/'.$matches[1].'?rel=0';
-            }
-        }
-
-        return $url;
-    }
 }

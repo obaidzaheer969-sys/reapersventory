@@ -7,7 +7,6 @@
         $totalSeconds = max(1, (int) $task->duration_seconds);
         $remaining = max(0, (int) $remainingSeconds);
         $ready = $remaining === 0;
-        $embedUrl = $task->embedUrl();
     @endphp
 
     <div class="mx-auto max-w-5xl {{ $ready ? '' : 'pb-40' }}">
@@ -28,28 +27,27 @@
                 </div>
             </div>
 
-            <div class="bg-ink-950/70">
-                <div class="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-2">
-                    <span class="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-400">
-                        <span class="h-2 w-2 rounded-full {{ $ready ? 'bg-mint-400' : 'animate-pulse bg-gold-400' }}"></span>
-                        {{ $ready ? 'Timer complete — claim karein' : 'Task content — timer chal raha hai' }}
-                    </span>
-                    <a href="{{ $task->target_url }}" target="_blank" rel="noopener noreferrer" class="text-[11px] font-bold text-mint-300 hover:text-mint-200">Open in new tab ↗</a>
-                </div>
+            <div class="bg-ink-950/70 px-5 py-5 sm:px-6">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="min-w-0">
+                        <p class="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-400">
+                            <span class="h-2 w-2 rounded-full {{ $ready ? 'bg-mint-400' : 'animate-pulse bg-gold-400' }}"></span>
+                            {{ $ready ? 'Timer complete — ab claim karein' : 'Real page naye tab me chal raha hai' }}
+                        </p>
+                        <p class="mt-2 max-w-xl text-sm leading-relaxed text-slate-300">
+                            Task ka asli page naye tab me khulta hai. Wahan video play karein, like ya subscribe karein — YouTube/Facebook par views, watch time, likes aur subscribes real time count hote hain.
+                        </p>
+                        <p class="mt-1.5 truncate text-[11px] text-slate-500" title="{{ $task->target_url }}">{{ $task->target_url }}</p>
+                    </div>
 
-                <div class="relative w-full" style="height: clamp(300px, 58vh, 640px);">
-                    <iframe src="{{ $embedUrl }}" title="{{ $task->title }}" loading="eager" allowfullscreen
-                            class="absolute inset-0 h-full w-full border-0"
-                            referrerpolicy="no-referrer-when-downgrade"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share"></iframe>
+                    <a href="{{ $task->target_url }}" target="_blank" rel="noopener noreferrer"
+                       class="shrink-0 rounded-xl bg-white px-4 py-2.5 text-center text-sm font-bold text-ink-950 hover:bg-slate-200">
+                        Open real page ↗
+                    </a>
                 </div>
-
-                <p class="border-t border-white/10 px-4 py-2 text-[11px] leading-relaxed text-slate-500">
-                    Agar content load na ho (kuch sites embedding block karti hain) to neeche <span class="font-semibold text-slate-300">Open link ↗</span> dabaein — yeh tab lock rahega.
-                </p>
             </div>
 
-            <div class="px-5 py-5 sm:px-6">
+            <div class="border-t border-white/10 px-5 py-5 sm:px-6">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
                         <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-mint-300" data-timer-status>{{ $ready ? 'Ready to claim' : 'Seconds remaining' }}</p>
@@ -60,24 +58,18 @@
                         </div>
                     </div>
 
-                    <div class="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[220px]">
-                        <a href="{{ $task->target_url }}" target="_blank" rel="noopener noreferrer"
-                           class="w-full rounded-xl px-4 py-2.5 text-center text-sm font-bold {{ $ready ? 'border border-white/15 bg-white/5 text-white hover:bg-white/10' : 'bg-white text-ink-950 hover:bg-slate-200' }}">
-                            Open link ↗
-                        </a>
-                        <form method="POST" action="{{ route('tasks.complete', $task) }}" class="w-full">
-                            @csrf
-                            <button type="submit" data-claim-button
-                                    class="w-full rounded-xl px-5 py-2.5 text-sm font-bold transition {{ $ready ? 'bg-gradient-to-r from-mint-400 to-mint-500 text-ink-950 shadow-lg shadow-mint-500/20' : 'cursor-not-allowed bg-white/5 text-slate-500' }}"
-                                    @disabled(! $ready)>
-                                {{ $ready ? 'Claim '.config('earning.currency').' '.number_format((float) $expectedReward, 2) : 'Please wait…' }}
-                            </button>
-                        </form>
-                    </div>
+                    <form method="POST" action="{{ route('tasks.complete', $task) }}" class="w-full sm:w-auto sm:min-w-[220px]">
+                        @csrf
+                        <button type="submit" data-claim-button
+                                class="w-full rounded-xl px-5 py-2.5 text-sm font-bold transition {{ $ready ? 'bg-gradient-to-r from-mint-400 to-mint-500 text-ink-950 shadow-lg shadow-mint-500/20' : 'cursor-not-allowed bg-white/5 text-slate-500' }}"
+                                @disabled(! $ready)>
+                            {{ $ready ? 'Claim '.config('earning.currency').' '.number_format((float) $expectedReward, 2) : 'Please wait…' }}
+                        </button>
+                    </form>
                 </div>
 
                 <p class="mt-4 text-xs leading-relaxed text-slate-500">
-                    Task ka link isi tab me neeche khud load hota hai. Timer poora hone tak yeh tab band karna aur back jana band rahega — time poora hone par khud unlock ho jayega.
+                    Is tab me timer chal raha hai. Timer poora hone tak yeh tab band karna aur back jana band rahega — time poora hone par khud unlock ho jayega. Task ka real page alag tab me hai, wahan kaam karte rahein.
                 </p>
             </div>
 
