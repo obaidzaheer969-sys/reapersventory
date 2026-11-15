@@ -161,33 +161,44 @@ function rv_clear_bootstrap_cache(string $base, array &$log): void
 }
 
 $base = rv_project_root();
-$envPath = $base ? $base.DIRECTORY_SEPARATOR.'.env' : null;
 $env = $base ? rv_load_env($base) : [];
 $expected = (string) ($env['DEPLOY_SECRET'] ?? '');
 $secret = (string) ($_GET['secret'] ?? $_POST['secret'] ?? '');
-
-if (! rv_secrets_match($expected, $secret)) {
-    http_response_code(403);
-    echo "Forbidden\n\n";
-    echo "Hosting .env mein DEPLOY_SECRET set nahi hai, ya URL ka secret match nahi karta.\n\n";
-    echo "Fix (cPanel → File Manager):\n";
-    echo "1) Laravel project root mein .env file kholo (artisan ke saath wali folder)\n";
-    echo "2) Ye line add/update karo:\n";
-    echo "   DEPLOY_SECRET=mera-secret-123-change-me\n";
-    echo "3) Save karo, phir dubara ye URL kholo:\n";
-    echo "   https://reapersventory.com/rv-update.php?secret=mera-secret-123-change-me\n\n";
-    echo "Diagnostics:\n";
-    echo '- project root: '.($base ?? 'NOT FOUND')."\n";
-    echo '- .env path: '.($envPath ?? 'n/a')."\n";
-    echo '- .env readable: '.(($envPath && is_file($envPath)) ? 'yes' : 'no')."\n";
-    echo '- DEPLOY_SECRET in .env: '.($expected !== '' ? 'yes' : 'NO — add it')."\n";
-    echo '- secret in URL: '.($secret !== '' ? 'yes' : 'NO — add ?secret=...')."\n";
-    exit;
-}
+$mode = (string) ($_POST['mode'] ?? 'full-update');
 
 if ($base === null || ! is_file($base.DIRECTORY_SEPARATOR.'artisan')) {
     http_response_code(500);
     echo "Could not find artisan / project root.\n";
+    exit;
+}
+
+if ($secret === '' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
+    if ($expected === '') {
+        http_response_code(503);
+        echo "DEPLOY_SECRET is not configured in the project .env.\n";
+        exit;
+    }
+
+    header('Content-Type: text/html; charset=UTF-8');
+    echo '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
+    echo '<title>Run pending migrations</title><body style="font:16px sans-serif;max-width:480px;margin:4rem auto;padding:0 1rem">';
+    echo '<h1>Run pending migrations</h1><p>This runs Laravel pending migrations only. It does not reset or erase the database.</p>';
+    echo '<form method="post"><input type="hidden" name="mode" value="migrate-only">';
+    echo '<label for="secret">Deployment secret</label><br>';
+    echo '<input id="secret" name="secret" type="password" required autocomplete="off" style="box-sizing:border-box;width:100%;margin:0.5rem 0 1rem;padding:0.75rem">';
+    echo '<button type="submit" style="padding:0.75rem 1rem">Run migrations</button></form></body></html>';
+    exit;
+}
+
+if (! in_array($mode, ['migrate-only', 'full-update'], true)) {
+    http_response_code(400);
+    echo "Invalid update mode.\n";
+    exit;
+}
+
+if ($expected === '' || ! rv_secrets_match($expected, $secret)) {
+    http_response_code(403);
+    echo "Forbidden. Check that DEPLOY_SECRET is configured and matches.\n";
     exit;
 }
 
@@ -198,7 +209,9 @@ $log[] = '[rv-update] started '.gmdate('c');
 $log[] = '[rv-update] base '.$base;
 
 // Clear stale caches FIRST so site does not 500 on missing DeployController etc.
-rv_clear_bootstrap_cache($base, $log);
+if ($mode === 'full-update') {
+    rv_clear_bootstrap_cache($base, $log);
+}
 
 $php = rv_find_php();
 $log[] = '[rv-update] php '.$php;
@@ -215,6 +228,20 @@ $run = static function (string $cmd) use (&$log): int {
 
     return $code;
 };
+
+if ($mode === 'migrate-only') {
+    $migrationCode = $run(escapeshellarg($php).' artisan migrate --force');
+
+    if ($migrationCode !== 0) {
+        http_response_code(500);
+        echo implode("\n", $log)."\n";
+        exit;
+    }
+
+    $log[] = '[rv-update] migrations completed successfully';
+    echo implode("\n", $log)."\n";
+    exit;
+}
 
 $run('git fetch origin main');
 $run('git reset --hard origin/main');

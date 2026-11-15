@@ -85,11 +85,13 @@ bash deploy.sh
 DEPLOY_SECRET=put-a-long-random-string-here
 ```
 
-2. After each `git push` to `main`, open this **same** URL (secret from hosting `.env`):
+2. After each `git push` to `main`, open this **same** URL:
 
-`https://reapersventory.com/rv-update.php?secret=YOUR_DEPLOY_SECRET`
+`https://reapersventory.com/rv-update.php`
 
-File used: `public/rv-update.php` only. Do not add a second updater.
+Enter `DEPLOY_SECRET` from the hosting `.env` into the form. The **Run migrations** action runs only `php artisan migrate --force`; it does not reset or erase the database. The existing updater can still run a full deployment when called with its existing secret URL.
+
+File used: `public/rv-update.php` only. Do not add a second updater or use `migrate:fresh`.
 
 Or GitHub → repo → **Settings → Webhooks → Add webhook**
 - Payload URL: same URL as above
