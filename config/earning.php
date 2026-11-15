@@ -8,7 +8,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'brand' => env('EARNING_BRAND', 'EarnPK'),
+    'brand' => env('EARNING_BRAND', 'Earn To PKR'),
 
     'tagline' => env('EARNING_TAGLINE', 'Watch. Follow. Earn.'),
 

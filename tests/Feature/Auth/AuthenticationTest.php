@@ -15,6 +15,7 @@ class AuthenticationTest extends TestCase
     {
         $this->get(route('login'))
             ->assertOk()
+            ->assertSee('Earn To PKR')
             ->assertSee('href="'.route('login').'"', false)
             ->assertSee('href="'.route('register').'"', false);
     }

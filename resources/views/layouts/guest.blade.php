@@ -49,7 +49,6 @@
                 <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-mint-400 to-mint-600 text-xl font-black text-ink-950 shadow-lg shadow-mint-500/25">₨</span>
                 <span class="leading-tight">
                     <span class="block font-display text-2xl font-bold text-white">{{ config('earning.brand') }}</span>
-                    <span class="block text-[11px] font-semibold uppercase tracking-[0.2em] text-mint-300/80">Earn in PKR</span>
                 </span>
             </a>
 

@@ -33,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->darkMode(false)
-            ->brandName('')
+            ->brandName('Earn To PKR')
             ->brandLogo(asset('images/reapersventory-logo.png'))
             ->brandLogoHeight('4rem')
             ->favicon(asset('images/reapersventory-logo.png'))
