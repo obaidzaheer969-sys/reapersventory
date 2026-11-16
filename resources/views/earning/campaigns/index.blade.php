@@ -13,7 +13,7 @@
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Community</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Other users ke tasks</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Yeh campaigns doosre users ne publish kiye hain. Har campaign ki quantity poori hone par woh khud ba khud hide ho jati hai. Ek campaign aap sirf ek dafa complete kar sakte hain.
+                Yeh campaigns doosre users ne publish kiye hain. Har action (subscribe, follow, like ya video view) ka reward exactly 2 PKR hai. Har campaign ki quantity poori hone par woh khud ba khud hide ho jati hai. Ek campaign aap sirf ek dafa complete kar sakte hain.
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
