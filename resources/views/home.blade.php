@@ -46,7 +46,7 @@
             </a>
 
             <nav class="ml-8 hidden items-center gap-6 text-sm font-semibold text-slate-300 md:flex">
-                <a href="#platforms" class="hover:text-white">Tasks</a>
+                <a href="#platforms" class="hover:text-white">Admin Tasks</a>
                 <a href="#how" class="hover:text-white">How it works</a>
                 <a href="#wallets" class="hover:text-white">Payouts</a>
                 <a href="#faq" class="hover:text-white">FAQ</a>
@@ -69,7 +69,7 @@
                 <div>
                     <span class="inline-flex items-center gap-2 rounded-full border border-mint-400/30 bg-mint-500/10 px-3.5 py-1.5 text-xs font-bold text-mint-200">
                         <span class="h-2 w-2 rounded-full bg-mint-400"></span>
-                        Daily tasks · Instant wallet credit
+                        Daily admin tasks · Instant wallet credit
                     </span>
 
                     <h1 class="mt-6 font-display text-4xl font-bold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
@@ -91,7 +91,7 @@
                     <div class="mt-10 grid max-w-lg grid-cols-3 gap-3">
                         <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
                             <p class="text-2xl font-bold text-white">{{ number_format($activeTasks) }}</p>
-                            <p class="mt-1 text-[11px] uppercase tracking-wider text-slate-400">Active tasks</p>
+                            <p class="mt-1 text-[11px] uppercase tracking-wider text-slate-400">Active admin tasks</p>
                         </div>
                         <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
                             <p class="text-2xl font-bold text-white">{{ number_format($tasksCompleted) }}</p>
@@ -153,7 +153,7 @@
 
         <section id="platforms" class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <div class="max-w-2xl">
-                <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Task categories</p>
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Admin task categories</p>
                 <h2 class="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Har platform ka apna task system</h2>
                 <p class="mt-3 text-slate-400">Admin jo seconds set karega, utni der task khula rahega. Timer poora hone ke baad hi reward claim hota hai.</p>
             </div>

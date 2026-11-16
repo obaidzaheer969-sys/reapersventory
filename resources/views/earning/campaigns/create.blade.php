@@ -28,7 +28,7 @@
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Create campaign</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Apna task publish karein</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Campaign ka poora budget wallet se foran hold hoga. Admin approval ke baad campaign doosre users ko live dikhegi. Reject hone par payment wallet me wapas aa jayegi.
+                Campaign ka poora budget wallet se foran hold hoga aur campaign turant live ho jayegi — kisi admin approval ka intezar nahi. Cancel karne par unused budget wallet me wapas aa jata hai.
             </p>
         </div>
         <div class="rounded-2xl border border-mint-400/25 bg-mint-500/10 px-4 py-3 text-right">
@@ -50,7 +50,7 @@
                             <option value="{{ $value }}" @selected($selectedType === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
-                    <p class="mt-1.5 text-[11px] text-slate-500">Follower, subscriber aur like campaigns par 100 actions ka reward 2 PKR + 1 PKR platform fee. Video campaigns duration ke hisaab se priced hain.</p>
+                    <p class="mt-1.5 text-[11px] text-slate-500">Har action (subscribe, follow, like ya video view) ka reward 2 PKR hai. 100 actions = PKR 200. Koi platform fee nahi.</p>
                 </div>
 
                 <div>
@@ -84,11 +84,11 @@
                                 class="w-full rounded-xl border border-white/10 bg-ink-900 px-3.5 py-2.5 text-sm text-white focus:border-mint-400 focus:outline-none focus:ring-2 focus:ring-mint-400/20">
                             @foreach ($durations as $seconds)
                                 <option value="{{ $seconds }}" @selected((int) old('duration_seconds', $minSeconds) === $seconds)>
-                                    {{ $seconds }} sec — {{ \App\Support\Currency::format($campaignConfig['video_base_reward'] + intdiv(max(0, $seconds - $minSeconds), $stepSeconds) * $campaignConfig['video_extra_reward']) }}
+                                    {{ $seconds }} sec
                                 </option>
                             @endforeach
                         </select>
-                        <p class="mt-1.5 text-[11px] text-slate-500">60s = 2 PKR, phir har extra 60s par +2 PKR.</p>
+                        <p class="mt-1.5 text-[11px] text-slate-500">Duration sirf minimum watch time hai. Video view ka reward bhi 2 PKR hai.</p>
                     </div>
                 </div>
 
@@ -103,7 +103,7 @@
                     <p id="quote-hint" class="text-[11px] text-slate-500">Quantity daalein — total cost yahan dikhega.</p>
                     <button type="submit" id="campaign-submit"
                             class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-5 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20 disabled:cursor-not-allowed disabled:opacity-50">
-                        Submit for approval
+                        Publish campaign
                     </button>
                 </div>
             </form>
@@ -116,26 +116,21 @@
                     <span class="text-slate-300">Reward per action</span>
                     <span id="quote-reward" class="font-bold text-white">PKR 0.00</span>
                 </div>
-                <div id="quote-fee-row" class="mt-2 flex items-center justify-between text-sm">
-                    <span class="text-slate-300">Platform fee</span>
-                    <span id="quote-fee" class="font-bold text-white">PKR 0.00</span>
-                </div>
                 <div class="mt-2 flex items-center justify-between text-sm">
                     <span class="text-slate-300">Total campaign cost</span>
                     <span id="quote-total" class="font-display text-xl font-bold text-mint-300">PKR 0.00</span>
                 </div>
-                <p class="mt-3 text-[11px] leading-relaxed text-slate-400">Poora amount wallet se hold hota hai. Har action complete hone par earner ko reward milta hai.</p>
+                <p class="mt-3 text-[11px] leading-relaxed text-slate-400">Poora amount wallet se hold hota hai. Har action complete hone par earner ko 2 PKR milte hain.</p>
             </div>
 
             <div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-xs leading-relaxed text-slate-400">
                 <h2 class="text-sm font-bold text-white">Campaign rules</h2>
                 <ul class="mt-2 list-inside list-disc space-y-1">
-                    <li>Campaign admin approval ke baad live hoti hai.</li>
-                    <li>Follower, subscriber aur like campaigns par 1 PKR platform fee lagti hai.</li>
+                    <li>Payment ke foran baad campaign live ho jati hai — approval ki zaroorat nahi.</li>
+                    <li>Har action ka reward 2 PKR hai, koi platform fee nahi.</li>
                     <li>Required quantity poori hone par campaign khud hide ho jati hai.</li>
                     <li>Ek earner aap ki campaign sirf ek dafa complete kar sakta hai.</li>
                     <li>Cancel karne par unused budget wallet me wapas aa jata hai.</li>
-                    <li>Reject hone par poora amount refund ho jata hai.</li>
                 </ul>
             </div>
         </div>
@@ -156,21 +151,12 @@
             var durationField = document.getElementById('duration-field');
             var durationSelect = document.getElementById('duration_seconds');
             var rewardOut = document.getElementById('quote-reward');
-            var feeRow = document.getElementById('quote-fee-row');
-            var feeOut = document.getElementById('quote-fee');
             var totalOut = document.getElementById('quote-total');
             var hintOut = document.getElementById('quote-hint');
             var submit = document.getElementById('campaign-submit');
 
             var watchMap = @js($watchMap);
-            var config = {
-                actionReward: {{ (float) $campaignConfig['action_reward'] }},
-                actionFee: {{ (float) $campaignConfig['action_admin_fee'] }},
-                base: {{ (float) $campaignConfig['video_base_reward'] }},
-                extra: {{ (float) $campaignConfig['video_extra_reward'] }},
-                min: {{ $minSeconds }},
-                step: {{ $stepSeconds }}
-            };
+            var reward = {{ (float) $campaignConfig['action_reward'] }};
             var wallet = {{ (float) $walletBalance }};
 
             function money(value) {
@@ -190,30 +176,10 @@
                     quantity = 0;
                 }
 
-                var reward;
-
-                if (isWatch) {
-                    var duration = parseInt(durationSelect.value, 10) || config.min;
-                    var steps = Math.max(0, Math.floor((duration - config.min) / config.step));
-                    reward = config.base + (steps * config.extra);
-                } else {
-                    reward = config.actionReward;
-                }
-
                 var total = reward * quantity;
-                var fee = isWatch ? 0 : config.actionFee;
-
-                if (quantity > 0) {
-                    total += fee;
-                }
 
                 rewardOut.textContent = money(reward);
-                feeOut.textContent = money(fee);
                 totalOut.textContent = money(total);
-
-                if (feeRow) {
-                    feeRow.classList.toggle('hidden', isWatch);
-                }
 
                 if (total <= 0) {
                     hintOut.textContent = 'Quantity daalein — total cost yahan dikhega.';
@@ -224,7 +190,7 @@
                     hintOut.className = 'text-[11px] text-rose-300';
                     submit.disabled = true;
                 } else {
-                    hintOut.textContent = 'Payment wallet se foran hold hogi. Approval ke baad campaign live hogi.';
+                    hintOut.textContent = 'Payment wallet se foran hold hogi aur campaign turant live ho jayegi.';
                     hintOut.className = 'text-[11px] text-mint-300';
                     submit.disabled = false;
                 }

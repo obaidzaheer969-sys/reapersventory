@@ -44,7 +44,7 @@ class EarningTaskFactory extends Factory
     }
 
     /**
-     * A follower/subscriber/like campaign waiting for admin approval.
+     * A legacy campaign still waiting for admin approval.
      */
     public function campaign(int $quantity = 100): static
     {
@@ -52,12 +52,12 @@ class EarningTaskFactory extends Factory
             'user_id' => User::factory(),
             'task_type' => TaskType::YoutubeSubscribe,
             'duration_seconds' => 15,
-            'reward' => 0.02,
+            'reward' => 2,
             'is_active' => false,
             'campaign_status' => CampaignStatus::Pending,
             'target_quantity' => $quantity,
             'completed_quantity' => 0,
-            'total_cost' => round((0.02 * $quantity) + 1, 2),
+            'total_cost' => round(2 * $quantity, 2),
         ]);
     }
 

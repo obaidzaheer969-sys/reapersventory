@@ -24,11 +24,11 @@ class EarningTaskResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Earning';
 
-    protected static ?string $navigationLabel = 'Tasks';
+    protected static ?string $navigationLabel = 'Admin Tasks';
 
-    protected static ?string $modelLabel = 'earning task';
+    protected static ?string $modelLabel = 'admin task';
 
-    protected static ?string $pluralModelLabel = 'earning tasks';
+    protected static ?string $pluralModelLabel = 'admin tasks';
 
     protected static ?int $navigationSort = 1;
 

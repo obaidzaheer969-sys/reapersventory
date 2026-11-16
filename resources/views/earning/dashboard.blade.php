@@ -14,10 +14,10 @@
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">{{ $greeting }}</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Assalam-o-Alaikum, {{ $user->name }}</h1>
-            <p class="mt-2 text-sm text-slate-400">{{ $now->format('l, d M Y') }} · Aaj ke tasks complete karein aur wallet barhayen.</p>
+            <p class="mt-2 text-sm text-slate-400">{{ $now->format('l, d M Y') }} · Admin tasks aur community campaigns complete karein aur wallet barhayen.</p>
         </div>
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route('tasks.index') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20">Start today's tasks</a>
+            <a href="{{ route('tasks.index') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20">Admin Tasks</a>
             <a href="{{ route('campaigns.index') }}" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Community</a>
             <a href="{{ route('deposits.index') }}" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Deposit</a>
             <a href="{{ route('wallet.index') }}" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Withdraw</a>
@@ -33,13 +33,13 @@
         </div>
 
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Aaj complete</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Admin tasks aaj</p>
             <p class="mt-2 font-display text-3xl font-bold text-white">{{ $completedTodayCount }}<span class="text-lg text-slate-500">/{{ $activeTasks->count() }}</span></p>
-            <p class="mt-2 text-xs text-slate-400">Tasks completed today</p>
+            <p class="mt-2 text-xs text-slate-400">Completed today · 2 PKR each</p>
         </div>
 
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Baaki tasks</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Baaki admin tasks</p>
             <p class="mt-2 font-display text-3xl font-bold text-white">{{ $remainingTodayCount }}</p>
             <p class="mt-2 text-xs text-slate-400">Unlock: {{ $nextResetAt->format('h:i A') }} (raat 12 baje)</p>
         </div>
@@ -56,8 +56,8 @@
             <div class="rounded-2xl border border-white/10 bg-white/5">
                 <div class="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4">
                     <div>
-                        <h2 class="text-base font-bold text-white">Aaj ke tasks</h2>
-                        <p class="text-xs text-slate-400">{{ $availableCount }} available · {{ $remainingTodayCount }} remaining</p>
+                        <h2 class="text-base font-bold text-white">Admin Tasks</h2>
+                        <p class="text-xs text-slate-400">{{ $availableCount }} available · {{ $remainingTodayCount }} remaining · 2 PKR each</p>
                     </div>
                     <a href="{{ route('tasks.index') }}" class="text-xs font-semibold text-mint-300 hover:text-mint-200">View all →</a>
                 </div>
@@ -90,7 +90,7 @@
                         </div>
                     @empty
                         <div class="px-5 py-10 text-center">
-                            <p class="text-sm text-slate-400">Abhi koi task available nahi. Admin jald naye tasks add karega.</p>
+                            <p class="text-sm text-slate-400">Abhi koi admin task available nahi. Admin jald naye tasks add karega.</p>
                         </div>
                     @endforelse
                 </div>
@@ -99,7 +99,7 @@
             <div class="rounded-2xl border border-white/10 bg-white/5">
                 <div class="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4">
                     <div>
-                        <h2 class="text-base font-bold text-white">Community tasks</h2>
+                        <h2 class="text-base font-bold text-white">Other Users Tasks</h2>
                         <p class="text-xs text-slate-400">{{ $communityTasks->count() }} live campaigns from other users</p>
                     </div>
                     <a href="{{ route('campaigns.index') }}" class="text-xs font-semibold text-mint-300 hover:text-mint-200">View all →</a>

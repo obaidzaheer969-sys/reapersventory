@@ -47,7 +47,6 @@ class CampaignController extends Controller
             'walletBalance' => (float) $user->wallet_balance,
             'totalSpend' => $user->totalCampaignSpend(),
             'liveCount' => $user->campaigns()->liveCampaigns()->count(),
-            'pendingCount' => $user->campaigns()->where('campaign_status', 'pending')->count(),
             'deliveredTotal' => (int) $user->campaigns()->sum('completed_quantity'),
         ]);
     }
@@ -83,7 +82,7 @@ class CampaignController extends Controller
 
         return redirect()
             ->route('campaigns.mine')
-            ->with('status', 'Campaign #'.$campaign->id.' admin approval ke liye bhej di gayi hai. Payment wallet se hold ho gayi hai.');
+            ->with('status', 'Campaign #'.$campaign->id.' live ho gayi hai! Payment wallet se hold ho gayi aur campaign foran doosre users ko dikhne lag gayi hai.');
     }
 
     public function show(Request $request, EarningTask $campaign): View

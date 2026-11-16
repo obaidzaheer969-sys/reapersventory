@@ -12,7 +12,7 @@
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">My campaigns</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Campaign dashboard</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Aap ki publish ki hui campaigns, unki quantity, spending aur completion status — sab yahan. Nayi campaign admin approval ke baad live hoti hai.
+                Aap ki publish ki hui campaigns, unki quantity, spending aur completion status — sab yahan. Nayi campaign payment ke foran baad live ho jati hai.
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -30,7 +30,7 @@
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total campaign spend</p>
             <p class="mt-2 font-display text-3xl font-bold text-white">{{ \App\Support\Currency::format($totalSpend) }}</p>
-            <p class="mt-2 text-xs text-slate-400">{{ $pendingCount }} pending approval</p>
+            <p class="mt-2 text-xs text-slate-400">Auto-approved · no waiting</p>
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Live campaigns</p>

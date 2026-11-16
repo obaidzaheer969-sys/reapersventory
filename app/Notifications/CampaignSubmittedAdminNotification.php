@@ -22,14 +22,14 @@ class CampaignSubmittedAdminNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('New campaign pending approval')
+            ->subject('New campaign is live')
             ->greeting('Hello '.$notifiable->name.',')
-            ->line('A user submitted a new campaign for review.')
+            ->line('A user published a new campaign. It is already live for earners.')
             ->line('User: '.($this->campaign->owner?->name ?? '—'))
             ->line('Task: '.$this->campaign->task_type->label().' — '.$this->campaign->title)
             ->line('Quantity: '.number_format((int) $this->campaign->target_quantity))
             ->line('Payment held: PKR '.number_format((float) $this->campaign->total_cost, 2))
-            ->action('Review campaign', url('/admin/campaigns'));
+            ->action('View campaigns', url('/admin/campaigns'));
     }
 
     /**
@@ -38,24 +38,24 @@ class CampaignSubmittedAdminNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => 'New campaign pending',
+            'title' => 'New campaign is live',
             'body' => ($this->campaign->owner?->name ?? 'User').' · '.$this->campaign->task_type->label()
                 .' · PKR '.number_format((float) $this->campaign->total_cost, 2),
             'url' => url('/admin/campaigns'),
-            'level' => 'warning',
+            'level' => 'success',
         ];
     }
 
     public function toDatabase(object $notifiable): array
     {
         return $this->filamentDatabaseMessage(
-            title: 'New campaign pending',
+            title: 'New campaign is live',
             body: ($this->campaign->owner?->name ?? 'User')
-                .' submitted '.$this->campaign->task_type->label()
+                .' published '.$this->campaign->task_type->label()
                 .' for '.number_format((int) $this->campaign->target_quantity).' actions.',
             url: url('/admin/campaigns'),
-            status: 'warning',
-            actionLabel: 'Review campaign',
+            status: 'success',
+            actionLabel: 'View campaign',
         );
     }
 }

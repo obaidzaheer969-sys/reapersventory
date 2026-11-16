@@ -64,14 +64,14 @@ class EarningStatsOverview extends StatsOverviewWidget
             Stat::make('Earners', number_format($earnersTotal))
                 ->description($earnersToday.' joined today')
                 ->color('primary'),
-            Stat::make('Active tasks', number_format($activeTasks))
+            Stat::make('Active admin tasks', number_format($activeTasks))
                 ->description('Live task catalog')
                 ->color('success'),
             Stat::make('Completed today', number_format($completedToday))
                 ->description('Task attempts finished today')
                 ->color('info'),
             Stat::make('Live campaigns', number_format($liveCampaigns))
-                ->description($pendingCampaigns.' pending approval')
+                ->description($pendingCampaigns.' legacy pending approval')
                 ->color($pendingCampaigns > 0 ? 'warning' : 'success'),
             Stat::make('Campaign spend', 'PKR '.number_format($campaignSpend))
                 ->description('Paid by campaign owners')

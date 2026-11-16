@@ -30,10 +30,23 @@ class TaskController extends Controller
             ->orderBy('id')
             ->get();
 
+        $campaigns = EarningTask::query()
+            ->liveCampaigns()
+            ->with('owner')
+            ->where('user_id', '!=', $user->id)
+            ->orderByDesc('approved_at')
+            ->orderByDesc('id')
+            ->limit(12)
+            ->get();
+
+        $inProgress = $this->tasks->inProgressAttempts($user);
+
         return view('earning.tasks.index', [
             'tasks' => $tasks,
+            'campaigns' => $campaigns,
             'completedIds' => $this->tasks->completedTaskIdsToday($user),
-            'inProgress' => $this->tasks->inProgressAttempts($user),
+            'completedCampaignIds' => $this->tasks->completedCampaignIds($user),
+            'inProgress' => $inProgress,
             'nextResetAt' => $this->tasks->nextResetAt(),
             'walletBalance' => $user->wallet_balance,
         ]);

@@ -17,39 +17,40 @@ class CampaignFlowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_video_campaign_pricing_scales_with_duration(): void
+    public function test_video_campaign_pricing_is_flat_regardless_of_duration(): void
     {
         $campaigns = app(CampaignService::class);
 
-        foreach ([60 => 2.0, 120 => 4.0, 180 => 6.0, 240 => 8.0] as $seconds => $reward) {
+        foreach ([60, 120, 180, 240] as $seconds) {
             $quote = $campaigns->quote(TaskType::YoutubeWatch, 100, $seconds);
 
-            $this->assertSame($reward, $quote['reward']);
+            $this->assertSame(2.0, $quote['reward']);
             $this->assertSame(0.0, $quote['fee']);
-            $this->assertSame(round($reward * 100, 2), $quote['total']);
+            $this->assertSame(200.0, $quote['total']);
+            $this->assertSame($seconds, $quote['duration_seconds']);
         }
     }
 
-    public function test_quantity_campaign_pricing_charges_a_one_pkr_platform_fee(): void
+    public function test_quantity_campaign_pricing_has_no_platform_fee(): void
     {
         $campaigns = app(CampaignService::class);
 
         $quote = $campaigns->quote(TaskType::YoutubeSubscribe, 100);
 
-        $this->assertSame(0.02, $quote['reward']);
-        $this->assertSame(1.0, $quote['fee']);
-        $this->assertSame(3.0, $quote['total']);
+        $this->assertSame(2.0, $quote['reward']);
+        $this->assertSame(0.0, $quote['fee']);
+        $this->assertSame(200.0, $quote['total']);
 
         $bulk = $campaigns->quote(TaskType::InstagramFollow, 200);
 
-        $this->assertSame(0.02, $bulk['reward']);
-        $this->assertSame(1.0, $bulk['fee']);
-        $this->assertSame(5.0, $bulk['total']);
+        $this->assertSame(2.0, $bulk['reward']);
+        $this->assertSame(0.0, $bulk['fee']);
+        $this->assertSame(400.0, $bulk['total']);
     }
 
-    public function test_creating_a_campaign_holds_the_payment_from_the_wallet(): void
+    public function test_creating_a_campaign_holds_the_payment_and_makes_it_live_immediately(): void
     {
-        $owner = User::factory()->earner()->create(['wallet_balance' => 10]);
+        $owner = User::factory()->earner()->create(['wallet_balance' => 500]);
 
         $this->actingAs($owner)
             ->post(route('campaigns.store'), [
@@ -64,23 +65,25 @@ class CampaignFlowTest extends TestCase
         $campaign = EarningTask::query()->campaigns()->sole();
 
         $this->assertSame($owner->id, $campaign->user_id);
-        $this->assertSame(CampaignStatus::Pending, $campaign->campaign_status);
-        $this->assertFalse($campaign->is_active);
+        $this->assertSame(CampaignStatus::Active, $campaign->campaign_status);
+        $this->assertTrue($campaign->is_active);
+        $this->assertNotNull($campaign->approved_at);
         $this->assertSame(100, $campaign->target_quantity);
         $this->assertSame(0, $campaign->completed_quantity);
-        $this->assertSame(0.02, (float) $campaign->reward);
-        $this->assertSame(3.0, (float) $campaign->total_cost);
-        $this->assertSame(1.0, $campaign->platformFee());
+        $this->assertSame(2.0, (float) $campaign->reward);
+        $this->assertSame(200.0, (float) $campaign->total_cost);
+        $this->assertSame(0.0, $campaign->platformFee());
+        $this->assertTrue($campaign->isLiveCampaign());
 
-        $this->assertSame(7.0, (float) $owner->fresh()->wallet_balance);
+        $this->assertSame(300.0, (float) $owner->fresh()->wallet_balance);
         $this->assertDatabaseHas('wallet_transactions', [
             'user_id' => $owner->id,
             'type' => WalletTransactionType::CampaignFunding->value,
-            'amount' => 3,
+            'amount' => 200,
         ]);
     }
 
-    public function test_a_video_campaign_is_charged_by_its_duration(): void
+    public function test_a_video_campaign_is_charged_a_flat_reward(): void
     {
         $owner = User::factory()->earner()->create(['wallet_balance' => 500]);
 
@@ -97,10 +100,10 @@ class CampaignFlowTest extends TestCase
         $campaign = EarningTask::query()->campaigns()->sole();
 
         $this->assertSame(120, $campaign->duration_seconds);
-        $this->assertSame(4.0, (float) $campaign->reward);
-        $this->assertSame(400.0, (float) $campaign->total_cost);
+        $this->assertSame(2.0, (float) $campaign->reward);
+        $this->assertSame(200.0, (float) $campaign->total_cost);
         $this->assertSame(0.0, $campaign->platformFee());
-        $this->assertSame(100.0, (float) $owner->fresh()->wallet_balance);
+        $this->assertSame(300.0, (float) $owner->fresh()->wallet_balance);
     }
 
     public function test_a_campaign_cannot_be_created_without_enough_wallet_balance(): void
@@ -141,7 +144,7 @@ class CampaignFlowTest extends TestCase
         $owner = User::factory()->earner()->create(['wallet_balance' => 0]);
         $campaign = EarningTask::factory()->campaign(100)->create([
             'user_id' => $owner->id,
-            'total_cost' => 3,
+            'total_cost' => 200,
         ]);
 
         $rejected = app(CampaignService::class)->reject($campaign, 'Link sahi nahi hai.');
@@ -149,11 +152,11 @@ class CampaignFlowTest extends TestCase
         $this->assertSame(CampaignStatus::Rejected, $rejected->campaign_status);
         $this->assertFalse($rejected->is_active);
         $this->assertSame('Link sahi nahi hai.', $rejected->admin_notes);
-        $this->assertSame(3.0, (float) $owner->fresh()->wallet_balance);
+        $this->assertSame(200.0, (float) $owner->fresh()->wallet_balance);
         $this->assertDatabaseHas('wallet_transactions', [
             'user_id' => $owner->id,
             'type' => WalletTransactionType::CampaignRefund->value,
-            'amount' => 3,
+            'amount' => 200,
         ]);
     }
 
@@ -166,8 +169,8 @@ class CampaignFlowTest extends TestCase
         $campaign = EarningTask::factory()->liveCampaign(2)->create([
             'user_id' => $owner->id,
             'duration_seconds' => 15,
-            'reward' => 0.02,
-            'total_cost' => 1.04,
+            'reward' => 2,
+            'total_cost' => 4,
         ]);
 
         $this->completeTask($firstEarner, $campaign);
@@ -177,7 +180,7 @@ class CampaignFlowTest extends TestCase
         $this->assertSame(1, $campaign->completed_quantity);
         $this->assertSame(CampaignStatus::Active, $campaign->campaign_status);
         $this->assertTrue($campaign->is_active);
-        $this->assertSame(0.02, (float) $firstEarner->fresh()->wallet_balance);
+        $this->assertSame(2.0, (float) $firstEarner->fresh()->wallet_balance);
 
         $this->completeTask($secondEarner, $campaign);
 
@@ -187,7 +190,7 @@ class CampaignFlowTest extends TestCase
         $this->assertSame(CampaignStatus::Completed, $campaign->campaign_status);
         $this->assertFalse($campaign->is_active);
         $this->assertTrue($campaign->isSoldOut());
-        $this->assertSame(0.02, (float) $secondEarner->fresh()->wallet_balance);
+        $this->assertSame(2.0, (float) $secondEarner->fresh()->wallet_balance);
         $this->assertFalse(
             EarningTask::query()->liveCampaigns()->whereKey($campaign->id)->exists()
         );
@@ -232,7 +235,7 @@ class CampaignFlowTest extends TestCase
         $owner = User::factory()->earner()->create(['wallet_balance' => 0]);
         $campaign = EarningTask::factory()->campaign(100)->create([
             'user_id' => $owner->id,
-            'total_cost' => 3,
+            'total_cost' => 200,
         ]);
 
         $this->actingAs($owner)
@@ -240,7 +243,7 @@ class CampaignFlowTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(CampaignStatus::Cancelled, $campaign->fresh()->campaign_status);
-        $this->assertSame(3.0, (float) $owner->fresh()->wallet_balance);
+        $this->assertSame(200.0, (float) $owner->fresh()->wallet_balance);
     }
 
     public function test_cancelling_a_live_campaign_refunds_only_the_unused_reward_budget(): void
@@ -248,8 +251,8 @@ class CampaignFlowTest extends TestCase
         $owner = User::factory()->earner()->create(['wallet_balance' => 0]);
         $campaign = EarningTask::factory()->liveCampaign(100)->create([
             'user_id' => $owner->id,
-            'reward' => 0.02,
-            'total_cost' => 3,
+            'reward' => 2,
+            'total_cost' => 200,
             'completed_quantity' => 40,
         ]);
 
@@ -262,11 +265,11 @@ class CampaignFlowTest extends TestCase
         $this->assertSame(CampaignStatus::Cancelled, $cancelled->campaign_status);
         $this->assertFalse($cancelled->is_active);
 
-        // 60 remaining actions × 0.02 PKR. The 1 PKR platform fee is retained.
-        $this->assertSame(1.2, (float) $owner->fresh()->wallet_balance);
+        // 60 remaining actions × 2 PKR. There is no platform fee to retain.
+        $this->assertSame(120.0, (float) $owner->fresh()->wallet_balance);
     }
 
-    public function test_a_pending_campaign_is_hidden_from_other_users(): void
+    public function test_a_legacy_pending_campaign_is_hidden_from_other_users(): void
     {
         $owner = User::factory()->earner()->create();
         $viewer = User::factory()->earner()->create();
@@ -294,6 +297,52 @@ class CampaignFlowTest extends TestCase
         $this->actingAs($viewer)
             ->get(route('campaigns.show', $pending))
             ->assertNotFound();
+    }
+
+    public function test_a_new_campaign_is_immediately_live_for_other_users(): void
+    {
+        $owner = User::factory()->earner()->create(['wallet_balance' => 500]);
+        $viewer = User::factory()->earner()->create();
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.store'), [
+                'task_type' => TaskType::YoutubeSubscribe->value,
+                'title' => 'Instant live campaign',
+                'target_url' => 'https://www.youtube.com/@earnpk',
+                'target_quantity' => 100,
+            ])
+            ->assertRedirect(route('campaigns.mine'));
+
+        $campaign = EarningTask::query()->campaigns()->sole();
+
+        $this->assertTrue($campaign->isLiveCampaign());
+        $this->assertNotNull($campaign->approved_at);
+
+        $this->actingAs($viewer)
+            ->get(route('tasks.index'))
+            ->assertOk()
+            ->assertSee('Admin Tasks')
+            ->assertSee('Other Users Tasks')
+            ->assertSee('Instant live campaign');
+
+        $this->actingAs($viewer)
+            ->post(route('tasks.start', $campaign))
+            ->assertRedirect(route('tasks.run', $campaign));
+    }
+
+    public function test_the_tasks_page_does_not_repeat_the_owners_own_campaigns(): void
+    {
+        $owner = User::factory()->earner()->create();
+
+        EarningTask::factory()->liveCampaign(100)->create([
+            'user_id' => $owner->id,
+            'title' => 'Owner only campaign',
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('tasks.index'))
+            ->assertOk()
+            ->assertDontSee('Owner only campaign');
     }
 
     private function completeTask(User $earner, EarningTask $campaign): void

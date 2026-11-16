@@ -41,7 +41,7 @@
         $unreadCount = $navUser ? $navUser->unreadNotifications()->count() : 0;
         $navLinks = [
             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => '⌂'],
-            ['label' => 'Tasks', 'route' => 'tasks.index', 'icon' => '✓'],
+            ['label' => 'Admin Tasks', 'route' => 'tasks.index', 'icon' => '✓'],
             ['label' => 'Community', 'route' => 'campaigns.index', 'icon' => '◎'],
             ['label' => 'My Campaigns', 'route' => 'campaigns.mine', 'icon' => '★'],
             ['label' => 'Earnings', 'route' => 'earnings.index', 'icon' => '₨'],

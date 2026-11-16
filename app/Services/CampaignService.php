@@ -32,9 +32,9 @@ class CampaignService
 
         $reward = $isWatch
             ? $this->videoReward($this->normaliseDuration($durationSeconds))
-            : (float) config('earning.campaign.action_reward', 0.02);
+            : (float) config('earning.campaign.action_reward', 2);
 
-        $fee = $isWatch ? 0.0 : (float) config('earning.campaign.action_admin_fee', 1);
+        $fee = $isWatch ? 0.0 : (float) config('earning.campaign.action_admin_fee', 0);
 
         return [
             'reward' => round($reward, 2),
@@ -83,12 +83,13 @@ class CampaignService
                 'duration_seconds' => $quote['duration_seconds'],
                 'reward' => $quote['reward'],
                 'instructions' => $data['instructions'] ?? null,
-                'is_active' => false,
+                'is_active' => true,
                 'sort_order' => 0,
-                'campaign_status' => CampaignStatus::Pending,
+                'campaign_status' => CampaignStatus::Active,
                 'target_quantity' => $quote['quantity'],
                 'completed_quantity' => 0,
                 'total_cost' => $total,
+                'approved_at' => now(),
             ]);
 
             $this->wallet->debit(
@@ -212,7 +213,7 @@ class CampaignService
     private function videoReward(int $durationSeconds): float
     {
         $base = (float) config('earning.campaign.video_base_reward', 2);
-        $extra = (float) config('earning.campaign.video_extra_reward', 2);
+        $extra = (float) config('earning.campaign.video_extra_reward', 0);
         $min = (int) config('earning.campaign.video_min_seconds', 60);
         $step = max(1, (int) config('earning.campaign.video_step_seconds', 60));
 

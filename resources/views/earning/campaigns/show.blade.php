@@ -93,7 +93,7 @@
                     </div>
                     @if ($campaign->approved_at)
                         <div class="flex items-center justify-between">
-                            <dt class="text-xs font-semibold uppercase tracking-wider text-slate-500">Approved</dt>
+                            <dt class="text-xs font-semibold uppercase tracking-wider text-slate-500">Live since</dt>
                             <dd class="text-xs font-semibold text-slate-200">{{ $campaign->approved_at->timezone($tz)->format('d M Y, h:i A') }}</dd>
                         </div>
                     @endif

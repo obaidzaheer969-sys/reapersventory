@@ -32,9 +32,9 @@ return [
     | User Campaigns
     |--------------------------------------------------------------------------
     |
-    | Users pay from their wallet to publish tasks for other users. Follower,
-    | subscriber and like campaigns are priced per action. Video campaigns are
-    | priced by watch duration (60s = 2 PKR, then +2 PKR per extra minute).
+    | Users pay from their wallet to publish tasks for other users. Every
+    | campaign action (subscribe, follow, like or video view) pays the earner
+    | 2 PKR, so 100 actions cost the owner 200 PKR. There is no platform fee.
     |
     */
 
@@ -42,17 +42,18 @@ return [
         'min_quantity' => (int) env('EARNING_CAMPAIGN_MIN_QUANTITY', 100),
         'max_quantity' => (int) env('EARNING_CAMPAIGN_MAX_QUANTITY', 100000),
 
-        // Price paid to each earner for a follow, subscribe or like.
-        'action_reward' => (float) env('EARNING_CAMPAIGN_ACTION_REWARD', 0.02),
+        // Price paid to each earner for one action.
+        'action_reward' => (float) env('EARNING_CAMPAIGN_ACTION_REWARD', 2),
 
-        // One-time platform fee added to each follower/subscriber/like campaign.
-        'action_admin_fee' => (float) env('EARNING_CAMPAIGN_ACTION_ADMIN_FEE', 1),
+        // Platform fee per campaign. Disabled: owners pay only the action budget.
+        'action_admin_fee' => (float) env('EARNING_CAMPAIGN_ACTION_ADMIN_FEE', 0),
 
-        // Video watch rewards by duration in seconds.
+        // Video campaigns still require a minimum watch time, but every view
+        // pays the earner the same flat reward as other campaign actions.
         'video_min_seconds' => (int) env('EARNING_CAMPAIGN_VIDEO_MIN_SECONDS', 60),
         'video_max_seconds' => (int) env('EARNING_CAMPAIGN_VIDEO_MAX_SECONDS', 3600),
         'video_base_reward' => (float) env('EARNING_CAMPAIGN_VIDEO_BASE_REWARD', 2),
-        'video_extra_reward' => (float) env('EARNING_CAMPAIGN_VIDEO_EXTRA_REWARD', 2),
+        'video_extra_reward' => (float) env('EARNING_CAMPAIGN_VIDEO_EXTRA_REWARD', 0),
         'video_step_seconds' => (int) env('EARNING_CAMPAIGN_VIDEO_STEP_SECONDS', 60),
     ],
 
