@@ -16,12 +16,22 @@ class DashboardController extends Controller
         $user = $request->user();
 
         $activeTasks = EarningTask::query()
+            ->system()
             ->active()
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
 
+        $communityTasks = EarningTask::query()
+            ->liveCampaigns()
+            ->with('owner')
+            ->orderByDesc('approved_at')
+            ->orderByDesc('id')
+            ->limit(6)
+            ->get();
+
         $completedIds = $tasks->completedTaskIdsToday($user);
+        $completedCampaignIds = $tasks->completedCampaignIds($user);
 
         $announcements = Announcement::query()
             ->visible()
@@ -43,13 +53,18 @@ class DashboardController extends Controller
         return view('earning.dashboard', [
             'user' => $user,
             'activeTasks' => $activeTasks,
+            'communityTasks' => $communityTasks,
             'completedIds' => $completedIds,
+            'completedCampaignIds' => $completedCampaignIds,
             'completedTodayCount' => $completedIds->intersect($activeTasks->pluck('id'))->count(),
             'remainingTodayCount' => $tasks->remainingTodayCount($user),
             'nextResetAt' => $tasks->nextResetAt(),
             'announcements' => $announcements,
             'recentAttempts' => $recentAttempts,
             'recentTransactions' => $recentTransactions,
+            'myCampaignsCount' => $user->liveCampaigns()->count(),
+            'totalCampaignSpend' => $user->totalCampaignSpend(),
+            'totalDeposited' => $user->totalDeposited(),
         ]);
     }
 }

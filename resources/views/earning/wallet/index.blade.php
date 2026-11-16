@@ -17,6 +17,10 @@
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Wallet &amp; payouts</h1>
             <p class="mt-2 text-sm text-slate-400">Easypaisa, JazzCash, UPaisa ya NayaPay me withdrawal request bhejein.</p>
         </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('deposits.index') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20">Deposit money</a>
+            <a href="{{ route('deposits.index') }}" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Deposit history</a>
+        </div>
     </div>
 
     <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -87,6 +91,35 @@
                         <p class="mt-3 text-[11px] text-slate-500">Payout ke liye kam az kam {{ \App\Support\Currency::format($minimumPayout, false) }} balance chahiye.</p>
                     @endif
                 @endif
+            </div>
+
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-base font-bold text-white">Add money</h2>
+                        <p class="mt-1 text-xs text-slate-400">Cashmaal se wallet deposit karein.</p>
+                    </div>
+                    <span class="rounded-lg bg-mint-500/15 px-2.5 py-1 text-[11px] font-bold text-mint-300">{{ \App\Support\Currency::format($totalDeposited) }}</span>
+                </div>
+
+                <a href="{{ route('deposits.index') }}" class="mt-4 block rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-center text-sm font-bold text-ink-950">Deposit via Cashmaal</a>
+
+                <div class="mt-4 space-y-2">
+                    @forelse ($recentDeposits as $deposit)
+                        <div class="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-ink-900/40 px-3 py-2">
+                            <div class="min-w-0">
+                                <p class="truncate font-mono text-[11px] text-slate-300">{{ $deposit->order_id }}</p>
+                                <p class="text-[10px] text-slate-500">{{ $deposit->created_at?->timezone($tz)->format('d M, h:i A') }}</p>
+                            </div>
+                            <div class="shrink-0 text-right">
+                                <p class="text-xs font-bold text-white">{{ \App\Support\Currency::format($deposit->credit_amount) }}</p>
+                                <p class="text-[10px] font-semibold" style="color: {{ $deposit->status->hex() }}">{{ $deposit->status->label() }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="rounded-lg border border-dashed border-white/15 px-3 py-4 text-center text-[11px] text-slate-400">Abhi koi deposit nahi.</p>
+                    @endforelse
+                </div>
             </div>
 
             <div class="rounded-2xl border border-white/10 bg-white/5 p-5">

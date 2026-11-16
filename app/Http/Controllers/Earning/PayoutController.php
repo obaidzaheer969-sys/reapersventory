@@ -30,6 +30,8 @@ class PayoutController extends Controller
             'minimumPayout' => (float) config('earning.min_payout', 500),
             'totalWithdrawn' => $user->totalWithdrawn(),
             'pendingPayout' => $user->pendingPayoutTotal(),
+            'recentDeposits' => $user->deposits()->latest()->limit(5)->get(),
+            'totalDeposited' => $user->totalDeposited(),
         ]);
     }
 

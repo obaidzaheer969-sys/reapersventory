@@ -27,6 +27,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->trustProxies(at: '*');
+
+        $middleware->validateCsrfTokens(except: [
+            'deposits/cashmaal/ipn',
+            'deposits/cashmaal/success',
+            'deposits/cashmaal/cancel',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

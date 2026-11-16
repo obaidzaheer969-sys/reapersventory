@@ -6,9 +6,14 @@
         ['label' => 'Pending payout', 'value' => \App\Support\Currency::format($user->pendingPayoutTotal())],
         ['label' => 'Tasks completed', 'value' => number_format($user->completedTaskAttempts()->count())],
         ['label' => 'Seconds watched', 'value' => number_format($user->totalWatchedSeconds())],
+        ['label' => 'Campaigns', 'value' => number_format($user->campaigns()->count())],
+        ['label' => 'Campaign spend', 'value' => \App\Support\Currency::format($user->totalCampaignSpend())],
+        ['label' => 'Total deposited', 'value' => \App\Support\Currency::format($user->totalDeposited())],
     ];
 
     $recentAttempts = $user->completedTaskAttempts()->with('task')->latest('completed_at')->limit(5)->get();
+    $recentCampaigns = $user->campaigns()->latest()->limit(5)->get();
+    $recentDeposits = $user->deposits()->latest()->limit(5)->get();
 @endphp
 
 <div style="display: grid; gap: 1rem;">
@@ -30,6 +35,30 @@
             </div>
         @empty
             <p style="margin: 0; font-size: .85rem; color: var(--gray-500, #6b7280);">No wallet account saved.</p>
+        @endforelse
+    </div>
+
+    <div>
+        <p style="margin: 0 0 .5rem; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--gray-500, #6b7280);">Recent campaigns</p>
+        @forelse ($recentCampaigns as $campaign)
+            <div style="display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--gray-100, #f3f4f6); padding: .45rem 0; font-size: .85rem;">
+                <span style="color: var(--gray-950, #030712);">{{ $campaign->title }}</span>
+                <span style="color: var(--gray-500, #6b7280);">{{ number_format($campaign->completed_quantity) }}/{{ number_format($campaign->target_quantity) }} · {{ $campaign->campaign_status->label() }}</span>
+            </div>
+        @empty
+            <p style="margin: 0; font-size: .85rem; color: var(--gray-500, #6b7280);">No campaign created yet.</p>
+        @endforelse
+    </div>
+
+    <div>
+        <p style="margin: 0 0 .5rem; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--gray-500, #6b7280);">Recent deposits</p>
+        @forelse ($recentDeposits as $deposit)
+            <div style="display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--gray-100, #f3f4f6); padding: .45rem 0; font-size: .85rem;">
+                <span style="font-family: monospace; color: var(--gray-950, #030712);">{{ $deposit->order_id }}</span>
+                <span style="color: var(--gray-500, #6b7280);">{{ \App\Support\Currency::format($deposit->credit_amount) }} · {{ $deposit->status->label() }}</span>
+            </div>
+        @empty
+            <p style="margin: 0; font-size: .85rem; color: var(--gray-500, #6b7280);">No deposit yet.</p>
         @endforelse
     </div>
 

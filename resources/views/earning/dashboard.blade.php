@@ -18,6 +18,8 @@
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('tasks.index') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20">Start today's tasks</a>
+            <a href="{{ route('campaigns.index') }}" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Community</a>
+            <a href="{{ route('deposits.index') }}" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Deposit</a>
             <a href="{{ route('wallet.index') }}" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Withdraw</a>
         </div>
     </div>
@@ -62,7 +64,9 @@
 
                 <div class="divide-y divide-white/5">
                     @forelse ($activeTasks->take(6) as $task)
-                        @php($isDone = $completedIds->contains($task->id))
+                        @php
+                            $isDone = $completedIds->contains($task->id);
+                        @endphp
                         <div class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
                             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-black"
                                   style="background: {{ $task->task_type->color() }}22; color: {{ $task->task_type->color() }}">{{ $task->task_type->icon() }}</span>
@@ -87,6 +91,51 @@
                     @empty
                         <div class="px-5 py-10 text-center">
                             <p class="text-sm text-slate-400">Abhi koi task available nahi. Admin jald naye tasks add karega.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <div class="rounded-2xl border border-white/10 bg-white/5">
+                <div class="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4">
+                    <div>
+                        <h2 class="text-base font-bold text-white">Community tasks</h2>
+                        <p class="text-xs text-slate-400">{{ $communityTasks->count() }} live campaigns from other users</p>
+                    </div>
+                    <a href="{{ route('campaigns.index') }}" class="text-xs font-semibold text-mint-300 hover:text-mint-200">View all →</a>
+                </div>
+
+                <div class="divide-y divide-white/5">
+                    @forelse ($communityTasks as $campaign)
+                        @php
+                            $isMine = $campaign->user_id === $user->id;
+                            $isCampaignDone = $completedCampaignIds->contains($campaign->id);
+                        @endphp
+                        <div class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-black"
+                                  style="background: {{ $campaign->task_type->color() }}22; color: {{ $campaign->task_type->color() }}">{{ $campaign->task_type->icon() }}</span>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-semibold text-white">{{ $campaign->title }}</p>
+                                <p class="mt-0.5 text-xs text-slate-400">{{ $campaign->platform() }} · {{ $campaign->actionLabel() }} · {{ number_format($campaign->remainingQuantity()) }} left</p>
+                                <div class="mt-1.5 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/10">
+                                    <div class="h-full rounded-full bg-gradient-to-r from-mint-400 to-mint-500" style="width: {{ $campaign->progressPercent() }}%"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between gap-3 sm:justify-end">
+                                <span class="text-sm font-bold text-mint-300">{{ \App\Support\Currency::format($campaign->reward) }}</span>
+                                @if ($isMine)
+                                    <a href="{{ route('campaigns.mine') }}" class="rounded-lg border border-gold-400/30 bg-gold-400/10 px-3.5 py-1.5 text-[11px] font-bold text-gold-300">Manage</a>
+                                @elseif ($isCampaignDone)
+                                    <span class="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-slate-400">✓ Done</span>
+                                @else
+                                    <a href="{{ route('campaigns.show', $campaign) }}" class="rounded-lg bg-gradient-to-r from-mint-400 to-mint-500 px-3.5 py-1.5 text-[11px] font-bold text-ink-950">Start</a>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="px-5 py-10 text-center">
+                            <p class="text-sm text-slate-400">Abhi koi community campaign live nahi. Aap pehli campaign publish kar sakte hain.</p>
+                            <a href="{{ route('campaigns.create') }}" class="mt-3 inline-flex rounded-lg bg-gradient-to-r from-mint-400 to-mint-500 px-3.5 py-1.5 text-[11px] font-bold text-ink-950">Create campaign</a>
                         </div>
                     @endforelse
                 </div>
@@ -120,6 +169,21 @@
                 <h2 class="text-base font-bold text-white">Daily reset timer</h2>
                 <p class="mt-1 text-xs text-slate-400">Tasks automatically unlock at midnight (Pakistan time).</p>
                 <p class="mt-4 font-display text-2xl font-bold text-gold-300" data-countdown-to="{{ $nextResetAt->getTimestamp() * 1000 }}">{{ $nextResetAt->diffForHumans() }}</p>
+            </div>
+
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <h2 class="text-base font-bold text-white">My campaigns</h2>
+                        <p class="mt-1 text-xs text-slate-400">{{ $myCampaignsCount }} live · {{ \App\Support\Currency::format($totalCampaignSpend) }} spent</p>
+                    </div>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-mint-500/15 text-lg text-mint-300">★</span>
+                </div>
+                <p class="mt-3 text-xs text-slate-400">Deposited so far: <span class="font-semibold text-white">{{ \App\Support\Currency::format($totalDeposited) }}</span></p>
+                <div class="mt-4 flex gap-2">
+                    <a href="{{ route('campaigns.create') }}" class="flex-1 rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-3 py-2 text-center text-[11px] font-bold text-ink-950">Create campaign</a>
+                    <a href="{{ route('deposits.index') }}" class="flex-1 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-center text-[11px] font-bold text-white hover:bg-white/10">Add money</a>
+                </div>
             </div>
 
             <div class="rounded-2xl border border-white/10 bg-white/5">

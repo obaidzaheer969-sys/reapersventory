@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\CampaignStatus;
 use App\Enums\TaskAttemptStatus;
 use App\Enums\WalletTransactionType;
 use App\Models\EarningTask;
 use App\Models\TaskAttempt;
 use App\Models\User;
+use App\Notifications\CampaignCompletedNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -29,12 +31,18 @@ class TaskService
     }
 
     /**
+     * The UTC instant range is converted back to the application timezone,
+     * because Eloquent stores datetime columns using the application timezone
+     * (config app.timezone), not UTC.
+     *
      * @return array{0: Carbon, 1: Carbon}
      */
     public function todayRangeUtc(): array
     {
-        $start = Carbon::now($this->timezone())->startOfDay()->utc();
-        $end = Carbon::now($this->timezone())->endOfDay()->utc();
+        $appTimezone = (string) config('app.timezone', 'UTC');
+
+        $start = Carbon::now($this->timezone())->startOfDay()->setTimezone($appTimezone);
+        $end = Carbon::now($this->timezone())->endOfDay()->setTimezone($appTimezone);
 
         return [$start, $end];
     }
@@ -52,6 +60,18 @@ class TaskService
     }
 
     /**
+     * Campaign tasks can only be completed once per earner, not once per day.
+     */
+    public function hasCompletedEver(User $user, EarningTask $task): bool
+    {
+        return TaskAttempt::query()
+            ->where('user_id', $user->id)
+            ->where('earning_task_id', $task->id)
+            ->where('status', TaskAttemptStatus::Completed->value)
+            ->exists();
+    }
+
+    /**
      * @return Collection<int, int>
      */
     public function completedTaskIdsToday(User $user): Collection
@@ -62,6 +82,21 @@ class TaskService
             ->where('user_id', $user->id)
             ->where('status', TaskAttemptStatus::Completed->value)
             ->whereBetween('completed_at', [$start, $end])
+            ->whereIn('earning_task_id', EarningTask::query()->system()->select('id'))
+            ->pluck('earning_task_id')
+            ->unique()
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, int>
+     */
+    public function completedCampaignIds(User $user): Collection
+    {
+        return TaskAttempt::query()
+            ->where('user_id', $user->id)
+            ->where('status', TaskAttemptStatus::Completed->value)
+            ->whereIn('earning_task_id', EarningTask::query()->campaigns()->select('id'))
             ->pluck('earning_task_id')
             ->unique()
             ->values();
@@ -87,7 +122,7 @@ class TaskService
 
     public function remainingTodayCount(User $user): int
     {
-        $activeIds = EarningTask::query()->active()->pluck('id');
+        $activeIds = EarningTask::query()->system()->active()->pluck('id');
 
         if ($activeIds->isEmpty()) {
             return 0;
@@ -106,7 +141,9 @@ class TaskService
             ]);
         }
 
-        if ($this->completedToday($user, $task)) {
+        if ($task->isCampaign()) {
+            $this->assertCampaignCanBeWorkedOn($user, $task);
+        } elseif ($this->completedToday($user, $task)) {
             throw ValidationException::withMessages([
                 'task' => 'Yeh task aaj complete ho chuka hai. Kal raat 12:00 baje dobara unlock hoga.',
             ]);
@@ -185,7 +222,9 @@ class TaskService
 
     public function completeAttempt(User $user, TaskAttempt $attempt): TaskAttempt
     {
-        return DB::transaction(function () use ($user, $attempt) {
+        $completedCampaign = null;
+
+        $attempt = DB::transaction(function () use ($user, $attempt, &$completedCampaign) {
             /** @var TaskAttempt $attempt */
             $attempt = TaskAttempt::query()->whereKey($attempt->id)->lockForUpdate()->firstOrFail();
 
@@ -217,28 +256,123 @@ class TaskService
 
             $task = $attempt->task;
 
-            if ($this->completedToday($user, $task)) {
-                throw ValidationException::withMessages([
-                    'task' => 'Yeh task aaj pehle hi complete ho chuka hai.',
-                ]);
+            if ($task->isCampaign()) {
+                $completedCampaign = $this->completeCampaignAttempt($user, $attempt, $task);
+            } else {
+                $this->completeSystemAttempt($user, $attempt, $task);
             }
-
-            $attempt->forceFill([
-                'status' => TaskAttemptStatus::Completed,
-                'completed_at' => now(),
-                'watched_seconds' => $task->duration_seconds,
-                'reward_amount' => $task->reward,
-            ])->save();
-
-            $this->wallet->credit(
-                $user,
-                (float) $task->reward,
-                WalletTransactionType::TaskReward,
-                'Task reward: '.$task->title,
-                $attempt,
-            );
 
             return $attempt->refresh();
         });
+
+        if ($completedCampaign) {
+            $completedCampaign->owner?->notify(new CampaignCompletedNotification($completedCampaign));
+        }
+
+        return $attempt;
+    }
+
+    private function completeSystemAttempt(User $user, TaskAttempt $attempt, EarningTask $task): void
+    {
+        if ($this->completedToday($user, $task)) {
+            throw ValidationException::withMessages([
+                'task' => 'Yeh task aaj pehle hi complete ho chuka hai.',
+            ]);
+        }
+
+        $attempt->forceFill([
+            'status' => TaskAttemptStatus::Completed,
+            'completed_at' => now(),
+            'watched_seconds' => $task->duration_seconds,
+            'reward_amount' => $task->reward,
+        ])->save();
+
+        $this->wallet->credit(
+            $user,
+            (float) $task->reward,
+            WalletTransactionType::TaskReward,
+            'Task reward: '.$task->title,
+            $attempt,
+        );
+    }
+
+    private function completeCampaignAttempt(User $user, TaskAttempt $attempt, EarningTask $task): ?EarningTask
+    {
+        /** @var EarningTask $locked */
+        $locked = EarningTask::query()->whereKey($task->id)->lockForUpdate()->firstOrFail();
+
+        if (! $locked->isLiveCampaign()) {
+            throw ValidationException::withMessages([
+                'task' => 'Yeh campaign filhal available nahi hai ya poori ho chuki hai.',
+            ]);
+        }
+
+        if ($locked->user_id === $user->id) {
+            throw ValidationException::withMessages([
+                'task' => 'Apni campaign khud complete nahi kar sakte.',
+            ]);
+        }
+
+        if ($this->hasCompletedEver($user, $locked)) {
+            throw ValidationException::withMessages([
+                'task' => 'Aap yeh campaign task pehle complete kar chuke hain.',
+            ]);
+        }
+
+        $attempt->forceFill([
+            'status' => TaskAttemptStatus::Completed,
+            'completed_at' => now(),
+            'watched_seconds' => $locked->duration_seconds,
+            'reward_amount' => $locked->reward,
+        ])->save();
+
+        $this->wallet->credit(
+            $user,
+            (float) $locked->reward,
+            WalletTransactionType::TaskReward,
+            'Campaign task reward: '.$locked->title,
+            $attempt,
+        );
+
+        $locked->completed_quantity = (int) $locked->completed_quantity + 1;
+
+        $finished = $locked->target_quantity !== null
+            && $locked->completed_quantity >= $locked->target_quantity;
+
+        if ($finished) {
+            $locked->campaign_status = CampaignStatus::Completed;
+            $locked->is_active = false;
+        }
+
+        $locked->save();
+
+        return $finished ? $locked->refresh() : null;
+    }
+
+    private function assertCampaignCanBeWorkedOn(User $user, EarningTask $task): void
+    {
+        if ($task->campaign_status !== CampaignStatus::Active) {
+            throw ValidationException::withMessages([
+                'task' => 'Yeh campaign filhal live nahi hai.',
+            ]);
+        }
+
+        if ($task->user_id === $user->id) {
+            throw ValidationException::withMessages([
+                'task' => 'Apni campaign khud complete nahi kar sakte.',
+            ]);
+        }
+
+        if ($task->isSoldOut()) {
+            throw ValidationException::withMessages([
+                'task' => 'Yeh campaign ki required quantity poori ho chuki hai.',
+            ]);
+        }
+
+        if ($this->hasCompletedEver($user, $task)) {
+            throw ValidationException::withMessages([
+                'task' => 'Aap yeh campaign task pehle complete kar chuke hain.',
+            ]);
+        }
     }
 }

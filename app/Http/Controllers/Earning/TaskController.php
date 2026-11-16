@@ -24,6 +24,7 @@ class TaskController extends Controller
         $user = $request->user();
 
         $tasks = EarningTask::query()
+            ->system()
             ->active()
             ->orderBy('sort_order')
             ->orderBy('id')

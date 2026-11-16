@@ -27,4 +27,53 @@ return [
     // A task attempt that is not completed within this many hours is reset.
     'attempt_timeout_hours' => (int) env('EARNING_ATTEMPT_TIMEOUT_HOURS', 6),
 
+    /*
+    |--------------------------------------------------------------------------
+    | User Campaigns
+    |--------------------------------------------------------------------------
+    |
+    | Users pay from their wallet to publish tasks for other users. Follower,
+    | subscriber and like campaigns are priced per action. Video campaigns are
+    | priced by watch duration (60s = 2 PKR, then +2 PKR per extra minute).
+    |
+    */
+
+    'campaign' => [
+        'min_quantity' => (int) env('EARNING_CAMPAIGN_MIN_QUANTITY', 100),
+        'max_quantity' => (int) env('EARNING_CAMPAIGN_MAX_QUANTITY', 100000),
+
+        // Price paid to each earner for a follow, subscribe or like.
+        'action_reward' => (float) env('EARNING_CAMPAIGN_ACTION_REWARD', 0.02),
+
+        // One-time platform fee added to each follower/subscriber/like campaign.
+        'action_admin_fee' => (float) env('EARNING_CAMPAIGN_ACTION_ADMIN_FEE', 1),
+
+        // Video watch rewards by duration in seconds.
+        'video_min_seconds' => (int) env('EARNING_CAMPAIGN_VIDEO_MIN_SECONDS', 60),
+        'video_max_seconds' => (int) env('EARNING_CAMPAIGN_VIDEO_MAX_SECONDS', 3600),
+        'video_base_reward' => (float) env('EARNING_CAMPAIGN_VIDEO_BASE_REWARD', 2),
+        'video_extra_reward' => (float) env('EARNING_CAMPAIGN_VIDEO_EXTRA_REWARD', 2),
+        'video_step_seconds' => (int) env('EARNING_CAMPAIGN_VIDEO_STEP_SECONDS', 60),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Wallet Deposits (Cashmaal)
+    |--------------------------------------------------------------------------
+    */
+
+    'deposit' => [
+        'min' => (float) env('EARNING_DEPOSIT_MIN', 100),
+        'max' => (float) env('EARNING_DEPOSIT_MAX', 100000),
+
+        'cashmaal' => [
+            'enabled' => (bool) env('CASHMAAL_ENABLED', true),
+            'pay_url' => env('CASHMAAL_PAY_URL', 'https://cmaal.com/Pay/'),
+            'verify_url' => env('CASHMAAL_VERIFY_URL', 'https://api.cmaal.com/verify_v2'),
+            'currency' => env('CASHMAAL_CURRENCY', 'PKR'),
+            'pay_method' => env('CASHMAAL_PAY_METHOD', ''),
+            'timeout' => (int) env('CASHMAAL_TIMEOUT', 10),
+        ],
+    ],
+
 ];

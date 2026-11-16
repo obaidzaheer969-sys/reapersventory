@@ -80,6 +80,21 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(PayoutRequest::class);
     }
 
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(EarningTask::class, 'user_id');
+    }
+
+    public function liveCampaigns(): HasMany
+    {
+        return $this->campaigns()->liveCampaigns();
+    }
+
+    public function deposits(): HasMany
+    {
+        return $this->hasMany(Deposit::class);
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->role === UserRole::SuperAdmin;
@@ -118,6 +133,16 @@ class User extends Authenticatable implements FilamentUser
     public function pendingPayoutTotal(): float
     {
         return (float) $this->payoutRequests()->where('status', PayoutStatus::Pending->value)->sum('amount');
+    }
+
+    public function totalCampaignSpend(): float
+    {
+        return (float) $this->campaigns()->sum('total_cost');
+    }
+
+    public function totalDeposited(): float
+    {
+        return (float) $this->deposits()->completed()->sum('credit_amount');
     }
 
     public function canAccessPanel(Panel $panel): bool

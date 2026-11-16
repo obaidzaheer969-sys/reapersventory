@@ -2,9 +2,12 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\CampaignStatus;
+use App\Enums\DepositStatus;
 use App\Enums\PayoutStatus;
 use App\Enums\TaskAttemptStatus;
 use App\Enums\UserRole;
+use App\Models\Deposit;
 use App\Models\EarningTask;
 use App\Models\PayoutRequest;
 use App\Models\TaskAttempt;
@@ -28,7 +31,19 @@ class EarningStatsOverview extends StatsOverviewWidget
         $earnersTotal = (clone $earners)->count();
         $earnersToday = (clone $earners)->whereDate('created_at', today())->count();
 
-        $activeTasks = EarningTask::query()->active()->count();
+        $activeTasks = EarningTask::query()->system()->active()->count();
+
+        $liveCampaigns = EarningTask::query()->liveCampaigns()->count();
+
+        $pendingCampaigns = EarningTask::query()
+            ->where('campaign_status', CampaignStatus::Pending->value)
+            ->count();
+
+        $campaignSpend = (float) EarningTask::query()->campaigns()->sum('total_cost');
+
+        $depositsReceived = (float) Deposit::query()
+            ->where('status', DepositStatus::Completed->value)
+            ->sum('credit_amount');
 
         $completedToday = TaskAttempt::query()
             ->where('status', TaskAttemptStatus::Completed->value)
@@ -55,6 +70,15 @@ class EarningStatsOverview extends StatsOverviewWidget
             Stat::make('Completed today', number_format($completedToday))
                 ->description('Task attempts finished today')
                 ->color('info'),
+            Stat::make('Live campaigns', number_format($liveCampaigns))
+                ->description($pendingCampaigns.' pending approval')
+                ->color($pendingCampaigns > 0 ? 'warning' : 'success'),
+            Stat::make('Campaign spend', 'PKR '.number_format($campaignSpend))
+                ->description('Paid by campaign owners')
+                ->color('info'),
+            Stat::make('Deposits received', 'PKR '.number_format($depositsReceived))
+                ->description('Completed Cashmaal deposits')
+                ->color('success'),
             Stat::make('Pending payouts', number_format($pendingCount))
                 ->description('PKR '.number_format($pendingAmount).' waiting')
                 ->color($pendingCount > 0 ? 'warning' : 'gray'),

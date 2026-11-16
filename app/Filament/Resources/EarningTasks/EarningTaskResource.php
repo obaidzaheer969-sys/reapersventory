@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class EarningTaskResource extends Resource
@@ -39,6 +40,11 @@ class EarningTaskResource extends Resource
     public static function table(Table $table): Table
     {
         return EarningTasksTable::configure($table);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->system();
     }
 
     public static function getPages(): array

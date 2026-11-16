@@ -2,8 +2,13 @@
 
 namespace App\Filament\Resources\Earners\Tables;
 
+use App\Enums\WalletTransactionType;
 use App\Models\User;
+use App\Services\WalletService;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
@@ -59,6 +64,42 @@ class EarnersTable
                 TernaryFilter::make('is_active')->label('Active'),
             ])
             ->recordActions([
+                Action::make('addWallet')
+                    ->label('Add balance')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->modalHeading(fn (User $record) => 'Add wallet balance — '.$record->name)
+                    ->modalDescription('Yeh amount seedha user ke wallet me add ho jayegi aur wallet history me "Admin credit" ke tor par dikhegi.')
+                    ->form([
+                        TextInput::make('amount')
+                            ->label('Amount (PKR)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(100000)
+                            ->required()
+                            ->prefix('PKR'),
+                        Textarea::make('description')
+                            ->label('Note (optional)')
+                            ->rows(2)
+                            ->maxLength(255)
+                            ->placeholder('e.g. Manual deposit / bonus'),
+                    ])
+                    ->action(function (User $record, array $data, WalletService $wallet): void {
+                        $wallet->credit(
+                            $record,
+                            (float) $data['amount'],
+                            WalletTransactionType::AdminCredit,
+                            filled($data['description'] ?? null)
+                                ? (string) $data['description']
+                                : 'Admin wallet credit',
+                        );
+
+                        Notification::make()
+                            ->title('Wallet balance added')
+                            ->body('PKR '.number_format((float) $data['amount'], 2).' '.$record->name.' ke wallet me add ho gaye. New balance: PKR '.number_format((float) $record->wallet_balance, 2).'.')
+                            ->success()
+                            ->send();
+                    }),
                 Action::make('viewStats')
                     ->label('View')
                     ->icon('heroicon-o-chart-bar')

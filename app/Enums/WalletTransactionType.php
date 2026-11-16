@@ -7,6 +7,10 @@ enum WalletTransactionType: string
     case TaskReward = 'task_reward';
     case PayoutRequest = 'payout_request';
     case PayoutRefund = 'payout_refund';
+    case CampaignFunding = 'campaign_funding';
+    case CampaignRefund = 'campaign_refund';
+    case Deposit = 'deposit';
+    case AdminCredit = 'admin_credit';
     case Bonus = 'bonus';
     case Adjustment = 'adjustment';
 
@@ -16,6 +20,10 @@ enum WalletTransactionType: string
             self::TaskReward => 'Task reward',
             self::PayoutRequest => 'Payout requested',
             self::PayoutRefund => 'Payout refunded',
+            self::CampaignFunding => 'Campaign payment',
+            self::CampaignRefund => 'Campaign refund',
+            self::Deposit => 'Wallet deposit',
+            self::AdminCredit => 'Admin credit',
             self::Bonus => 'Bonus',
             self::Adjustment => 'Adjustment',
         };
@@ -24,7 +32,7 @@ enum WalletTransactionType: string
     public function isCredit(): bool
     {
         return match ($this) {
-            self::PayoutRequest => false,
+            self::PayoutRequest, self::CampaignFunding => false,
             default => true,
         };
     }

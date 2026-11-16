@@ -42,8 +42,11 @@
         $navLinks = [
             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => '⌂'],
             ['label' => 'Tasks', 'route' => 'tasks.index', 'icon' => '✓'],
+            ['label' => 'Community', 'route' => 'campaigns.index', 'icon' => '◎'],
+            ['label' => 'My Campaigns', 'route' => 'campaigns.mine', 'icon' => '★'],
             ['label' => 'Earnings', 'route' => 'earnings.index', 'icon' => '₨'],
             ['label' => 'Wallet', 'route' => 'wallet.index', 'icon' => '◈'],
+            ['label' => 'Deposit', 'route' => 'deposits.index', 'icon' => '↓'],
             ['label' => 'Announcements', 'route' => 'announcements.index', 'icon' => '!' ],
         ];
     @endphp
@@ -94,6 +97,8 @@
                         </div>
                         <a href="{{ route('profile.edit') }}" class="block px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5">Profile settings</a>
                         <a href="{{ route('earnings.index') }}" class="block px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5">My earnings</a>
+                        <a href="{{ route('campaigns.mine') }}" class="block px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5">My campaigns</a>
+                        <a href="{{ route('deposits.index') }}" class="block px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5">Deposit money</a>
                         <a href="{{ route('wallet.index') }}" class="block px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5">Wallet & payouts</a>
                         <form method="POST" action="{{ route('logout') }}" class="border-t border-white/10">
                             @csrf

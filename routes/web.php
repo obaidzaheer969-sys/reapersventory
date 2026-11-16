@@ -28,7 +28,11 @@ use App\Http\Controllers\Business\SupplierController;
 use App\Http\Controllers\Business\TeamUserController;
 use App\Http\Controllers\Business\WarehouseController;
 use App\Http\Controllers\Earning\AnnouncementController as EarningAnnouncementController;
+use App\Http\Controllers\Earning\CampaignController as EarningCampaignController;
+use App\Http\Controllers\Earning\CashmaalCallbackController;
+use App\Http\Controllers\Earning\CashmaalIpnController;
 use App\Http\Controllers\Earning\DashboardController as EarningDashboardController;
+use App\Http\Controllers\Earning\DepositController as EarningDepositController;
 use App\Http\Controllers\Earning\EarningsController as EarningEarningsController;
 use App\Http\Controllers\Earning\NotificationController as EarningNotificationController;
 use App\Http\Controllers\Earning\PayoutController as EarningPayoutController;
@@ -43,6 +47,12 @@ Route::bind('paymentProof', fn (string $value) => PaymentProof::withoutGlobalSco
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('/pricing', PricingController::class)->name('pricing');
+
+Route::post('/deposits/cashmaal/ipn', CashmaalIpnController::class)->name('deposits.cashmaal.ipn');
+Route::match(['get', 'post'], '/deposits/cashmaal/success', [CashmaalCallbackController::class, 'success'])
+    ->name('deposits.cashmaal.success');
+Route::match(['get', 'post'], '/deposits/cashmaal/cancel', [CashmaalCallbackController::class, 'cancel'])
+    ->name('deposits.cashmaal.cancel');
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
@@ -81,6 +91,17 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::put('/wallet/accounts/{account}', [EarningPayoutController::class, 'updateAccount'])->name('wallet.accounts.update');
     Route::delete('/wallet/accounts/{account}', [EarningPayoutController::class, 'destroyAccount'])->name('wallet.accounts.destroy');
     Route::post('/wallet/payouts', [EarningPayoutController::class, 'storePayout'])->name('wallet.payouts.store');
+
+    Route::get('/wallet/deposit', [EarningDepositController::class, 'index'])->name('deposits.index');
+    Route::post('/wallet/deposit', [EarningDepositController::class, 'store'])->name('deposits.store');
+    Route::get('/wallet/deposit/{deposit}/pay', [EarningDepositController::class, 'pay'])->name('deposits.pay');
+
+    Route::get('/community', [EarningCampaignController::class, 'index'])->name('campaigns.index');
+    Route::get('/campaigns', [EarningCampaignController::class, 'mine'])->name('campaigns.mine');
+    Route::get('/campaigns/create', [EarningCampaignController::class, 'create'])->name('campaigns.create');
+    Route::post('/campaigns', [EarningCampaignController::class, 'store'])->name('campaigns.store');
+    Route::get('/campaigns/{campaign}', [EarningCampaignController::class, 'show'])->name('campaigns.show');
+    Route::post('/campaigns/{campaign}/cancel', [EarningCampaignController::class, 'cancel'])->name('campaigns.cancel');
 
     Route::get('/announcements', [EarningAnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/notifications', [EarningNotificationController::class, 'index'])->name('notifications.index');

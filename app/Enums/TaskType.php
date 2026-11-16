@@ -6,6 +6,7 @@ enum TaskType: string
 {
     case YoutubeSubscribe = 'youtube_subscribe';
     case YoutubeWatch = 'youtube_watch';
+    case YoutubeLike = 'youtube_like';
     case FacebookFollow = 'facebook_follow';
     case FacebookWatch = 'facebook_watch';
     case InstagramFollow = 'instagram_follow';
@@ -18,6 +19,7 @@ enum TaskType: string
         return match ($this) {
             self::YoutubeSubscribe => 'YouTube Subscribe',
             self::YoutubeWatch => 'YouTube Video Watch',
+            self::YoutubeLike => 'YouTube Like',
             self::FacebookFollow => 'Facebook Page Follow',
             self::FacebookWatch => 'Facebook Video Watch',
             self::InstagramFollow => 'Instagram Follow',
@@ -30,7 +32,7 @@ enum TaskType: string
     public function platform(): string
     {
         return match ($this) {
-            self::YoutubeSubscribe, self::YoutubeWatch => 'YouTube',
+            self::YoutubeSubscribe, self::YoutubeWatch, self::YoutubeLike => 'YouTube',
             self::FacebookFollow, self::FacebookWatch => 'Facebook',
             self::InstagramFollow, self::InstagramWatch => 'Instagram',
             self::WhatsappChannel => 'WhatsApp',
@@ -41,7 +43,7 @@ enum TaskType: string
     public function platformKey(): string
     {
         return match ($this) {
-            self::YoutubeSubscribe, self::YoutubeWatch => 'youtube',
+            self::YoutubeSubscribe, self::YoutubeWatch, self::YoutubeLike => 'youtube',
             self::FacebookFollow, self::FacebookWatch => 'facebook',
             self::InstagramFollow, self::InstagramWatch => 'instagram',
             self::WhatsappChannel => 'whatsapp',
@@ -54,6 +56,7 @@ enum TaskType: string
         return match ($this) {
             self::YoutubeSubscribe => 'Subscribe',
             self::YoutubeWatch => 'Watch video',
+            self::YoutubeLike => 'Like video',
             self::FacebookFollow => 'Follow page',
             self::FacebookWatch => 'Watch video',
             self::InstagramFollow => 'Follow profile',
@@ -81,10 +84,23 @@ enum TaskType: string
         ], true);
     }
 
+    public function isCampaignEligible(): bool
+    {
+        return $this !== self::AdWatch;
+    }
+
+    /**
+     * Follower, subscriber and like campaigns are priced per action, not per second.
+     */
+    public function isQuantityCampaign(): bool
+    {
+        return ! $this->isWatchTask();
+    }
+
     public function color(): string
     {
         return match ($this) {
-            self::YoutubeSubscribe, self::YoutubeWatch => '#ef4444',
+            self::YoutubeSubscribe, self::YoutubeWatch, self::YoutubeLike => '#ef4444',
             self::FacebookFollow, self::FacebookWatch => '#2563eb',
             self::InstagramFollow, self::InstagramWatch => '#db2777',
             self::WhatsappChannel => '#16a34a',
@@ -95,7 +111,7 @@ enum TaskType: string
     public function icon(): string
     {
         return match ($this) {
-            self::YoutubeSubscribe, self::YoutubeWatch => '▶',
+            self::YoutubeSubscribe, self::YoutubeWatch, self::YoutubeLike => '▶',
             self::FacebookFollow, self::FacebookWatch => 'f',
             self::InstagramFollow, self::InstagramWatch => '◎',
             self::WhatsappChannel => '✆',
@@ -109,6 +125,17 @@ enum TaskType: string
     public static function options(): array
     {
         return collect(self::cases())
+            ->mapWithKeys(fn (self $type) => [$type->value => $type->label()])
+            ->all();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function campaignOptions(): array
+    {
+        return collect(self::cases())
+            ->filter(fn (self $type) => $type->isCampaignEligible())
             ->mapWithKeys(fn (self $type) => [$type->value => $type->label()])
             ->all();
     }
