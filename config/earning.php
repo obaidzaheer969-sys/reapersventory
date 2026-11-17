@@ -21,8 +21,9 @@ return [
     // All daily task locks and "unlock after 12am" logic uses this timezone.
     'timezone' => env('EARNING_TIMEZONE', 'Asia/Karachi'),
 
-    // Minimum wallet balance a user can withdraw in one request.
-    'min_payout' => (float) env('EARNING_MIN_PAYOUT', 500),
+    // Allowed withdrawal range for a single request, in PKR.
+    'min_payout' => (float) env('EARNING_MIN_PAYOUT', 50),
+    'max_payout' => (float) env('EARNING_MAX_PAYOUT', 250),
 
     // Only one withdrawal request is allowed in this window.
     'payout_cooldown_hours' => (int) env('EARNING_PAYOUT_COOLDOWN_HOURS', 24),

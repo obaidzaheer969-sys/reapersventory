@@ -29,7 +29,7 @@ enum WalletTransactionType: string
             self::CampaignAdminFee => 'Campaign admin fee',
             self::Deposit => 'Wallet deposit',
             self::DepositAdminFee => 'Deposit admin fee',
-            self::PayoutAdminFee => 'Withdrawal admin fee',
+            self::PayoutAdminFee => 'Withdrawal tax - fee',
             self::PayoutFeeReversal => 'Withdrawal fee refunded',
             self::AdminCredit => 'Admin credit',
             self::Bonus => 'Bonus',

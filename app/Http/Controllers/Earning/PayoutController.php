@@ -27,9 +27,10 @@ class PayoutController extends Controller
             'accounts' => $user->payoutAccounts()->orderByDesc('is_default')->latest()->get(),
             'payouts' => $user->payoutRequests()->latest()->paginate(10, ['*'], 'payouts'),
             'transactions' => $user->walletTransactions()->latest()->limit(12)->get(),
-            'minimumPayout' => (float) config('earning.min_payout', 500),
+            'minimumPayout' => (float) config('earning.min_payout', 50),
+            'maximumPayout' => (float) config('earning.max_payout', 250),
             'payoutCooldownHours' => max(0, (int) config('earning.payout_cooldown_hours', 24)),
-            'payoutQuote' => $this->payouts->quote((float) config('earning.min_payout', 500)),
+            'payoutQuote' => $this->payouts->quote((float) config('earning.min_payout', 50)),
             'payoutFeePercent' => (float) config('earning.payout_admin_fee_percent', 10),
             'latestPayout' => $user->payoutRequests()->latest('created_at')->latest('id')->first(),
             'totalWithdrawn' => $user->totalWithdrawn(),
@@ -116,10 +117,16 @@ class PayoutController extends Controller
     {
         $user = $request->user();
 
+        $minimum = (float) config('earning.min_payout', 50);
+        $maximum = (float) config('earning.max_payout', 250);
+
         $data = $request->validate([
             'payout_account_id' => ['required', 'integer'],
-            'amount' => ['required', 'numeric', 'min:1'],
-        ], [], [
+            'amount' => ['required', 'numeric', 'min:'.$minimum, 'max:'.$maximum],
+        ], [
+            'amount.min' => 'Minimum payout PKR '.number_format($minimum, 0).' hai.',
+            'amount.max' => 'Maximum payout PKR '.number_format($maximum, 0).' hai.',
+        ], [
             'payout_account_id' => 'wallet account',
             'amount' => 'amount',
         ]);

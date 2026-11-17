@@ -42,11 +42,18 @@ class PayoutService
             abort(403, 'This payout account does not belong to you.');
         }
 
-        $minimum = (float) config('earning.min_payout', 500);
+        $minimum = (float) config('earning.min_payout', 50);
+        $maximum = (float) config('earning.max_payout', 250);
 
         if ($amount < $minimum) {
             throw ValidationException::withMessages([
                 'amount' => 'Minimum payout PKR '.number_format($minimum, 0).' hai.',
+            ]);
+        }
+
+        if ($amount > $maximum) {
+            throw ValidationException::withMessages([
+                'amount' => 'Maximum payout PKR '.number_format($maximum, 0).' hai.',
             ]);
         }
 
@@ -100,7 +107,7 @@ class PayoutService
                 $this->wallet->creditFirstActiveAdmin(
                     $quote['fee'],
                     WalletTransactionType::PayoutAdminFee,
-                    'Withdrawal admin fee: payout #'.$payout->id,
+                    'Withdrawal tax - fee: payout #'.$payout->id,
                     $payout,
                 );
             }
@@ -191,7 +198,7 @@ class PayoutService
                     $adminFee->user,
                     $payout->feeAmount(),
                     WalletTransactionType::PayoutFeeReversal,
-                    'Payout #'.$payout->id.' rejected — admin fee reversed',
+                    'Payout #'.$payout->id.' rejected — tax - fee reversed',
                     $payout,
                 );
             }

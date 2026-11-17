@@ -33,7 +33,7 @@
             <div class="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-mint-400/20 blur-2xl"></div>
             <p class="text-xs font-semibold uppercase tracking-wider text-mint-200/80">Available balance</p>
             <p class="mt-2 font-display text-3xl font-bold text-white">{{ \App\Support\Currency::format($balance) }}</p>
-            <p class="mt-2 text-xs text-slate-400">Minimum payout {{ \App\Support\Currency::format($minimumPayout, false) }}</p>
+            <p class="mt-2 text-xs text-slate-400">Withdrawal {{ \App\Support\Currency::format($minimumPayout, false) }} – {{ \App\Support\Currency::format($maximumPayout, false) }}</p>
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pending payout</p>
@@ -80,10 +80,10 @@
                         <div>
                             <label for="amount" class="mb-1.5 block text-xs font-semibold text-slate-300">Amount ({{ config('earning.currency') }})</label>
                             <input type="number" step="0.01" name="amount" id="amount" required
-                                   min="{{ $minimumPayout }}" max="{{ max($minimumPayout, $balance) }}"
-                                   value="{{ old('amount', $balance >= $minimumPayout ? number_format($balance, 2, '.', '') : number_format($minimumPayout, 2, '.', '')) }}"
+                                   min="{{ $minimumPayout }}" max="{{ $maximumPayout }}"
+                                   value="{{ old('amount', number_format(min(max($minimumPayout, $balance), $maximumPayout), 2, '.', '')) }}"
                                    class="w-full rounded-xl border border-white/10 bg-ink-900 px-3.5 py-2.5 text-sm text-white focus:border-mint-400 focus:outline-none focus:ring-2 focus:ring-mint-400/20">
-                            <p class="mt-1.5 text-[11px] text-slate-500">Available: {{ \App\Support\Currency::format($balance) }} · Minimum: {{ \App\Support\Currency::format($minimumPayout, false) }}</p>
+                            <p class="mt-1.5 text-[11px] text-slate-500">Available: {{ \App\Support\Currency::format($balance) }} · Minimum: {{ \App\Support\Currency::format($minimumPayout, false) }} · Maximum: {{ \App\Support\Currency::format($maximumPayout, false) }}</p>
                         </div>
 
                         <div class="space-y-1.5 rounded-xl border border-gold-400/20 bg-gold-400/5 px-4 py-3 text-[11px]">
@@ -92,7 +92,7 @@
                                 <span id="payout-gross" class="font-bold text-white">{{ \App\Support\Currency::format($payoutQuote['gross']) }}</span>
                             </div>
                             <div class="flex items-center justify-between gap-3">
-                                <span class="text-slate-400">Admin fee ({{ number_format($payoutFeePercent, 0) }}%)</span>
+                                <span class="text-slate-400">Tax - fee ({{ number_format($payoutFeePercent, 0) }}%)</span>
                                 <span id="payout-fee" class="font-bold text-gold-300">{{ \App\Support\Currency::format($payoutQuote['fee']) }}</span>
                             </div>
                             <div class="flex items-center justify-between gap-3 border-t border-white/10 pt-1.5">
@@ -114,7 +114,7 @@
 
                 <p class="mt-3 rounded-xl border border-mint-400/20 bg-mint-500/5 px-3 py-2.5 text-[11px] leading-relaxed text-slate-300">
                     <span class="font-bold text-mint-300">Withdrawal period: {{ $cooldownHours }} ghante.</span>
-                    Ek baar payout request bhejne ke baad agla withdrawal {{ $cooldownHours }} ghante baad hi ho sakta hai. Har withdrawal par {{ number_format($payoutFeePercent, 0) }}% admin fee cut hoti hai — wallet se poora amount debit hota hai, admin ko fee jaati hai aur baqi amount aap ke wallet account me bheja jata hai.
+                    Ek baar payout request bhejne ke baad agla withdrawal {{ $cooldownHours }} ghante baad hi ho sakta hai. Har withdrawal par {{ number_format($payoutFeePercent, 0) }}% tax - fee cut hoti hai — wallet se poora amount debit hota hai, fee admin ko jaati hai aur baqi amount aap ke wallet account me bheja jata hai.
                 </p>
 
                 @if ($payoutLocked)
@@ -270,7 +270,7 @@
                                         <p class="font-bold text-white">{{ \App\Support\Currency::format($payout->amount) }}</p>
                                         <p class="text-[10px] text-slate-500">Wallet cut {{ \App\Support\Currency::format($payout->grossAmount()) }}</p>
                                         @if ($payout->feeAmount() > 0)
-                                            <p class="text-[10px] text-gold-300/80">Admin fee {{ \App\Support\Currency::format($payout->feeAmount()) }}</p>
+                                            <p class="text-[10px] text-gold-300/80">Tax - fee {{ \App\Support\Currency::format($payout->feeAmount()) }}</p>
                                         @endif
                                     </td>
                                     <td class="px-5 py-3.5">

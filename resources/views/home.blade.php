@@ -247,7 +247,7 @@
                             <span class="text-sm font-bold text-mint-200">PKR 980.00</span>
                         </div>
                     </div>
-                    <p class="mt-4 text-xs text-slate-500">Minimum payout: PKR {{ number_format((float) config('earning.min_payout'), 0) }}</p>
+                    <p class="mt-4 text-xs text-slate-500">Withdrawal: PKR {{ number_format((float) config('earning.min_payout'), 0) }} – PKR {{ number_format((float) config('earning.max_payout', 250), 0) }} per request</p>
                 </div>
             </div>
         </section>
