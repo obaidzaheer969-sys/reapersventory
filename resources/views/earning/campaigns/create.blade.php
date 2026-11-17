@@ -65,7 +65,7 @@
                     <input type="url" name="target_url" id="target_url" required maxlength="2048" value="{{ old('target_url') }}"
                            placeholder="https://..."
                            class="w-full rounded-xl border border-white/10 bg-ink-900 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-mint-400 focus:outline-none focus:ring-2 focus:ring-mint-400/20">
-                    <p class="mt-1.5 text-[11px] text-slate-500">Yeh link earners ko naye tab me khulega jahan woh action complete karenge.</p>
+                    <p class="mt-1.5 text-[11px] text-slate-500">YouTube/Facebook video watch tasks isi lock page ke official player me chalti hain; subscribe, follow aur like links naye tab me khulte hain.</p>
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">

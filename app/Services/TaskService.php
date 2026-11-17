@@ -193,6 +193,64 @@ class TaskService
         return $attempt->refresh();
     }
 
+    /**
+     * Credit embedded watch time from a playback heartbeat.
+     *
+     * The client is never trusted with a number: only wall-clock time between
+     * two nearby heartbeats is counted, so seeking or spamming the endpoint
+     * cannot skip the required watch time.
+     */
+    public function recordEmbedHeartbeat(User $user, TaskAttempt $attempt, bool $playing): TaskAttempt
+    {
+        return DB::transaction(function () use ($user, $attempt, $playing) {
+            /** @var TaskAttempt $attempt */
+            $attempt = TaskAttempt::query()->whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+
+            if ($attempt->user_id !== $user->id) {
+                abort(403, 'This task does not belong to you.');
+            }
+
+            /** @var EarningTask $task */
+            $task = $attempt->task;
+
+            if (! $task->hasEmbeddedPlayer()) {
+                throw ValidationException::withMessages([
+                    'task' => 'Yeh task embedded player support nahi karta.',
+                ]);
+            }
+
+            if ($attempt->isCompleted() || $attempt->isFailed()) {
+                return $attempt;
+            }
+
+            $now = now();
+            $credited = 0;
+
+            if ($playing && $attempt->embed_seen_at !== null) {
+                $gap = $now->getTimestamp() - $attempt->embed_seen_at->getTimestamp();
+
+                if ($gap >= 1 && $gap <= 15) {
+                    $credited = min(10, $gap);
+                }
+            }
+
+            $watched = (int) $attempt->watched_seconds;
+
+            if ($playing) {
+                $watched = min((int) $task->duration_seconds, $watched + $credited);
+            }
+
+            $attempt->forceFill([
+                'opened_at' => $attempt->opened_at ?? ($playing ? $now : null),
+                'embed_played_at' => $attempt->embed_played_at ?? ($playing ? $now : null),
+                'embed_seen_at' => $playing ? $now : null,
+                'watched_seconds' => $watched,
+            ])->save();
+
+            return $attempt->refresh();
+        });
+    }
+
     public function failAttempt(User $user, TaskAttempt $attempt): TaskAttempt
     {
         return DB::transaction(function () use ($user, $attempt) {
@@ -238,15 +296,11 @@ class TaskService
 
             if ($attempt->isFailed() || $attempt->failed_at !== null) {
                 throw ValidationException::withMessages([
-                    'task' => 'Task fail ho gaya tha — real page timer poora hone se pehle band hua. Task dobara start karein.',
+                    'task' => 'Task fail ho gaya tha — timer poora hone se pehle task chhor diya gaya. Task dobara start karein.',
                 ]);
             }
 
-            if (! $attempt->hasOpenedRealPage()) {
-                throw ValidationException::withMessages([
-                    'task' => 'Pehle task ka real page kholein — bina task dekhe reward nahi milega.',
-                ]);
-            }
+            $task = $attempt->task;
 
             if (now()->lt($attempt->expires_at)) {
                 throw ValidationException::withMessages([
@@ -254,7 +308,25 @@ class TaskService
                 ]);
             }
 
-            $task = $attempt->task;
+            if ($task->hasEmbeddedPlayer()) {
+                if (! $attempt->hasStartedEmbeddedPlayback()) {
+                    throw ValidationException::withMessages([
+                        'task' => 'Pehle video play karein — play ke bagair watch time count nahi hoga.',
+                    ]);
+                }
+
+                $missingSeconds = max(0, (int) $task->duration_seconds - (int) $attempt->watched_seconds);
+
+                if ($missingSeconds > 0) {
+                    throw ValidationException::withMessages([
+                        'task' => 'Video abhi poora nahi chala. '.$missingSeconds.' seconds aur play karein, phir claim karein.',
+                    ]);
+                }
+            } elseif (! $attempt->hasOpenedRealPage()) {
+                throw ValidationException::withMessages([
+                    'task' => 'Pehle task ka real page kholein — bina task dekhe reward nahi milega.',
+                ]);
+            }
 
             if ($task->isCampaign()) {
                 $completedCampaign = $this->completeCampaignAttempt($user, $attempt, $task);

@@ -88,18 +88,22 @@
                         @elseif ($isDone)
                             <div class="rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2.5 text-center text-xs font-semibold text-slate-400">✓ Aap yeh campaign complete kar chuke hain</div>
                         @elseif ($attempt)
-                            @if ($attempt->isReadyToClaim())
+                            @if ($attempt->canClaim($campaign))
                                 <a href="{{ route('tasks.run', $campaign) }}" class="block rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 px-4 py-2.5 text-center text-sm font-bold text-ink-950">Claim reward →</a>
                             @else
                                 <a href="{{ route('tasks.run', $campaign) }}" class="block rounded-xl border border-gold-400/40 bg-gold-400/10 px-4 py-2.5 text-center text-sm font-bold text-gold-300">
-                                    Resume · {{ $attempt->remainingSeconds() }}s left
+                                    @if ($attempt->isReadyToClaim())
+                                        Resume · watch time left
+                                    @else
+                                        Resume · {{ $attempt->remainingSeconds() }}s left
+                                    @endif
                                 </a>
                             @endif
                         @else
                             <form method="POST" action="{{ route('tasks.start', $campaign) }}">
                                 @csrf
                                 <button type="submit" class="block w-full rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-center text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/10">
-                                    Start task → real page
+                                    {{ $campaign->hasEmbeddedPlayer() ? 'Watch video →' : 'Start task → real page' }}
                                 </button>
                             </form>
                         @endif

@@ -84,6 +84,102 @@ enum TaskType: string
         ], true);
     }
 
+    /**
+     * Only platforms with an official embeddable player are rendered inside
+     * the lock page. Instagram and generic ad tasks keep the real-page flow.
+     */
+    public function isEmbeddedWatchTask(): bool
+    {
+        return in_array($this, [
+            self::YoutubeWatch,
+            self::FacebookWatch,
+        ], true);
+    }
+
+    public function embedUrl(string $targetUrl, ?string $origin = null): ?string
+    {
+        return match ($this) {
+            self::YoutubeWatch => $this->youtubeEmbedUrl($targetUrl, $origin),
+            self::FacebookWatch => $this->facebookEmbedUrl($targetUrl),
+            default => null,
+        };
+    }
+
+    private function youtubeEmbedUrl(string $targetUrl, ?string $origin): ?string
+    {
+        $videoId = self::youtubeVideoId($targetUrl);
+
+        if ($videoId === null) {
+            return null;
+        }
+
+        $query = [
+            'enablejsapi' => '1',
+            'rel' => '0',
+            'playsinline' => '1',
+        ];
+
+        if ($origin !== null && $origin !== '') {
+            $query['origin'] = $origin;
+        }
+
+        return 'https://www.youtube.com/embed/'.$videoId.'?'.http_build_query($query);
+    }
+
+    private static function youtubeVideoId(string $url): ?string
+    {
+        $parts = parse_url($url);
+
+        if ($parts === false || empty($parts['host'])) {
+            return null;
+        }
+
+        $host = strtolower((string) $parts['host']);
+        $path = trim((string) ($parts['path'] ?? ''), '/');
+        $isYoutubeHost = $host === 'youtube.com' || str_ends_with($host, '.youtube.com');
+
+        if ($host === 'youtu.be' || str_ends_with($host, '.youtu.be')) {
+            return preg_match('/^[A-Za-z0-9_-]{11}$/', $path) === 1 ? $path : null;
+        }
+
+        if (! $isYoutubeHost) {
+            return null;
+        }
+
+        parse_str((string) ($parts['query'] ?? ''), $query);
+
+        if (isset($query['v']) && is_string($query['v']) && preg_match('/^[A-Za-z0-9_-]{11}$/', $query['v']) === 1) {
+            return $query['v'];
+        }
+
+        if (preg_match('#^(?:embed|shorts|live|v)/([A-Za-z0-9_-]{11})$#', $path, $matches) === 1) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
+    private function facebookEmbedUrl(string $targetUrl): ?string
+    {
+        $host = strtolower((string) parse_url($targetUrl, PHP_URL_HOST));
+
+        $isFacebookHost = $host === 'facebook.com'
+            || str_ends_with($host, '.facebook.com')
+            || $host === 'fb.watch'
+            || str_ends_with($host, '.fb.watch');
+
+        if (! $isFacebookHost) {
+            return null;
+        }
+
+        return 'https://www.facebook.com/plugins/video.php?'.http_build_query([
+            'href' => $targetUrl,
+            'show_text' => 'false',
+            'autoplay' => 'false',
+            'allowfullscreen' => 'true',
+        ]);
+    }
+
     public function isCampaignEligible(): bool
     {
         return $this !== self::AdWatch;

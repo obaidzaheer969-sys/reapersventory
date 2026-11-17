@@ -82,6 +82,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/tasks/{task}/start', [EarningTaskController::class, 'start'])->name('tasks.start');
     Route::get('/tasks/{task}/run', [EarningTaskController::class, 'run'])->name('tasks.run');
     Route::post('/tasks/{task}/opened', [EarningTaskController::class, 'opened'])->name('tasks.opened');
+    Route::post('/tasks/{task}/progress', [EarningTaskController::class, 'progress'])
+        ->middleware('throttle:30,1')
+        ->name('tasks.progress');
     Route::post('/tasks/{task}/fail', [EarningTaskController::class, 'fail'])->name('tasks.fail');
     Route::post('/tasks/{task}/complete', [EarningTaskController::class, 'complete'])->name('tasks.complete');
 

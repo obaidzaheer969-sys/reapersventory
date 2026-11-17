@@ -56,9 +56,13 @@ class TaskController extends Controller
     {
         $attempt = $this->tasks->startAttempt($request->user(), $task, $request->ip());
 
+        $message = $task->hasEmbeddedPlayer()
+            ? 'Task shuru ho gaya. Video isi page par play karein — required watch time aur timer poora hone par reward claim karein.'
+            : 'Task shuru ho gaya. "Open real page" dabaein — asli page naye tab me khulega. Timer poora hone se pehle real page ka tab band karne par task fail ho jayega.';
+
         return redirect()
             ->route('tasks.run', $task)
-            ->with('status', 'Task shuru ho gaya. "Open real page" dabaein — asli page naye tab me khulega. Timer poora hone se pehle real page ka tab band karne par task fail ho jayega.');
+            ->with('status', $message);
     }
 
     public function run(Request $request, EarningTask $task): View|RedirectResponse
@@ -73,12 +77,56 @@ class TaskController extends Controller
                 ->withErrors(['task' => 'Pehle task start karein.']);
         }
 
+        $embedUrl = $task->task_type->embedUrl(
+            $task->target_url,
+            $request->getSchemeAndHttpHost(),
+        );
+
+        $isEmbedded = $embedUrl !== null;
+
         return view('earning.tasks.run', [
             'task' => $task,
             'attempt' => $attempt,
             'remainingSeconds' => $attempt->remainingSeconds(),
             'realPageOpened' => $attempt->hasOpenedRealPage(),
+            'embedded' => $isEmbedded,
+            'embedUrl' => $embedUrl,
+            'embedPlatform' => $isEmbedded ? $task->task_type->platformKey() : null,
+            'embedPlayed' => $attempt->hasStartedEmbeddedPlayback(),
+            'watchedSeconds' => $isEmbedded ? (int) $attempt->watched_seconds : 0,
+            'requiredSeconds' => $isEmbedded ? (int) $task->duration_seconds : 0,
             'expectedReward' => $task->reward,
+        ]);
+    }
+
+    public function progress(Request $request, EarningTask $task): JsonResponse
+    {
+        $attempt = $this->currentAttempt($request->user(), $task);
+
+        if (! $attempt) {
+            return response()->json(['ok' => false, 'message' => 'Task attempt nahi mila.'], 404);
+        }
+
+        $validated = $request->validate([
+            'playing' => ['required', 'boolean'],
+        ]);
+
+        $attempt = $this->tasks->recordEmbedHeartbeat(
+            $request->user(),
+            $attempt,
+            (bool) $validated['playing'],
+        );
+
+        $required = (int) $task->duration_seconds;
+        $watched = (int) $attempt->watched_seconds;
+
+        return response()->json([
+            'ok' => true,
+            'watched_seconds' => $watched,
+            'required_seconds' => $required,
+            'remaining_watch_seconds' => max(0, $required - $watched),
+            'timer_remaining_seconds' => $attempt->remainingSeconds(),
+            'can_claim' => $attempt->canClaim($task),
         ]);
     }
 

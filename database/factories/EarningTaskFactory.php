@@ -43,6 +43,26 @@ class EarningTaskFactory extends Factory
         ]);
     }
 
+    public function youtubeWatch(int $seconds = 30, float $reward = 2): static
+    {
+        return $this->state(fn () => [
+            'task_type' => TaskType::YoutubeWatch,
+            'duration_seconds' => $seconds,
+            'reward' => $reward,
+            'target_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        ]);
+    }
+
+    public function facebookWatch(int $seconds = 30, float $reward = 2): static
+    {
+        return $this->state(fn () => [
+            'task_type' => TaskType::FacebookWatch,
+            'duration_seconds' => $seconds,
+            'reward' => $reward,
+            'target_url' => 'https://www.facebook.com/earnpk/videos/123456789012345/',
+        ]);
+    }
+
     /**
      * A legacy campaign still waiting for admin approval.
      */

@@ -199,8 +199,8 @@
                             ✓ Aap yeh campaign complete kar chuke hain. Har campaign ek user ko sirf ek dafa milti hai.
                         </p>
                     @elseif ($inProgress)
-                        @if ($inProgress->isReadyToClaim())
-                            <p class="mt-2 text-xs text-slate-400">Timer poora ho gaya — reward claim karein.</p>
+                        @if ($inProgress->canClaim($campaign))
+                            <p class="mt-2 text-xs text-slate-400">Timer aur watch time dono poore ho gaye — reward claim karein.</p>
                             <form method="POST" action="{{ route('tasks.complete', $campaign) }}" class="mt-3">
                                 @csrf
                                 <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 px-4 py-2.5 text-sm font-bold text-ink-950">
@@ -208,17 +208,24 @@
                                 </button>
                             </form>
                         @else
-                            <p class="mt-2 text-xs text-slate-400">Aap ka task already chal raha hai. {{ $inProgress->remainingSeconds() }}s baaki.</p>
+                            <p class="mt-2 text-xs text-slate-400">
+                                @if ($inProgress->isReadyToClaim())
+                                    Timer poora ho gaya — video ka remaining watch time poora karein.
+                                @else
+                                    Aap ka task already chal raha hai. {{ $inProgress->remainingSeconds() }}s baaki.
+                                @endif
+                            </p>
                             <a href="{{ route('tasks.run', $campaign) }}" class="mt-3 block rounded-xl border border-gold-400/40 bg-gold-400/10 px-4 py-2.5 text-center text-sm font-bold text-gold-300">Resume task</a>
                         @endif
                     @else
                         <p class="mt-2 text-xs text-slate-400">
-                            {{ $campaign->actionLabel() }} karein aur {{ \App\Support\Currency::format($campaign->reward) }} kamayen. Real page naye tab me khulega.
+                            {{ $campaign->actionLabel() }} karein aur {{ \App\Support\Currency::format($campaign->reward) }} kamayen.
+                            {{ $campaign->hasEmbeddedPlayer() ? 'Video isi lock page ke andar official player me chalegi.' : 'Real page naye tab me khulega.' }}
                         </p>
                         <form method="POST" action="{{ route('tasks.start', $campaign) }}" class="mt-3">
                             @csrf
                             <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20">
-                                Start task → real page
+                                {{ $campaign->hasEmbeddedPlayer() ? 'Watch video →' : 'Start task → real page' }}
                             </button>
                         </form>
                     @endif
@@ -227,9 +234,15 @@
                 <div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-xs leading-relaxed text-slate-400">
                     <h2 class="text-sm font-bold text-white">How it works</h2>
                     <ul class="mt-2 list-inside list-disc space-y-1">
-                        <li>Task start karein aur real page naye tab me kholein.</li>
-                        <li>Timer poora hone tak real page ka tab band na karein, warna task fail ho jayega.</li>
-                        <li>Timer poora hone par reward wallet me add ho jata hai.</li>
+                        @if ($campaign->hasEmbeddedPlayer())
+                            <li>Task start karein aur video isi lock page ke official player me play karein.</li>
+                            <li>Timer poora hone tak tab band na karein, aur video ko required seconds tak play rakhein.</li>
+                            <li>Timer aur watch time dono poore hone par reward wallet me add ho jata hai.</li>
+                        @else
+                            <li>Task start karein aur real page naye tab me kholein.</li>
+                            <li>Timer poora hone tak real page ka tab band na karein, warna task fail ho jayega.</li>
+                            <li>Timer poora hone par reward wallet me add ho jata hai.</li>
+                        @endif
                     </ul>
                 </div>
             @endif

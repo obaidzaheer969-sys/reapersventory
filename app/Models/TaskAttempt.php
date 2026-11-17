@@ -17,6 +17,8 @@ use Illuminate\Support\Carbon;
     'status',
     'started_at',
     'opened_at',
+    'embed_played_at',
+    'embed_seen_at',
     'expires_at',
     'completed_at',
     'failed_at',
@@ -35,6 +37,8 @@ class TaskAttempt extends Model
             'status' => TaskAttemptStatus::class,
             'started_at' => 'datetime',
             'opened_at' => 'datetime',
+            'embed_played_at' => 'datetime',
+            'embed_seen_at' => 'datetime',
             'expires_at' => 'datetime',
             'completed_at' => 'datetime',
             'failed_at' => 'datetime',
@@ -84,9 +88,28 @@ class TaskAttempt extends Model
         return $this->opened_at !== null;
     }
 
+    public function hasStartedEmbeddedPlayback(): bool
+    {
+        return $this->embed_played_at !== null;
+    }
+
     public function isReadyToClaim(): bool
     {
         return $this->expires_at->lessThanOrEqualTo(Carbon::now());
+    }
+
+    public function canClaim(EarningTask $task): bool
+    {
+        if (! $this->isReadyToClaim() || $this->isCompleted() || $this->isFailed()) {
+            return false;
+        }
+
+        if ($task->hasEmbeddedPlayer()) {
+            return $this->hasStartedEmbeddedPlayback()
+                && (int) $this->watched_seconds >= (int) $task->duration_seconds;
+        }
+
+        return $this->hasOpenedRealPage();
     }
 
     public function remainingSeconds(): int

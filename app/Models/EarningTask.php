@@ -107,6 +107,15 @@ class EarningTask extends Model
         return $this->campaign_status !== null;
     }
 
+    /**
+     * An unparseable or unsupported URL falls back to the real-page flow, so
+     * the player requirement must be based on the actual URL, not just type.
+     */
+    public function hasEmbeddedPlayer(): bool
+    {
+        return $this->task_type->embedUrl($this->target_url) !== null;
+    }
+
     public function isLiveCampaign(): bool
     {
         return $this->isCampaign()

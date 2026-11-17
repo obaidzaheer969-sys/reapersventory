@@ -7,7 +7,11 @@
         $totalSeconds = max(1, (int) $task->duration_seconds);
         $remaining = max(0, (int) $remainingSeconds);
         $ready = $remaining === 0;
-        $claimable = $ready && $realPageOpened;
+        $isEmbedded = (bool) ($embedded ?? false);
+        $watchRequired = $isEmbedded ? max(1, (int) $requiredSeconds) : 0;
+        $watched = $isEmbedded ? min($watchRequired, (int) $watchedSeconds) : 0;
+        $watchReady = ! $isEmbedded || $watched >= $watchRequired;
+        $claimable = $ready && $watchReady && ($isEmbedded || $realPageOpened);
     @endphp
 
     <div class="mx-auto max-w-5xl {{ $ready ? '' : 'pb-40' }}">
@@ -32,29 +36,102 @@
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
                         <p class="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-300">
-                            <span class="h-2 w-2 rounded-full {{ $ready ? 'bg-mint-400' : 'animate-pulse bg-gold-400' }}" data-real-dot></span>
-                            <span data-real-status>{{ $ready ? 'Timer complete — ab claim karein' : 'Real page kholein — timer chalu hai' }}</span>
+                            <span class="h-2 w-2 rounded-full {{ $ready && $watchReady ? 'bg-mint-400' : 'animate-pulse bg-gold-400' }}" data-real-dot></span>
+                            <span data-real-status>
+                                @if ($isEmbedded)
+                                    {{ $ready && $watchReady ? 'Timer complete — ab claim karein' : 'Video play karein — watch time shuru karein' }}
+                                @else
+                                    {{ $ready ? 'Timer complete — ab claim karein' : 'Real page kholein — timer chalu hai' }}
+                                @endif
+                            </span>
                         </p>
                         <p class="mt-2 max-w-xl text-sm leading-relaxed text-slate-300">
-                            Task ka asli page naye tab me khulta hai. Wahan video play karein, like ya subscribe karein — YouTube/Facebook par views, watch time, likes aur subscribes real time count hote hain.
+                            @if ($isEmbedded)
+                                Video neeche official {{ $task->platform() }} player me chal rahi hai. Play button dabaein — watch time isi page par count hota hai. Timer poora hone aur required watch time mukammal hone par reward claim karein.
+                            @else
+                                Task ka asli page naye tab me khulta hai. Wahan video play karein, like ya subscribe karein — YouTube/Facebook par views, watch time, likes aur subscribes real time count hote hain.
+                            @endif
                         </p>
                         <p class="mt-1.5 truncate text-[11px] text-slate-500" title="{{ $task->target_url }}">{{ $task->target_url }}</p>
                     </div>
 
-                    <button type="button" data-open-real
-                            class="shrink-0 rounded-xl bg-white px-4 py-2.5 text-center text-sm font-bold text-ink-950 hover:bg-slate-200">
-                        Open real page ↗
-                    </button>
+                    @if ($isEmbedded)
+                        <span class="shrink-0 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-center text-sm font-bold text-slate-200">
+                            ⏱ {{ $watchRequired }}s watch
+                        </span>
+                    @else
+                        <button type="button" data-open-real
+                                class="shrink-0 rounded-xl bg-white px-4 py-2.5 text-center text-sm font-bold text-ink-950 hover:bg-slate-200">
+                            Open real page ↗
+                        </button>
+                    @endif
                 </div>
 
-                <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90" data-real-hint>
-                    🔒 Real page ka tab timer poora hone se pehle band kiya to task <span class="font-bold">FAIL</span> ho jayega aur reward nahi milega. Us tab ko khula rakhein.
-                </p>
+                @if ($isEmbedded)
+                    <div class="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-black">
+                        @if ($embedPlatform === 'youtube')
+                            <div class="aspect-video w-full">
+                                <iframe id="task-embed-player" data-embed-player data-platform="youtube"
+                                        src="{{ $embedUrl }}"
+                                        title="{{ $task->title }}"
+                                        class="h-full w-full"
+                                        frameborder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        referrerpolicy="strict-origin-when-cross-origin"
+                                        allowfullscreen></iframe>
+                            </div>
+                        @else
+                            <div id="fb-root"></div>
+                            <div class="flex min-h-[240px] items-center justify-center p-3">
+                                <div class="fb-video w-full"
+                                     data-href="{{ $task->target_url }}"
+                                     data-width="640"
+                                     data-show-text="false"
+                                     data-autoplay="false"
+                                     data-allowfullscreen="true"></div>
+                            </div>
+                            <noscript>
+                                <iframe src="{{ $embedUrl }}"
+                                        title="{{ $task->title }}"
+                                        class="aspect-video w-full"
+                                        frameborder="0"
+                                        allow="autoplay; encrypted-media; picture-in-picture"
+                                        allowfullscreen></iframe>
+                            </noscript>
+                        @endif
+                    </div>
+
+                    <div class="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+                        <div class="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+                            <span>Watch time</span>
+                            <span><span data-watch-seconds>{{ $watched }}</span> / {{ $watchRequired }} sec</span>
+                        </div>
+                        <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                            <div class="h-full rounded-full bg-gradient-to-r from-mint-400 to-mint-500 transition-[width] duration-500"
+                                 data-watch-bar style="width: {{ $watchRequired > 0 ? round(($watched / $watchRequired) * 100) : 0 }}%"></div>
+                        </div>
+                        <p class="mt-2 text-[11px] leading-relaxed text-slate-500" data-play-hint>
+                            Video play button dabaein. Play na karne par watch time count nahi hoga aur claim band rahega.
+                        </p>
+                    </div>
+
+                    <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90">
+                        🔒 Timer poora hone tak tab band karna, reload karna aur back jana band hai. Video pause karne par timer chalta rahega lekin watch time nahi badhega.
+                    </p>
+                @else
+                    <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90" data-real-hint>
+                        🔒 Real page ka tab timer poora hone se pehle band kiya to task <span class="font-bold">FAIL</span> ho jayega aur reward nahi milega. Us tab ko khula rakhein.
+                    </p>
+                @endif
 
                 <div data-fail-banner class="mt-3 hidden rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-3">
                     <p class="text-sm font-bold text-rose-200">❌ Task fail ho gaya</p>
                     <p class="mt-1 text-[11px] leading-relaxed text-rose-100/80">
-                        Real page ka tab timer poora hone se pehle band kar diya gaya. Is task ka reward nahi milega — dobara start karein.
+                        @if ($isEmbedded)
+                            Timer poora hone se pehle yeh tab band kar diya gaya. Is task ka reward nahi milega — dobara start karein aur video required waqt tak play rakhein.
+                        @else
+                            Real page ka tab timer poora hone se pehle band kar diya gaya. Is task ka reward nahi milega — dobara start karein.
+                        @endif
                     </p>
                     <a href="{{ route('tasks.index') }}" class="mt-2.5 inline-flex rounded-lg bg-rose-500 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-rose-400">Dobara start karein →</a>
                 </div>
@@ -76,13 +153,17 @@
                         <button type="submit" data-claim-button
                                 class="w-full rounded-xl px-5 py-2.5 text-sm font-bold transition {{ $claimable ? 'bg-gradient-to-r from-mint-400 to-mint-500 text-ink-950 shadow-lg shadow-mint-500/20' : 'cursor-not-allowed bg-white/5 text-slate-500' }}"
                                 @disabled(! $claimable)>
-                            {{ $claimable ? 'Claim '.config('earning.currency').' '.number_format((float) $expectedReward, 2) : ($ready ? 'Pehle real page kholein' : 'Please wait…') }}
+                            {{ $claimable ? 'Claim '.config('earning.currency').' '.number_format((float) $expectedReward, 2) : ($ready ? ($isEmbedded ? 'Video '.(max(0, $watchRequired - $watched)).'s aur dekhein' : 'Pehle real page kholein') : 'Please wait…') }}
                         </button>
                     </form>
                 </div>
 
                 <p class="mt-4 text-xs leading-relaxed text-slate-500">
-                    Is tab me timer chal raha hai aur isi tab ka title bar seconds dikhata hai. Timer poora hone tak yeh tab band karna aur back jana band rahega — real page alag tab me hai, use bhi band na karein.
+                    @if ($isEmbedded)
+                        Is tab me timer chal raha hai aur isi tab ka title bar seconds dikhata hai. Timer poora hone tak yeh tab band karna aur back jana band rahega. Video play karte waqt hi watch time count hota hai — pause karne par watch time ruk jata hai.
+                    @else
+                        Is tab me timer chal raha hai aur isi tab ka title bar seconds dikhata hai. Timer poora hone tak yeh tab band karna aur back jana band rahega — real page alag tab me hai, use bhi band na karein.
+                    @endif
                 </p>
             </div>
 
@@ -156,9 +237,14 @@
             var brand = @json(config('earning.brand'));
             var targetUrl = @json($task->target_url);
             var openedUrl = @json(route('tasks.opened', $task));
+            var progressUrl = @json(route('tasks.progress', $task));
             var failUrl = @json(route('tasks.fail', $task));
             var csrf = @json(csrf_token());
-            var opened = @json((bool) $realPageOpened);
+            var embedded = @json((bool) $isEmbedded);
+            var platform = @json($embedPlatform);
+            var required = {{ (int) $watchRequired }};
+            var watched = {{ (int) $watched }};
+            var opened = @json($isEmbedded ? (bool) $embedPlayed : (bool) $realPageOpened);
 
             var locked = remaining > 0;
             var finished = remaining === 0;
@@ -167,6 +253,8 @@
             var deadline = Date.now() + remaining * 1000;
             var ticker = null;
             var watcher = null;
+            var heartbeat = null;
+            var videoPlaying = false;
 
             var display = document.querySelector('[data-timer-display]');
             var bar = document.querySelector('[data-timer-bar]');
@@ -178,6 +266,10 @@
             var realDot = document.querySelector('[data-real-dot]');
             var realHint = document.querySelector('[data-real-hint]');
             var failBanner = document.querySelector('[data-fail-banner]');
+
+            var watchSecondsEl = document.querySelector('[data-watch-seconds]');
+            var watchBar = document.querySelector('[data-watch-bar]');
+            var playHint = document.querySelector('[data-play-hint]');
 
             var lockBar = document.querySelector('[data-task-lock]');
             var lockInner = document.querySelector('[data-lock-inner]');
@@ -202,7 +294,7 @@
                 return Math.min(100, Math.round(((total - remaining) / total) * 100));
             }
 
-            function post(url) {
+            function post(url, payload) {
                 try {
                     fetch(url, {
                         method: 'POST',
@@ -213,7 +305,45 @@
                             'X-CSRF-TOKEN': csrf,
                             'X-Requested-With': 'XMLHttpRequest'
                         },
-                        body: '{}'
+                        body: JSON.stringify(payload || {})
+                    }).catch(function () {});
+                } catch (error) {}
+            }
+
+            function sendProgress(playing) {
+                if (!embedded || failed) {
+                    return;
+                }
+
+                try {
+                    fetch(progressUrl, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ playing: !!playing })
+                    }).then(function (response) {
+                        return response.ok ? response.json() : null;
+                    }).then(function (data) {
+                        if (!data || !data.ok) {
+                            return;
+                        }
+
+                        if (typeof data.required_seconds === 'number' && data.required_seconds > 0) {
+                            required = data.required_seconds;
+                        }
+
+                        if (typeof data.watched_seconds === 'number') {
+                            watched = Math.max(watched, Math.min(required, data.watched_seconds));
+                        }
+
+                        renderWatch();
+                        updateClaim();
+                        updateEmbedStatus();
                     }).catch(function () {});
                 } catch (error) {}
             }
@@ -236,12 +366,73 @@
                 realDot.className = dotClasses[tone] || dotClasses.gold;
             }
 
+            function updateEmbedStatus() {
+                if (!embedded) {
+                    return;
+                }
+
+                if (failed) {
+                    setRealStatus('Task failed', 'rose');
+
+                    return;
+                }
+
+                if (finished && watched >= required) {
+                    setRealStatus('Timer complete — ab claim karein', 'mint');
+
+                    return;
+                }
+
+                if (finished) {
+                    setRealStatus('Timer complete — video ' + Math.max(0, required - watched) + 's aur play karein', 'gold');
+
+                    return;
+                }
+
+                if (videoPlaying) {
+                    setRealStatus('Video chal rahi hai — watch time count ho raha hai', 'mint');
+
+                    return;
+                }
+
+                if (opened) {
+                    setRealStatus('Video paused — play karein, watch time ruk gaya hai', 'gold');
+
+                    return;
+                }
+
+                setRealStatus('Video play button dabaein — watch time shuru karein', 'gold');
+            }
+
+            function renderWatch() {
+                if (watchSecondsEl) {
+                    watchSecondsEl.textContent = String(watched);
+                }
+
+                if (watchBar) {
+                    watchBar.style.width = (required > 0 ? Math.min(100, Math.round((watched / required) * 100)) : 0) + '%';
+                }
+
+                if (playHint) {
+                    if (finished && watched < required) {
+                        playHint.textContent = 'Timer poora ho gaya, lekin video abhi ' + Math.max(0, required - watched) + ' seconds aur play karni hai.';
+                    } else if (videoPlaying) {
+                        playHint.textContent = 'Video play ho rahi hai — watch time count ho raha hai. Yeh tab khula rakhein.';
+                    } else if (opened) {
+                        playHint.textContent = 'Video paused hai — play dabaein, watch time dobara shuru hoga.';
+                    } else {
+                        playHint.textContent = 'Video play button dabaein. Play na karne par watch time count nahi hoga.';
+                    }
+                }
+            }
+
             function updateClaim() {
                 if (!button) {
                     return;
                 }
 
-                var claimable = !failed && finished && opened;
+                var watchReady = !embedded || watched >= required;
+                var claimable = !failed && finished && watchReady && (embedded || opened);
 
                 button.disabled = !claimable;
                 button.classList.toggle('cursor-not-allowed', !claimable);
@@ -256,10 +447,12 @@
 
                 if (failed) {
                     button.textContent = 'Task failed';
-                } else if (finished && opened) {
-                    button.textContent = 'Claim ' + currency + ' ' + reward;
-                } else if (finished) {
+                } else if (!embedded && finished && !opened) {
                     button.textContent = 'Pehle real page kholein';
+                } else if (embedded && finished && !watchReady) {
+                    button.textContent = 'Video ' + Math.max(0, required - watched) + 's aur dekhein';
+                } else if (claimable) {
+                    button.textContent = 'Claim ' + currency + ' ' + reward;
                 } else {
                     button.textContent = 'Please wait…';
                 }
@@ -382,6 +575,20 @@
                 watcher = null;
             }
 
+            function startHeartbeat() {
+                if (!embedded || heartbeat) {
+                    return;
+                }
+
+                heartbeat = window.setInterval(function () {
+                    if (!videoPlaying || document.hidden) {
+                        return;
+                    }
+
+                    sendProgress(true);
+                }, 5000);
+            }
+
             function failTask() {
                 if (failed) {
                     return;
@@ -420,15 +627,18 @@
                     status.textContent = 'Task failed';
                 }
 
-                setRealStatus('Task fail — real page tab timer se pehle band hua', 'rose');
+                setRealStatus(
+                    embedded ? 'Task fail — timer se pehle tab band ho gaya' : 'Task fail — real page tab timer se pehle band hua',
+                    'rose'
+                );
                 document.title = '❌ Task failed — ' + brand;
                 updateClaim();
                 post(failUrl);
             }
 
-            function showUnlockedToast() {
+            function showUnlockedToast(message) {
                 var toast = document.createElement('div');
-                toast.textContent = '🔓 Timer poora — ab aap tab band kar sakte hain ya back ja sakte hain.';
+                toast.textContent = message;
                 toast.setAttribute('style', 'position:fixed;left:50%;bottom:1.5rem;transform:translateX(-50%);z-index:60;width:max-content;max-width:calc(100vw - 2rem);border-radius:0.85rem;background:linear-gradient(90deg,#34d399,#10b981);color:#060a12;font-weight:700;font-size:0.8rem;line-height:1.3;padding:0.7rem 1rem;box-shadow:0 14px 34px rgba(16,185,129,.4);text-align:center;');
                 document.body.appendChild(toast);
 
@@ -460,14 +670,24 @@
 
                 document.title = pageTitle;
 
-                if (opened) {
+                if (embedded) {
+                    updateEmbedStatus();
+                    renderWatch();
+
+                    if (watched < required) {
+                        showUnlockedToast('⏳ Timer poora — video abhi ' + Math.max(0, required - watched) + ' seconds aur play karein.');
+                    } else {
+                        showUnlockedToast('🔓 Timer poora — ab aap reward claim kar sakte hain.');
+                    }
+                } else if (opened) {
                     setRealStatus('Timer complete — ab claim karein', 'mint');
+                    showUnlockedToast('🔓 Timer poora — ab aap tab band kar sakte hain ya back ja sakte hain.');
                 } else {
                     setRealStatus('Timer complete — claim se pehle real page kholein', 'gold');
+                    showUnlockedToast('🔓 Timer poora — claim se pehle real page kholein.');
                 }
 
                 updateClaim();
-                showUnlockedToast();
             }
 
             function warnLocked() {
@@ -490,6 +710,106 @@
                 }
             }
 
+            function setupYoutube() {
+                var tag = document.createElement('script');
+                tag.src = 'https://www.youtube.com/iframe_api';
+                tag.async = true;
+                document.head.appendChild(tag);
+
+                window.onYouTubeIframeAPIReady = function () {
+                    var frame = document.querySelector('[data-embed-player]');
+
+                    if (!frame || !window.YT || !window.YT.Player) {
+                        return;
+                    }
+
+                    new YT.Player(frame, {
+                        events: {
+                            onStateChange: function (event) {
+                                if (event.data === YT.PlayerState.PLAYING) {
+                                    if (!videoPlaying) {
+                                        videoPlaying = true;
+                                        opened = true;
+                                        sendProgress(true);
+                                    }
+                                } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
+                                    if (videoPlaying) {
+                                        videoPlaying = false;
+                                        sendProgress(false);
+                                    }
+                                }
+
+                                updateEmbedStatus();
+                                renderWatch();
+                            }
+                        }
+                    });
+                };
+            }
+
+            function setupFacebook() {
+                window.fbAsyncInit = function () {
+                    if (!window.FB) {
+                        return;
+                    }
+
+                    FB.init({ xfbml: true, version: 'v27.0' });
+
+                    FB.Event.subscribe('xfbml.ready', function (message) {
+                        if (!message || message.type !== 'video' || !message.instance) {
+                            return;
+                        }
+
+                        window.__taskFbReady = true;
+
+                        var player = message.instance;
+
+                        player.subscribe('startedPlaying', function () {
+                            videoPlaying = true;
+                            opened = true;
+                            sendProgress(true);
+                            updateEmbedStatus();
+                            renderWatch();
+                        });
+
+                        player.subscribe('paused', function () {
+                            if (videoPlaying) {
+                                videoPlaying = false;
+                                sendProgress(false);
+                            }
+
+                            updateEmbedStatus();
+                            renderWatch();
+                        });
+
+                        player.subscribe('finishedPlaying', function () {
+                            if (videoPlaying) {
+                                videoPlaying = false;
+                                sendProgress(false);
+                            }
+
+                            updateEmbedStatus();
+                            renderWatch();
+                        });
+                    });
+                };
+
+                var tag = document.createElement('script');
+                tag.async = true;
+                tag.defer = true;
+                tag.crossOrigin = 'anonymous';
+                tag.src = 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v27.0';
+                document.body.appendChild(tag);
+
+                window.setTimeout(function () {
+                    if (window.__taskFbReady || !playHint) {
+                        return;
+                    }
+
+                    playHint.textContent = 'Facebook player load nahi hua. Ad-blocker band karke page reload karein.';
+                }, 12000);
+            }
+
             if (openButton) {
                 openButton.addEventListener('click', openReal);
             }
@@ -505,6 +825,16 @@
                             return;
                         }
 
+                        if (embedded) {
+                            if (watched < required) {
+                                event.preventDefault();
+                                renderWatch();
+                                updateEmbedStatus();
+                            }
+
+                            return;
+                        }
+
                         checkPopup();
 
                         if (failed) {
@@ -515,8 +845,20 @@
             }
 
             document.addEventListener('visibilitychange', function () {
-                if (!document.hidden && popup) {
-                    checkPopup();
+                if (!embedded) {
+                    if (!document.hidden && popup) {
+                        checkPopup();
+                    }
+
+                    return;
+                }
+
+                if (document.hidden) {
+                    if (videoPlaying) {
+                        sendProgress(false);
+                    }
+                } else if (videoPlaying) {
+                    sendProgress(true);
                 }
             });
 
@@ -576,14 +918,25 @@
             });
 
             render();
+            renderWatch();
             updateClaim();
+            updateEmbedStatus();
 
-            if (opened) {
-                setOpenUi();
+            if (embedded) {
+                startHeartbeat();
+
+                if (platform === 'youtube') {
+                    setupYoutube();
+                } else if (platform === 'facebook') {
+                    setupFacebook();
+                }
             }
 
             if (!locked) {
-                if (opened) {
+                if (embedded) {
+                    updateEmbedStatus();
+                } else if (opened) {
+                    setOpenUi();
                     setRealStatus('Timer complete — ab claim karein', 'mint');
                 } else {
                     setRealStatus('Timer complete — claim se pehle real page kholein', 'gold');

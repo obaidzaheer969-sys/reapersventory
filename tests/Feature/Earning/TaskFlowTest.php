@@ -237,4 +237,286 @@ class TaskFlowTest extends TestCase
 
         $this->assertDatabaseCount('task_attempts', 0);
     }
+
+    public function test_a_youtube_watch_task_renders_the_official_embed_instead_of_a_new_tab(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(30)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertSee('<iframe', false)
+            ->assertSee('https://www.youtube.com/embed/dQw4w9WgXcQ', false)
+            ->assertSee('enablejsapi=1', false)
+            ->assertDontSee('<button type="button" data-open-real', false)
+            ->assertSee('data-watch-seconds', false);
+    }
+
+    public function test_a_facebook_watch_task_renders_the_official_facebook_embed(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->facebookWatch(30)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertSee('fb-video', false)
+            ->assertSee('connect.facebook.net', false)
+            ->assertSee('facebook.com/plugins/video.php', false)
+            ->assertDontSee('<button type="button" data-open-real', false);
+    }
+
+    public function test_an_embedded_watch_task_cannot_be_claimed_after_the_timer_without_playback(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(15, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->travel(16)->seconds();
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertSessionHasErrors('task');
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+        $this->assertSame(TaskAttemptStatus::InProgress, $attempt->status);
+        $this->assertNull($attempt->embed_played_at);
+        $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
+    }
+
+    public function test_embedded_watch_time_only_comes_from_server_measured_playback_heartbeats(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(15, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertOk()
+            ->assertJson(['watched_seconds' => 0, 'required_seconds' => 15]);
+
+        for ($i = 0; $i < 8; $i++) {
+            $this->actingAs($user)
+                ->postJson(route('tasks.progress', $task), ['playing' => true])
+                ->assertOk()
+                ->assertJson(['watched_seconds' => 0]);
+        }
+
+        $this->travel(4)->seconds();
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertOk()
+            ->assertJson(['watched_seconds' => 4]);
+
+        $this->travel(4)->seconds();
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertOk()
+            ->assertJson(['watched_seconds' => 8]);
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+        $this->assertNotNull($attempt->embed_played_at);
+        $this->assertSame(8, $attempt->watched_seconds);
+    }
+
+    public function test_pausing_the_embedded_player_stops_watch_time_credit(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(30, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => true])->assertOk();
+
+        $this->travel(5)->seconds();
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertJson(['watched_seconds' => 5]);
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => false])
+            ->assertJson(['watched_seconds' => 5]);
+
+        $this->travel(10)->seconds();
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertJson(['watched_seconds' => 5]);
+
+        $this->travel(5)->seconds();
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertJson(['watched_seconds' => 10]);
+    }
+
+    public function test_an_embedded_watch_task_pays_after_the_timer_and_required_watch_time(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(15, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => true])->assertOk();
+
+        $this->travel(5)->seconds();
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => true])->assertOk();
+
+        $this->travel(5)->seconds();
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => true])->assertOk();
+
+        $this->travel(5)->seconds();
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertOk()
+            ->assertJson(['watched_seconds' => 15, 'can_claim' => true]);
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertRedirect(route('tasks.index'))
+            ->assertSessionHas('status');
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+        $this->assertSame(TaskAttemptStatus::Completed, $attempt->status);
+        $this->assertSame(15, $attempt->watched_seconds);
+        $this->assertSame(2.0, (float) $attempt->reward_amount);
+        $this->assertSame(2.0, (float) $user->fresh()->wallet_balance);
+        $this->assertDatabaseHas('wallet_transactions', [
+            'user_id' => $user->id,
+            'type' => WalletTransactionType::TaskReward->value,
+            'amount' => 2,
+        ]);
+    }
+
+    public function test_an_embedded_watch_task_can_be_claimed_only_after_the_required_watch_time_even_if_the_timer_is_done(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(10, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => true])->assertOk();
+
+        $this->travel(6)->seconds();
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertOk()
+            ->assertJson(['watched_seconds' => 6]);
+
+        $this->travel(5)->seconds();
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertSessionHasErrors('task');
+
+        $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
+
+        $this->travel(4)->seconds();
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertOk()
+            ->assertJson(['watched_seconds' => 10]);
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertRedirect(route('tasks.index'));
+
+        $this->assertSame(2.0, (float) $user->fresh()->wallet_balance);
+    }
+
+    public function test_a_watch_task_with_an_unsupported_url_keeps_the_real_page_flow(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(10, 2)->create([
+            'target_url' => 'https://www.youtube.com/@earnpk',
+        ]);
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertSee('<button type="button" data-open-real', false)
+            ->assertDontSee('youtube.com/embed', false);
+
+        $this->actingAs($user)->post(route('tasks.opened', $task));
+
+        $this->travel(11)->seconds();
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertRedirect(route('tasks.index'));
+
+        $this->assertSame(2.0, (float) $user->fresh()->wallet_balance);
+    }
+
+    public function test_a_spoofed_video_host_does_not_render_an_official_embed(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(10, 2)->create([
+            'target_url' => 'https://youtube.com.evil.example/watch?v=dQw4w9WgXcQ',
+        ]);
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertSee('<button type="button" data-open-real', false)
+            ->assertDontSee('youtube.com/embed', false);
+    }
+
+    public function test_an_embedded_attempt_failed_before_the_timer_cannot_be_claimed(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(15, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => true])->assertOk();
+
+        $this->actingAs($user)->post(route('tasks.fail', $task));
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+        $this->assertSame(TaskAttemptStatus::Failed, $attempt->status);
+        $this->assertNotNull($attempt->failed_at);
+
+        $this->travel(16)->seconds();
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertSessionHasErrors('task');
+
+        $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
+    }
+
+    public function test_a_user_cannot_credit_watch_time_to_another_users_attempt(): void
+    {
+        $owner = User::factory()->earner()->create();
+        $intruder = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(15, 2)->create();
+
+        $this->actingAs($owner)->post(route('tasks.start', $task));
+
+        $this->actingAs($intruder)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertNotFound();
+
+        $attempt = TaskAttempt::query()->where('user_id', $owner->id)->sole();
+
+        $this->assertSame(0, $attempt->watched_seconds);
+        $this->assertNull($attempt->embed_played_at);
+    }
 }
