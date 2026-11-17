@@ -83,6 +83,12 @@ class DepositService
             return 'Invalid IPN key';
         }
 
+        $webId = trim((string) ($payload['web_id'] ?? ''));
+
+        if ($webId !== '' && ! hash_equals($this->gateway->webId(), $webId)) {
+            return 'Invalid Web ID';
+        }
+
         $orderId = (string) ($payload['order_id'] ?? '');
         $deposit = Deposit::query()->where('order_id', $orderId)->first();
 
@@ -93,19 +99,30 @@ class DepositService
         $status = (string) ($payload['status'] ?? '');
 
         if ($status === '1') {
-            $received = (float) ($payload['Amount'] ?? 0);
+            $cmTid = trim((string) ($payload['CM_TID'] ?? ''));
 
-            if ($received > 0 && $received + 0.01 < (float) $deposit->amount) {
-                $this->markFailed($deposit, 'Cashmaal ne kam amount bheja: '.$received, $payload);
-            } else {
-                $this->complete(
-                    $deposit,
-                    (string) ($payload['CM_TID'] ?? ''),
-                    $payload,
-                    (float) ($payload['fee'] ?? 0),
-                );
+            if ($cmTid === '') {
+                return 'Missing transaction id';
             }
-        } elseif ($status === '3') {
+
+            // IPN alone is never enough. Cashmaal's verify API is the source
+            // of truth, so an unpaid or replayed notification cannot credit
+            // the wallet.
+            $verified = $this->verifyCallback($deposit, $cmTid, $payload);
+            $fresh = $deposit->fresh();
+
+            if ($verified || ! $fresh?->isPending()) {
+                return '**OK**';
+            }
+
+            return 'Payment verification pending';
+        }
+
+        if ($status === '2') {
+            return 'Payment pending';
+        }
+
+        if ($status === '3') {
             $this->markFailed($deposit, 'Cashmaal payment reject ho gayi.', $payload);
         } elseif ($status === '0') {
             $this->markCancelled($deposit, $payload);
@@ -176,7 +193,10 @@ class DepositService
         });
     }
 
-    public function verifyCallback(Deposit $deposit, ?string $cmTid): bool
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    public function verifyCallback(Deposit $deposit, ?string $cmTid, array $context = []): bool
     {
         if (blank($cmTid)) {
             return false;
@@ -184,7 +204,7 @@ class DepositService
 
         $data = $this->gateway->verify($cmTid);
 
-        if (($data['status'] ?? null) != 1) {
+        if (! is_array($data) || (string) ($data['status'] ?? '') !== '1') {
             return false;
         }
 
@@ -194,20 +214,42 @@ class DepositService
             return false;
         }
 
-        $amount = (float) ($data['PKR_amount'] ?? $data['USD_amount'] ?? 0);
+        $paidAmount = $this->paidAmount($data);
 
-        if ($amount > 0 && $amount + 0.01 < (float) $deposit->amount) {
+        if ($paidAmount + 0.01 < (float) $deposit->amount) {
+            $this->markFailed(
+                $deposit,
+                'Cashmaal ne kam amount bheja: '.$paidAmount.' (expected '.$deposit->amount.')',
+                array_merge($context, $data),
+            );
+
             return false;
         }
 
         $this->complete(
             $deposit,
             $cmTid,
-            $data,
+            array_merge($context, $data),
             (float) ($data['fee_in_PKR'] ?? 0),
         );
 
         return true;
+    }
+
+    /**
+     * Cashmaal reports the net amount received and the gateway fee separately.
+     * For PKR deposits, `PKR_amount_with_fee` is the total the user paid, so we
+     * compare that with the amount requested in the redirect form.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function paidAmount(array $data): float
+    {
+        $base = (float) ($data['PKR_amount'] ?? $data['Amount'] ?? 0);
+        $fee = (float) ($data['fee_in_PKR'] ?? $data['fee'] ?? 0);
+        $withFee = (float) ($data['PKR_amount_with_fee'] ?? 0);
+
+        return round(max($base + $fee, $withFee, $base), 2);
     }
 
     public function findByOrderId(string $orderId): ?Deposit

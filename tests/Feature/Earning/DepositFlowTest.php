@@ -97,9 +97,20 @@ class DepositFlowTest extends TestCase
         $user = User::factory()->earner()->create(['wallet_balance' => 100]);
         $deposit = app(DepositService::class)->create($user, 500);
 
+        Http::fake([
+            'api.cmaal.com/*' => Http::response([
+                'status' => 1,
+                'order_id' => $deposit->order_id,
+                'PKR_amount' => 550,
+                'PKR_amount_with_fee' => 550,
+                'fee_in_PKR' => 0,
+            ]),
+        ]);
+
         $payload = [
             'status' => '1',
             'ipn_key' => 'IPN-SECRET',
+            'web_id' => 'WEB-12345',
             'order_id' => $deposit->order_id,
             'Amount' => '550.00',
             'CM_TID' => 'CM-TXN-1',
@@ -154,15 +165,133 @@ class DepositFlowTest extends TestCase
         $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
     }
 
+    public function test_an_ipn_without_a_transaction_id_does_not_complete_the_deposit(): void
+    {
+        $this->configureCashmaal();
+        $user = User::factory()->earner()->create();
+        $deposit = app(DepositService::class)->create($user, 500);
+
+        Http::fake();
+
+        $response = $this->post(route('deposits.cashmaal.ipn'), [
+            'status' => '1',
+            'ipn_key' => 'IPN-SECRET',
+            'web_id' => 'WEB-12345',
+            'order_id' => $deposit->order_id,
+            'Amount' => '550.00',
+        ]);
+
+        $response->assertOk();
+        $this->assertSame('Missing transaction id', $response->getContent());
+        $this->assertSame(DepositStatus::Pending, $deposit->fresh()->status);
+        $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
+        Http::assertNothingSent();
+    }
+
+    public function test_an_ipn_is_not_accepted_when_cashmaal_verification_fails(): void
+    {
+        $this->configureCashmaal();
+        $user = User::factory()->earner()->create();
+        $deposit = app(DepositService::class)->create($user, 500);
+
+        Http::fake([
+            'api.cmaal.com/*' => Http::response([
+                'status' => 0,
+                'error' => 'Payment not received',
+            ]),
+        ]);
+
+        $response = $this->post(route('deposits.cashmaal.ipn'), [
+            'status' => '1',
+            'ipn_key' => 'IPN-SECRET',
+            'web_id' => 'WEB-12345',
+            'order_id' => $deposit->order_id,
+            'Amount' => '550.00',
+            'CM_TID' => 'CM-UNPAID',
+        ]);
+
+        $response->assertOk();
+        $this->assertSame('Payment verification pending', $response->getContent());
+        $this->assertSame(DepositStatus::Pending, $deposit->fresh()->status);
+        $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
+    }
+
+    public function test_an_ipn_with_a_mismatched_web_id_is_rejected(): void
+    {
+        $this->configureCashmaal();
+        $user = User::factory()->earner()->create();
+        $deposit = app(DepositService::class)->create($user, 500);
+
+        Http::fake();
+
+        $response = $this->post(route('deposits.cashmaal.ipn'), [
+            'status' => '1',
+            'ipn_key' => 'IPN-SECRET',
+            'web_id' => 'WRONG-WEB-ID',
+            'order_id' => $deposit->order_id,
+            'Amount' => '550.00',
+            'CM_TID' => 'CM-TXN-1',
+        ]);
+
+        $response->assertOk();
+        $this->assertSame('Invalid Web ID', $response->getContent());
+        $this->assertSame(DepositStatus::Pending, $deposit->fresh()->status);
+        Http::assertNothingSent();
+    }
+
+    public function test_the_gateway_fee_is_counted_as_part_of_the_paid_amount(): void
+    {
+        $this->configureCashmaal();
+        $admin = User::factory()->superAdmin()->create(['wallet_balance' => 0]);
+        $user = User::factory()->earner()->create(['wallet_balance' => 100]);
+        $deposit = app(DepositService::class)->create($user, 500);
+
+        Http::fake([
+            'api.cmaal.com/*' => Http::response([
+                'status' => 1,
+                'order_id' => $deposit->order_id,
+                'PKR_amount' => 500,
+                'fee_in_PKR' => 50,
+            ]),
+        ]);
+
+        $this->post(route('deposits.cashmaal.ipn'), [
+            'status' => '1',
+            'ipn_key' => 'IPN-SECRET',
+            'web_id' => 'WEB-12345',
+            'order_id' => $deposit->order_id,
+            'Amount' => '500.00',
+            'fee' => '50.00',
+            'CM_TID' => 'CM-WITH-FEE',
+        ])->assertOk();
+
+        $deposit->refresh();
+
+        $this->assertSame(DepositStatus::Completed, $deposit->status);
+        $this->assertSame(600.0, (float) $user->fresh()->wallet_balance);
+        $this->assertSame(50.0, (float) $admin->fresh()->wallet_balance);
+    }
+
     public function test_an_ipn_with_a_lower_amount_fails_the_deposit(): void
     {
         $this->configureCashmaal();
         $user = User::factory()->earner()->create();
         $deposit = app(DepositService::class)->create($user, 500);
 
+        Http::fake([
+            'api.cmaal.com/*' => Http::response([
+                'status' => 1,
+                'order_id' => $deposit->order_id,
+                'PKR_amount' => 100,
+                'PKR_amount_with_fee' => 100,
+                'fee_in_PKR' => 0,
+            ]),
+        ]);
+
         $this->post(route('deposits.cashmaal.ipn'), [
             'status' => '1',
             'ipn_key' => 'IPN-SECRET',
+            'web_id' => 'WEB-12345',
             'order_id' => $deposit->order_id,
             'Amount' => '100.00',
             'CM_TID' => 'CM-LOW',
@@ -200,6 +329,7 @@ class DepositFlowTest extends TestCase
                 'status' => 1,
                 'order_id' => $deposit->order_id,
                 'PKR_amount' => 550,
+                'PKR_amount_with_fee' => 550,
                 'fee_in_PKR' => 0,
             ]),
         ]);
