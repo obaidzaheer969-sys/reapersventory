@@ -6,6 +6,7 @@ use App\Enums\WalletTransactionType;
 use App\Models\User;
 use App\Services\WalletService;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -114,6 +115,12 @@ class EarnersTable
                     ->color(fn (User $record) => $record->is_active ? 'danger' : 'success')
                     ->requiresConfirmation()
                     ->action(fn (User $record) => $record->update(['is_active' => ! $record->is_active])),
+                DeleteAction::make()
+                    ->label('Delete earner')
+                    ->modalHeading(fn (User $record) => 'Delete earner — '.$record->name)
+                    ->modalDescription('Yeh earner aur uska wallet/task/payout history permanently delete ho jayegi. Yeh action wapas nahi ho sakta.')
+                    ->successNotificationTitle('Earner deleted')
+                    ->visible(fn (User $record): bool => $record->id !== auth()->id()),
             ]);
     }
 }

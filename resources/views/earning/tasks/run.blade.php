@@ -299,6 +299,7 @@
                     fetch(url, {
                         method: 'POST',
                         credentials: 'same-origin',
+                        keepalive: true,
                         headers: {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
@@ -306,6 +307,30 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         },
                         body: JSON.stringify(payload || {})
+                    }).catch(function () {});
+                } catch (error) {}
+            }
+
+            function notifyServerFailure() {
+                var payload = new URLSearchParams();
+                payload.append('_token', csrf);
+
+                try {
+                    if (navigator.sendBeacon && navigator.sendBeacon(failUrl, payload)) {
+                        return;
+                    }
+                } catch (error) {}
+
+                try {
+                    fetch(failUrl, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        keepalive: true,
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: payload
                     }).catch(function () {});
                 } catch (error) {}
             }
@@ -633,7 +658,7 @@
                 );
                 document.title = '❌ Task failed — ' + brand;
                 updateClaim();
-                post(failUrl);
+                notifyServerFailure();
             }
 
             function showUnlockedToast(message) {
@@ -915,6 +940,15 @@
                 event.preventDefault();
                 event.returnValue = '';
                 return '';
+            });
+
+            window.addEventListener('pagehide', function () {
+                if (!locked || failed) {
+                    return;
+                }
+
+                failed = true;
+                notifyServerFailure();
             });
 
             render();

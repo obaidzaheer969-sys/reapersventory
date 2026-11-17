@@ -77,10 +77,7 @@ class TaskController extends Controller
                 ->withErrors(['task' => 'Pehle task start karein.']);
         }
 
-        $embedUrl = $task->task_type->embedUrl(
-            $task->target_url,
-            $request->getSchemeAndHttpHost(),
-        );
+        $embedUrl = $task->embedUrl($request->getSchemeAndHttpHost());
 
         $isEmbedded = $embedUrl !== null;
 
@@ -91,7 +88,7 @@ class TaskController extends Controller
             'realPageOpened' => $attempt->hasOpenedRealPage(),
             'embedded' => $isEmbedded,
             'embedUrl' => $embedUrl,
-            'embedPlatform' => $isEmbedded ? $task->task_type->platformKey() : null,
+            'embedPlatform' => $task->embedPlatform(),
             'embedPlayed' => $attempt->hasStartedEmbeddedPlayback(),
             'watchedSeconds' => $isEmbedded ? (int) $attempt->watched_seconds : 0,
             'requiredSeconds' => $isEmbedded ? (int) $task->duration_seconds : 0,

@@ -161,4 +161,27 @@ class AdminPanelTest extends TestCase
             'description' => 'Manual top-up',
         ]);
     }
+
+    public function test_admin_can_delete_an_earner(): void
+    {
+        $admin = User::factory()->superAdmin()->create();
+        $earner = User::factory()->earner()->create();
+
+        $this->actingAs($admin)->get('/admin/earners')->assertOk();
+
+        Livewire::actingAs($admin)
+            ->test(ListEarners::class)
+            ->callAction(TestAction::make('delete')->table($earner))
+            ->assertHasNoActionErrors();
+
+        $this->assertDatabaseMissing('users', ['id' => $earner->id]);
+        $this->assertDatabaseHas('users', ['id' => $admin->id]);
+    }
+
+    public function test_admin_cannot_delete_their_own_account(): void
+    {
+        $admin = User::factory()->superAdmin()->create();
+
+        $this->assertFalse($admin->can('delete', $admin));
+    }
 }

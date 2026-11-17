@@ -107,13 +107,25 @@ class EarningTask extends Model
         return $this->campaign_status !== null;
     }
 
+    public function embedUrl(?string $origin = null): ?string
+    {
+        return $this->task_type->embedUrl($this->target_url, $origin);
+    }
+
+    public function embedPlatform(): ?string
+    {
+        return $this->embedUrl() !== null
+            ? $this->task_type->embeddedPlatformForUrl($this->target_url)
+            : null;
+    }
+
     /**
-     * An unparseable or unsupported URL falls back to the real-page flow, so
-     * the player requirement must be based on the actual URL, not just type.
+     * The player is chosen from the actual URL so an "Ad Watch" task that
+     * points to a YouTube/Facebook video still uses the official embed.
      */
     public function hasEmbeddedPlayer(): bool
     {
-        return $this->task_type->embedUrl($this->target_url) !== null;
+        return $this->embedUrl() !== null;
     }
 
     public function isLiveCampaign(): bool

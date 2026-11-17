@@ -24,4 +24,14 @@ class UserPolicy
             || ($user->isBusinessOwner()
                 && $user->belongsToBusiness((int) $model->business_id));
     }
+
+    public function delete(User $user, User $model): bool
+    {
+        return $user->isSuperAdmin() && $user->id !== $model->id;
+    }
+
+    public function deleteAny(User $user): bool
+    {
+        return $user->isSuperAdmin();
+    }
 }

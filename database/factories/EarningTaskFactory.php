@@ -63,6 +63,16 @@ class EarningTaskFactory extends Factory
         ]);
     }
 
+    public function adWatch(int $seconds = 30, float $reward = 2): static
+    {
+        return $this->state(fn () => [
+            'task_type' => TaskType::AdWatch,
+            'duration_seconds' => $seconds,
+            'reward' => $reward,
+            'target_url' => 'https://example.com/ad',
+        ]);
+    }
+
     /**
      * A legacy campaign still waiting for admin approval.
      */

@@ -85,27 +85,51 @@ enum TaskType: string
     }
 
     /**
-     * Only platforms with an official embeddable player are rendered inside
-     * the lock page. Instagram and generic ad tasks keep the real-page flow.
+     * Types that may render an official embed. AdWatch only does so when its
+     * target URL points to a supported YouTube/Facebook video.
      */
     public function isEmbeddedWatchTask(): bool
     {
         return in_array($this, [
             self::YoutubeWatch,
             self::FacebookWatch,
+            self::AdWatch,
         ], true);
     }
 
     public function embedUrl(string $targetUrl, ?string $origin = null): ?string
     {
         return match ($this) {
-            self::YoutubeWatch => $this->youtubeEmbedUrl($targetUrl, $origin),
-            self::FacebookWatch => $this->facebookEmbedUrl($targetUrl),
+            self::YoutubeWatch => self::youtubeEmbedUrl($targetUrl, $origin),
+            self::FacebookWatch => self::facebookEmbedUrl($targetUrl),
+            self::AdWatch => self::embeddedWatchUrl($targetUrl, $origin),
             default => null,
         };
     }
 
-    private function youtubeEmbedUrl(string $targetUrl, ?string $origin): ?string
+    public static function embeddedPlatformForUrl(string $targetUrl): ?string
+    {
+        if (self::youtubeVideoId($targetUrl) !== null) {
+            return 'youtube';
+        }
+
+        if (self::isFacebookVideoUrl($targetUrl)) {
+            return 'facebook';
+        }
+
+        return null;
+    }
+
+    private static function embeddedWatchUrl(string $targetUrl, ?string $origin): ?string
+    {
+        return match (self::embeddedPlatformForUrl($targetUrl)) {
+            'youtube' => self::youtubeEmbedUrl($targetUrl, $origin),
+            'facebook' => self::facebookEmbedUrl($targetUrl),
+            default => null,
+        };
+    }
+
+    private static function youtubeEmbedUrl(string $targetUrl, ?string $origin): ?string
     {
         $videoId = self::youtubeVideoId($targetUrl);
 
@@ -159,16 +183,19 @@ enum TaskType: string
         return null;
     }
 
-    private function facebookEmbedUrl(string $targetUrl): ?string
+    private static function isFacebookVideoUrl(string $targetUrl): bool
     {
         $host = strtolower((string) parse_url($targetUrl, PHP_URL_HOST));
 
-        $isFacebookHost = $host === 'facebook.com'
+        return $host === 'facebook.com'
             || str_ends_with($host, '.facebook.com')
             || $host === 'fb.watch'
             || str_ends_with($host, '.fb.watch');
+    }
 
-        if (! $isFacebookHost) {
+    private static function facebookEmbedUrl(string $targetUrl): ?string
+    {
+        if (! self::isFacebookVideoUrl($targetUrl)) {
             return null;
         }
 

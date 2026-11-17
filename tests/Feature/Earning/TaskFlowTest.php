@@ -271,6 +271,81 @@ class TaskFlowTest extends TestCase
             ->assertDontSee('<button type="button" data-open-real', false);
     }
 
+    public function test_an_ad_watch_task_with_a_youtube_url_renders_the_official_embed(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->adWatch(30)->create([
+            'target_url' => 'https://youtu.be/38tbtivKIyE?si=NelIFPJKPQqOGYoE',
+        ]);
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertSee('<iframe', false)
+            ->assertSee('https://www.youtube.com/embed/38tbtivKIyE', false)
+            ->assertSee('enablejsapi=1', false)
+            ->assertSee('https://www.youtube.com/iframe_api', false)
+            ->assertDontSee('<button type="button" data-open-real', false);
+    }
+
+    public function test_an_ad_watch_task_with_a_generic_url_still_opens_the_real_page(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->adWatch(30)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertSee('<button type="button" data-open-real', false)
+            ->assertSee('https://example.com/ad', false)
+            ->assertDontSee('<iframe', false);
+    }
+
+    public function test_the_lock_page_reports_an_early_exit_with_a_beacon(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeSubscribe(60, 25)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertSee("window.addEventListener('pagehide'", false)
+            ->assertSee('navigator.sendBeacon(failUrl, payload)', false);
+    }
+
+    public function test_a_form_encoded_exit_beacon_fails_the_task_before_the_timer(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeSubscribe(60, 25)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->withSession(['_token' => 'beacon-token'])
+            ->post(route('tasks.fail', $task), ['_token' => 'beacon-token'])
+            ->assertOk()
+            ->assertJson(['ok' => true, 'failed' => true]);
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+        $this->assertSame(TaskAttemptStatus::Failed, $attempt->status);
+        $this->assertNotNull($attempt->failed_at);
+
+        $this->travel(61)->seconds();
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertSessionHasErrors('task');
+
+        $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
+    }
+
     public function test_an_embedded_watch_task_cannot_be_claimed_after_the_timer_without_playback(): void
     {
         $user = User::factory()->earner()->create();
