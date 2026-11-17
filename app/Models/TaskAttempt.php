@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
     'embed_played_at',
     'embed_seen_at',
     'expires_at',
+    'timer_paused_at',
     'completed_at',
     'failed_at',
     'watched_seconds',
@@ -40,6 +41,7 @@ class TaskAttempt extends Model
             'embed_played_at' => 'datetime',
             'embed_seen_at' => 'datetime',
             'expires_at' => 'datetime',
+            'timer_paused_at' => 'datetime',
             'completed_at' => 'datetime',
             'failed_at' => 'datetime',
             'watched_seconds' => 'integer',
@@ -93,9 +95,29 @@ class TaskAttempt extends Model
         return $this->embed_played_at !== null;
     }
 
+    public function isTimerPaused(): bool
+    {
+        return $this->timer_paused_at !== null;
+    }
+
+    /**
+     * The timer deadline moves forward by the full paused duration, so a
+     * paused video cannot make the task claimable just by waiting.
+     */
+    public function effectiveExpiresAt(): Carbon
+    {
+        if (! $this->isTimerPaused()) {
+            return $this->expires_at;
+        }
+
+        return $this->expires_at->copy()->addSeconds(
+            max(0, Carbon::now()->getTimestamp() - $this->timer_paused_at->getTimestamp()),
+        );
+    }
+
     public function isReadyToClaim(): bool
     {
-        return $this->expires_at->lessThanOrEqualTo(Carbon::now());
+        return $this->effectiveExpiresAt()->lessThanOrEqualTo(Carbon::now());
     }
 
     public function canClaim(EarningTask $task): bool
@@ -114,6 +136,8 @@ class TaskAttempt extends Model
 
     public function remainingSeconds(): int
     {
-        return max(0, (int) ceil(Carbon::now()->diffInSeconds($this->expires_at, false)));
+        $reference = $this->timer_paused_at ?? Carbon::now();
+
+        return max(0, (int) ceil($reference->diffInSeconds($this->expires_at, false)));
     }
 }

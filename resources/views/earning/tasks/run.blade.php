@@ -122,7 +122,7 @@
                     @endif
 
                     <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90">
-                        🔒 Timer poora hone tak tab band karna, reload karna aur back jana band hai. Video pause karne par timer chalta rahega lekin watch time nahi badhega.
+                        🔒 Timer poora hone tak tab band karna, reload karna aur back jana band hai. Video pause karne par timer bhi ruk jayega aur watch time bhi nahi badhega.
                     </p>
                 @else
                     <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90" data-real-hint>
@@ -169,7 +169,7 @@
 
                 <p class="mt-4 text-xs leading-relaxed text-slate-500">
                     @if ($isEmbedded)
-                        Is tab me timer chal raha hai aur isi tab ka title bar seconds dikhata hai. Timer poora hone tak yeh tab band karna aur back jana band rahega. Video play karte waqt hi watch time count hota hai — pause karne par watch time ruk jata hai.
+                        Is tab me timer chal raha hai aur isi tab ka title bar seconds dikhata hai. Timer poora hone tak yeh tab band karna aur back jana band rahega. Video play karte waqt hi timer aur watch time dono chalte hain — pause karne par dono ruk jate hain.
                     @else
                         Is tab me timer chal raha hai aur isi tab ka title bar seconds dikhata hai. Timer poora hone tak yeh tab band karna aur back jana band rahega — real page alag tab me hai, use bhi band na karein.
                     @endif
@@ -264,6 +264,9 @@
             var watcher = null;
             var heartbeat = null;
             var videoPlaying = false;
+            var timerPaused = @json((bool) ($timerPaused ?? false));
+            var pausedRemaining = remaining;
+            var progressSequence = 0;
 
             var display = document.querySelector('[data-timer-display]');
             var timerLockNote = document.querySelector('[data-timer-lock-note]');
@@ -283,11 +286,15 @@
 
             var lockBar = document.querySelector('[data-task-lock]');
             var lockInner = document.querySelector('[data-lock-inner]');
+            var lockLabel = document.querySelector('[data-lock-label]');
+            var lockMessage = document.querySelector('[data-lock-message]');
             var lockCountdown = document.querySelector('[data-lock-countdown]');
             var lockFill = document.querySelector('[data-lock-bar]');
             var lockHint = document.querySelector('[data-lock-hint]');
             var inlineBack = document.querySelector('[data-lock-inline-back]');
 
+            var originalLockLabel = lockLabel ? lockLabel.textContent.trim() : '';
+            var originalLockMessage = lockMessage ? lockMessage.textContent.trim() : '';
             var originalHint = lockHint ? lockHint.textContent.trim() : '';
             var warnTimeout = null;
             var pageTitle = 'Task — ' + brand;
@@ -322,6 +329,50 @@
                 }
 
                 ticker = null;
+            }
+
+            function updateTimerPauseUi() {
+                var pausedNow = embedded && timerPaused && locked && !finished && !failed;
+
+                if (lockLabel) {
+                    lockLabel.textContent = pausedNow ? 'Timer paused' : originalLockLabel;
+                }
+
+                if (lockMessage) {
+                    lockMessage.textContent = pausedNow
+                        ? 'Video paused hai — play karte hi timer dobara chalega.'
+                        : originalLockMessage;
+                }
+
+                if (timerLockNote) {
+                    timerLockNote.textContent = pausedNow
+                        ? 'Timer video pause hone ki wajah se ruk gaya hai'
+                        : 'Timer neeche lock bar me chal raha hai';
+                }
+            }
+
+            function pauseLocalTimer() {
+                if (!embedded || !locked || finished || failed || timerPaused) {
+                    return;
+                }
+
+                pausedRemaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+                remaining = pausedRemaining;
+                timerPaused = true;
+                updateTimerPauseUi();
+                render();
+            }
+
+            function resumeLocalTimer() {
+                if (!embedded || !locked || finished || failed || !timerPaused) {
+                    return;
+                }
+
+                remaining = pausedRemaining;
+                deadline = Date.now() + remaining * 1000;
+                timerPaused = false;
+                updateTimerPauseUi();
+                render();
             }
 
             function progress() {
@@ -374,6 +425,16 @@
                     return;
                 }
 
+                playing = !!playing;
+
+                if (playing) {
+                    resumeLocalTimer();
+                } else {
+                    pauseLocalTimer();
+                }
+
+                var sequence = ++progressSequence;
+
                 try {
                     fetch(progressUrl, {
                         method: 'POST',
@@ -384,11 +445,11 @@
                             'X-CSRF-TOKEN': csrf,
                             'X-Requested-With': 'XMLHttpRequest'
                         },
-                        body: JSON.stringify({ playing: !!playing })
+                        body: JSON.stringify({ playing: playing })
                     }).then(function (response) {
                         return response.ok ? response.json() : null;
                     }).then(function (data) {
-                        if (!data || !data.ok) {
+                        if (!data || !data.ok || sequence !== progressSequence) {
                             return;
                         }
 
@@ -398,6 +459,13 @@
 
                         if (typeof data.watched_seconds === 'number') {
                             watched = Math.max(watched, Math.min(required, data.watched_seconds));
+                        }
+
+                        if (typeof data.timer_remaining_seconds === 'number' && locked && !finished && !failed) {
+                            remaining = Math.max(0, data.timer_remaining_seconds);
+                            pausedRemaining = remaining;
+                            deadline = Date.now() + remaining * 1000;
+                            render();
                         }
 
                         renderWatch();
@@ -455,7 +523,7 @@
                 }
 
                 if (opened) {
-                    setRealStatus('Video paused — play karein, watch time ruk gaya hai', 'gold');
+                    setRealStatus('Video paused — play karein, watch time aur timer dono ruke hain', 'gold');
 
                     return;
                 }
@@ -478,7 +546,7 @@
                     } else if (videoPlaying) {
                         playHint.textContent = 'Video play ho rahi hai — watch time count ho raha hai. Yeh tab khula rakhein.';
                     } else if (opened) {
-                        playHint.textContent = 'Video paused hai — play dabaein, watch time dobara shuru hoga.';
+                        playHint.textContent = 'Video paused hai — play dabaein, watch time aur timer dono dobara shuru honge.';
                     } else {
                         playHint.textContent = 'Video play button dabaein. Play na karne par watch time count nahi hoga.';
                     }
@@ -657,9 +725,11 @@
 
                 failed = true;
                 locked = false;
+                timerPaused = false;
 
                 stopTicker();
                 syncTimerDisplay();
+                updateTimerPauseUi();
 
                 stopWatcher();
 
@@ -709,9 +779,11 @@
             function unlock() {
                 locked = false;
                 finished = true;
+                timerPaused = false;
                 window.clearTimeout(warnTimeout);
                 stopTicker();
                 syncTimerDisplay();
+                updateTimerPauseUi();
                 stopWatcher();
 
                 if (status) {
@@ -991,6 +1063,7 @@
             renderWatch();
             updateClaim();
             updateEmbedStatus();
+            updateTimerPauseUi();
 
             if (embedded) {
                 startHeartbeat();
@@ -1024,6 +1097,12 @@
             }
 
             window.__earningTaskTicker = window.setInterval(function () {
+                if (timerPaused) {
+                    render();
+
+                    return;
+                }
+
                 remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
                 render();
 

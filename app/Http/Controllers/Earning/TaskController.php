@@ -90,6 +90,7 @@ class TaskController extends Controller
             'embedUrl' => $embedUrl,
             'embedPlatform' => $task->embedPlatform(),
             'embedPlayed' => $attempt->hasStartedEmbeddedPlayback(),
+            'timerPaused' => $isEmbedded && $attempt->isTimerPaused(),
             'watchedSeconds' => $isEmbedded ? (int) $attempt->watched_seconds : 0,
             'requiredSeconds' => $isEmbedded ? (int) $task->duration_seconds : 0,
             'expectedReward' => $task->reward,
@@ -108,10 +109,18 @@ class TaskController extends Controller
             'playing' => ['required', 'boolean'],
         ]);
 
+        $playing = (bool) $validated['playing'];
+
+        if ($task->hasEmbeddedPlayer()) {
+            $attempt = $playing
+                ? $this->tasks->resumeTimer($request->user(), $attempt)
+                : $this->tasks->pauseTimer($request->user(), $attempt);
+        }
+
         $attempt = $this->tasks->recordEmbedHeartbeat(
             $request->user(),
             $attempt,
-            (bool) $validated['playing'],
+            $playing,
         );
 
         $required = (int) $task->duration_seconds;
@@ -123,6 +132,7 @@ class TaskController extends Controller
             'required_seconds' => $required,
             'remaining_watch_seconds' => max(0, $required - $watched),
             'timer_remaining_seconds' => $attempt->remainingSeconds(),
+            'timer_paused' => $attempt->isTimerPaused(),
             'can_claim' => $attempt->canClaim($task),
         ]);
     }

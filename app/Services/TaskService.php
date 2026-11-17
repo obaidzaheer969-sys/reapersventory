@@ -176,6 +176,7 @@ class TaskService
                 'status' => TaskAttemptStatus::InProgress,
                 'started_at' => $startedAt,
                 'expires_at' => $startedAt->copy()->addSeconds($task->duration_seconds),
+                'timer_paused_at' => $task->hasEmbeddedPlayer() ? $startedAt : null,
                 'ip_address' => $ipAddress,
             ]);
         });
@@ -192,6 +193,55 @@ class TaskService
         }
 
         return $attempt->refresh();
+    }
+
+    public function pauseTimer(User $user, TaskAttempt $attempt): TaskAttempt
+    {
+        return DB::transaction(function () use ($user, $attempt) {
+            /** @var TaskAttempt $attempt */
+            $attempt = TaskAttempt::query()->whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+
+            if ($attempt->user_id !== $user->id) {
+                abort(403, 'This task does not belong to you.');
+            }
+
+            if ($attempt->isCompleted() || $attempt->isFailed() || $attempt->isTimerPaused()) {
+                return $attempt;
+            }
+
+            if (! now()->lt($attempt->expires_at)) {
+                return $attempt;
+            }
+
+            $attempt->forceFill(['timer_paused_at' => now()])->save();
+
+            return $attempt->refresh();
+        });
+    }
+
+    public function resumeTimer(User $user, TaskAttempt $attempt): TaskAttempt
+    {
+        return DB::transaction(function () use ($user, $attempt) {
+            /** @var TaskAttempt $attempt */
+            $attempt = TaskAttempt::query()->whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+
+            if ($attempt->user_id !== $user->id) {
+                abort(403, 'This task does not belong to you.');
+            }
+
+            if ($attempt->isCompleted() || $attempt->isFailed() || ! $attempt->isTimerPaused()) {
+                return $attempt;
+            }
+
+            $pausedSeconds = max(0, now()->getTimestamp() - $attempt->timer_paused_at->getTimestamp());
+
+            $attempt->forceFill([
+                'expires_at' => $attempt->expires_at->copy()->addSeconds($pausedSeconds),
+                'timer_paused_at' => null,
+            ])->save();
+
+            return $attempt->refresh();
+        });
     }
 
     /**
@@ -266,7 +316,7 @@ class TaskService
                 return $attempt;
             }
 
-            if (! now()->lt($attempt->expires_at)) {
+            if (! now()->lt($attempt->effectiveExpiresAt())) {
                 return $attempt;
             }
 
@@ -303,7 +353,7 @@ class TaskService
 
             $task = $attempt->task;
 
-            if (now()->lt($attempt->expires_at)) {
+            if (! $attempt->isReadyToClaim()) {
                 throw ValidationException::withMessages([
                     'task' => 'Timer abhi poora nahi hua. '.$attempt->remainingSeconds().' seconds baaki hain.',
                 ]);

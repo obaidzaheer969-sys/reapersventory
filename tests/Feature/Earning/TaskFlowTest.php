@@ -79,8 +79,11 @@ class TaskFlowTest extends TestCase
             ->assertOk()
             ->assertSee('Timer poora hone tak tab band karna aur back jana band hai.')
             ->assertSee('Timer neeche lock bar me chal raha hai')
+            ->assertSee('data-timer-lock-note>Timer neeche lock bar me chal raha hai</p>', false)
             ->assertSee('hidden" data-timer-display', false)
-            ->assertSee('window.__earningTaskTicker', false);
+            ->assertSee('window.__earningTaskTicker', false)
+            ->assertSee('function pauseLocalTimer()', false)
+            ->assertSee('function resumeLocalTimer()', false);
 
         $this->travel(31)->seconds();
 
@@ -88,7 +91,7 @@ class TaskFlowTest extends TestCase
             ->get(route('tasks.run', $task))
             ->assertOk()
             ->assertDontSee('Timer poora hone tak tab band karna aur back jana band hai.')
-            ->assertDontSee('Timer neeche lock bar me chal raha hai')
+            ->assertDontSee('data-timer-lock-note>Timer neeche lock bar me chal raha hai</p>', false)
             ->assertDontSee('hidden" data-timer-display', false);
     }
 
@@ -257,7 +260,9 @@ class TaskFlowTest extends TestCase
             ->assertSee('https://www.youtube.com/embed/dQw4w9WgXcQ', false)
             ->assertSee('enablejsapi=1', false)
             ->assertDontSee('<button type="button" data-open-real', false)
-            ->assertSee('data-watch-seconds', false);
+            ->assertSee('data-watch-seconds', false)
+            ->assertSee('Video pause karne par timer bhi ruk jayega')
+            ->assertSee('var timerPaused = true;', false);
     }
 
     public function test_a_facebook_watch_task_renders_the_official_facebook_embed(): void
@@ -442,6 +447,146 @@ class TaskFlowTest extends TestCase
         $this->actingAs($user)
             ->postJson(route('tasks.progress', $task), ['playing' => true])
             ->assertJson(['watched_seconds' => 10]);
+    }
+
+    public function test_an_embedded_attempt_starts_with_a_paused_timer_until_playback_begins(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(30, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+        $this->assertSame(true, $attempt->isTimerPaused());
+        $this->assertSame(30, $attempt->remainingSeconds());
+
+        $originalExpiresAt = $attempt->expires_at->getTimestamp();
+
+        $this->travel(10)->seconds();
+
+        $this->assertSame(30, $attempt->fresh()->remainingSeconds());
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertOk()
+            ->assertJson(['timer_paused' => false, 'timer_remaining_seconds' => 30]);
+
+        $this->assertSame($originalExpiresAt + 10, $attempt->fresh()->expires_at->getTimestamp());
+    }
+
+    public function test_pausing_the_video_freezes_the_timer_but_tab_close_still_fails_it(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(30, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => true])->assertOk();
+
+        $this->travel(5)->seconds();
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => false])
+            ->assertOk()
+            ->assertJson(['timer_paused' => true, 'timer_remaining_seconds' => 25]);
+
+        $this->travel(20)->seconds();
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+        $this->assertSame(25, $attempt->remainingSeconds());
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.fail', $task))
+            ->assertOk()
+            ->assertJson(['ok' => true, 'failed' => true]);
+
+        $attempt->refresh();
+
+        $this->assertSame(TaskAttemptStatus::Failed, $attempt->status);
+        $this->assertNotNull($attempt->failed_at);
+    }
+
+    public function test_resuming_after_a_pause_extends_the_deadline_by_the_paused_duration(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(30, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+        $originalExpiresAt = $attempt->expires_at->getTimestamp();
+
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => true])->assertOk();
+
+        $this->travel(5)->seconds();
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => false])->assertOk();
+
+        $this->travel(12)->seconds();
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertOk()
+            ->assertJson(['timer_paused' => false, 'timer_remaining_seconds' => 25]);
+
+        $attempt->refresh();
+
+        $this->assertSame($originalExpiresAt + 12, $attempt->expires_at->getTimestamp());
+        $this->assertSame(25, $attempt->remainingSeconds());
+    }
+
+    public function test_the_claim_stays_blocked_while_the_video_is_paused(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(30, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => true])->assertOk();
+
+        $this->travel(5)->seconds();
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => true])->assertOk();
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => false])->assertOk();
+
+        $this->travel(20)->seconds();
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertSessionHasErrors('task');
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+        $this->assertSame(TaskAttemptStatus::InProgress, $attempt->status);
+        $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
+    }
+
+    public function test_a_pause_after_the_timer_finishes_does_not_restart_it(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(10, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+        $this->actingAs($user)->postJson(route('tasks.progress', $task), ['playing' => true])->assertOk();
+
+        $this->travel(11)->seconds();
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => true])
+            ->assertOk()
+            ->assertJson(['timer_paused' => false, 'timer_remaining_seconds' => 0]);
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.progress', $task), ['playing' => false])
+            ->assertOk()
+            ->assertJson(['timer_paused' => false, 'timer_remaining_seconds' => 0]);
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertRedirect(route('tasks.index'));
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+        $this->assertSame(TaskAttemptStatus::Completed, $attempt->status);
+        $this->assertSame(2.0, (float) $user->fresh()->wallet_balance);
     }
 
     public function test_an_embedded_watch_task_pays_after_the_timer_and_required_watch_time(): void
