@@ -37,12 +37,11 @@ class EarningTaskForm
                     ->label('Reward (PKR)')
                     ->numeric()
                     ->required()
-                    ->minValue(2)
-                    ->maxValue(2)
+                    ->minValue(1)
                     ->default(2)
                     ->step(0.01)
                     ->prefix('PKR')
-                    ->helperText('Admin tasks ka reward fixed 2 PKR hai.'),
+                    ->helperText('Admin apni marzi se reward set kar sakta hai. Users ke campaigns ka reward fixed 2 PKR hota hai.'),
                 TextInput::make('target_url')
                     ->label('Target URL')
                     ->url()

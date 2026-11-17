@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Earning;
 
+use App\Enums\TaskType;
 use App\Enums\WalletTransactionType;
 use App\Filament\Pages\SiteAdsSettings;
 use App\Filament\Resources\Campaigns\Pages\ListCampaigns;
 use App\Filament\Resources\Earners\Pages\ListEarners;
+use App\Filament\Resources\EarningTasks\Pages\CreateEarningTask;
 use App\Filament\Resources\EarningTasks\Pages\ListEarningTasks;
 use App\Models\EarningTask;
 use App\Models\SystemSetting;
@@ -47,6 +49,29 @@ class AdminPanelTest extends TestCase
             ->test(ListEarningTasks::class)
             ->assertCanSeeTableRecords([$systemTask])
             ->assertCanNotSeeTableRecords([$campaign]);
+    }
+
+    public function test_admin_can_create_a_task_with_a_custom_reward_amount(): void
+    {
+        $admin = User::factory()->superAdmin()->create();
+
+        Livewire::actingAs($admin)
+            ->test(CreateEarningTask::class)
+            ->fillForm([
+                'title' => 'High reward task',
+                'task_type' => TaskType::YoutubeSubscribe->value,
+                'target_url' => 'https://www.youtube.com/@earnpk',
+                'reward' => 500,
+                'duration_seconds' => 15,
+                'sort_order' => 0,
+                'is_active' => true,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $task = EarningTask::query()->system()->sole();
+
+        $this->assertSame(500.0, (float) $task->reward);
     }
 
     public function test_admin_campaign_table_only_lists_user_campaigns(): void

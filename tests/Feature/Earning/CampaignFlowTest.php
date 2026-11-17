@@ -92,6 +92,29 @@ class CampaignFlowTest extends TestCase
         $this->assertSame(4.0, (float) $owner->fresh()->wallet_balance);
     }
 
+    public function test_a_user_cannot_choose_their_own_campaign_reward(): void
+    {
+        $owner = User::factory()->earner()->create(['wallet_balance' => 10]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.store'), [
+                'task_type' => TaskType::YoutubeSubscribe->value,
+                'title' => 'Fixed reward only',
+                'target_url' => 'https://www.youtube.com/@earnpk',
+                'target_quantity' => 1,
+                'reward' => 9999,
+                'total_cost' => 1,
+            ])
+            ->assertRedirect(route('campaigns.mine'))
+            ->assertSessionHasNoErrors();
+
+        $campaign = EarningTask::query()->campaigns()->sole();
+
+        $this->assertSame(2.0, (float) $campaign->reward);
+        $this->assertSame(3.0, (float) $campaign->total_cost);
+        $this->assertSame(7.0, (float) $owner->fresh()->wallet_balance);
+    }
+
     public function test_creating_a_campaign_holds_the_payment_and_makes_it_live_immediately(): void
     {
         $owner = User::factory()->earner()->create(['wallet_balance' => 500]);
