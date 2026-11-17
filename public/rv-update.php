@@ -241,7 +241,7 @@ if ($secret === '' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
     exit;
 }
 
-if (! in_array($mode, ['migrate-only', 'full-update', 'logs'], true)) {
+if (! in_array($mode, ['migrate-only', 'full-update'], true)) {
     http_response_code(400);
     echo "Invalid update mode.\n";
     exit;
@@ -254,29 +254,6 @@ if (strlen($expected) < 32 || ! rv_secrets_match($expected, $secret)) {
 }
 
 chdir($base);
-
-if ($mode === 'logs') {
-    $logDirectory = $base.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'logs';
-    $logFiles = glob($logDirectory.DIRECTORY_SEPARATOR.'laravel*.log') ?: [];
-
-    usort($logFiles, static function (string $left, string $right): int {
-        return (int) filemtime($right) <=> (int) filemtime($left);
-    });
-
-    if ($logFiles === []) {
-        echo "No Laravel log files found.\n";
-        exit;
-    }
-
-    foreach (array_slice($logFiles, 0, 2) as $logFile) {
-        $lines = file($logFile, FILE_IGNORE_NEW_LINES) ?: [];
-
-        echo '[rv-logs] '.basename($logFile)."\n";
-        echo implode("\n", array_slice($lines, -200))."\n";
-    }
-
-    exit;
-}
 
 if (! function_exists('exec')) {
     http_response_code(500);

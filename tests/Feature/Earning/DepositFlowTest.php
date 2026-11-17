@@ -9,6 +9,7 @@ use App\Models\SystemSetting;
 use App\Models\User;
 use App\Services\DepositService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -58,6 +59,24 @@ class DepositFlowTest extends TestCase
         $this->assertSame('250.00', $fields['amount']);
         $this->assertSame(route('deposits.cashmaal.success'), $fields['succes_url']);
         $this->assertSame(route('deposits.cashmaal.cancel'), $fields['cancel_url']);
+    }
+
+    public function test_deposit_succeeds_when_a_stale_setting_object_is_cached(): void
+    {
+        $this->configureCashmaal();
+        $user = User::factory()->earner()->create();
+
+        foreach (['cashmaal_enabled', 'cashmaal_web_id', 'cashmaal_ipn_key'] as $key) {
+            Cache::put("system_setting.{$key}", new \stdClass, 300);
+        }
+
+        $response = $this->actingAs($user)
+            ->post(route('deposits.store'), ['amount' => 500])
+            ->assertOk()
+            ->assertViewIs('earning.deposits.redirect');
+
+        $this->assertSame('WEB-12345', $response->viewData('fields')['web_id']);
+        $this->assertDatabaseCount('deposits', 1);
     }
 
     public function test_a_successful_ipn_credits_the_wallet_and_acknowledges(): void
