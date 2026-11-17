@@ -1,3 +1,8 @@
+@php
+    $siteApproved = (bool) \App\Models\SystemSetting::getValue('site_approved', false);
+    $adsEnabled = (bool) \App\Models\SystemSetting::getValue('ads_enabled', false);
+    $adCode = $adsEnabled ? (string) \App\Models\SystemSetting::getValue('ad_code', '') : '';
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -140,6 +145,18 @@
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
+            </div>
+        @endif
+
+        @if ($siteApproved)
+            <div class="mb-4 inline-flex items-center gap-1.5 rounded-full border border-mint-400/30 bg-mint-500/10 px-3 py-1 text-xs font-semibold text-mint-200">
+                <span aria-hidden="true">✓</span> Approved
+            </div>
+        @endif
+
+        @if ($adCode !== '')
+            <div class="mb-5 overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-3 py-3" aria-label="Advertisement">
+                {!! $adCode !!}
             </div>
         @endif
 

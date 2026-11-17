@@ -3,10 +3,12 @@
 namespace Tests\Feature\Earning;
 
 use App\Enums\WalletTransactionType;
+use App\Filament\Pages\SiteAdsSettings;
 use App\Filament\Resources\Campaigns\Pages\ListCampaigns;
 use App\Filament\Resources\Earners\Pages\ListEarners;
 use App\Filament\Resources\EarningTasks\Pages\ListEarningTasks;
 use App\Models\EarningTask;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,6 +31,7 @@ class AdminPanelTest extends TestCase
         $response->assertSee('Campaigns');
         $response->assertSee('Deposits');
         $response->assertSee('Cashmaal settings');
+        $response->assertSee('Site ads &amp; approval', false);
         $response->assertDontSee('Businesses');
         $response->assertDontSee('Subscriptions');
         $response->assertDontSee('Payment methods');
@@ -56,6 +59,54 @@ class AdminPanelTest extends TestCase
             ->test(ListCampaigns::class)
             ->assertCanSeeTableRecords([$campaign])
             ->assertCanNotSeeTableRecords([$systemTask]);
+    }
+
+    public function test_admin_can_enable_site_approval_and_ads(): void
+    {
+        $admin = User::factory()->superAdmin()->create();
+
+        $this->actingAs($admin)->get('/admin/site-ads-settings')->assertOk();
+
+        Livewire::actingAs($admin)
+            ->test(SiteAdsSettings::class)
+            ->set('data.site_approved', true)
+            ->set('data.ads_enabled', true)
+            ->set('data.ad_provider', 'custom')
+            ->set('data.ad_code', '<div data-test-ad>Admin ad</div>')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertTrue((bool) SystemSetting::getValue('site_approved', false));
+        $this->assertTrue((bool) SystemSetting::getValue('ads_enabled', false));
+        $this->assertSame('<div data-test-ad>Admin ad</div>', SystemSetting::getValue('ad_code'));
+    }
+
+    public function test_approval_badge_and_ads_are_shown_to_users_when_enabled(): void
+    {
+        $user = User::factory()->earner()->create();
+        SystemSetting::setValue('site_approved', true);
+        SystemSetting::setValue('ads_enabled', true);
+        SystemSetting::setValue('ad_code', '<div data-test-ad>Admin ad</div>');
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Approved')
+            ->assertSee('data-test-ad', false)
+            ->assertSee('Admin ad', false);
+    }
+
+    public function test_approval_badge_and_ads_are_hidden_when_disabled(): void
+    {
+        $user = User::factory()->earner()->create();
+        SystemSetting::setValue('site_approved', false);
+        SystemSetting::setValue('ads_enabled', false);
+        SystemSetting::setValue('ad_code', '<div data-test-ad>Admin ad</div>');
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('Approved')
+            ->assertDontSee('data-test-ad', false)
+            ->assertDontSee('Admin ad', false);
     }
 
     public function test_admin_can_add_balance_to_a_users_wallet(): void
