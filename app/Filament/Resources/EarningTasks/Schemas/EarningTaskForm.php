@@ -49,7 +49,7 @@ class EarningTaskForm
                     ->required()
                     ->maxLength(2048)
                     ->columnSpanFull()
-                    ->helperText('YouTube/Facebook video URLs isi page par official player me chalenge; baaki links naye tab me khulenge.'),
+                    ->helperText('YouTube/Facebook video URLs isi page par official player me chalenge; monetized videos par ads YouTube apne rules se chalata hai. Baaki links naye tab me khulenge.'),
                 TextInput::make('duration_seconds')
                     ->label('Required time (seconds)')
                     ->numeric()

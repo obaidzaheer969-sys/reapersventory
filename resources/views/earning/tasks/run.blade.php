@@ -70,7 +70,7 @@
                 @if ($isEmbedded)
                     <div class="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-black">
                         @if ($embedPlatform === 'youtube')
-                            <div class="aspect-video w-full">
+                            <div class="aspect-video min-h-[240px] w-full">
                                 <iframe id="task-embed-player" data-embed-player data-platform="youtube"
                                         src="{{ $embedUrl }}"
                                         title="{{ $task->title }}"
@@ -114,6 +114,12 @@
                             Video play button dabaein. Play na karne par watch time count nahi hoga aur claim band rahega.
                         </p>
                     </div>
+
+                    @if ($embedPlatform === 'youtube')
+                        <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90">
+                            💡 Monetized videos me ads YouTube apne rules ke mutabiq chalata hai. Creator ke liye zaroori hai ke video monetized ho aur embedding allowed ho; viewer YouTube Premium ya ad-blocker use na kare. Hum ads force nahi kar sakte aur paid/incentivized views ko YouTube invalid traffic mana sakta hai.
+                        </p>
+                    @endif
 
                     <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90">
                         🔒 Timer poora hone tak tab band karna, reload karna aur back jana band hai. Video pause karne par timer chalta rahega lekin watch time nahi badhega.

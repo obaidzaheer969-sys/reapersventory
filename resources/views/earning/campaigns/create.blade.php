@@ -66,6 +66,7 @@
                            placeholder="https://..."
                            class="w-full rounded-xl border border-white/10 bg-ink-900 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-mint-400 focus:outline-none focus:ring-2 focus:ring-mint-400/20">
                     <p class="mt-1.5 text-[11px] text-slate-500">YouTube/Facebook video watch tasks isi lock page ke official player me chalti hain; subscribe, follow aur like links naye tab me khulte hain.</p>
+                    <p class="mt-1.5 text-[11px] leading-relaxed text-gold-200/90">⚠️ Monetization ke liye YouTube Studio me video ka monetization aur embedding dono on hona chahiye. Ads sirf YouTube apne rules me chalata hai; paid/incentivized views ko YouTube invalid traffic mana sakta hai, isliye ad chalne ka guarantee nahi hai.</p>
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
