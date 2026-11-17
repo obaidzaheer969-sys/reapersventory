@@ -77,14 +77,19 @@ class TaskFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('tasks.run', $task))
             ->assertOk()
-            ->assertSee('Timer poora hone tak tab band karna aur back jana band hai.');
+            ->assertSee('Timer poora hone tak tab band karna aur back jana band hai.')
+            ->assertSee('Timer neeche lock bar me chal raha hai')
+            ->assertSee('hidden" data-timer-display', false)
+            ->assertSee('window.__earningTaskTicker', false);
 
         $this->travel(31)->seconds();
 
         $this->actingAs($user)
             ->get(route('tasks.run', $task))
             ->assertOk()
-            ->assertDontSee('Timer poora hone tak tab band karna aur back jana band hai.');
+            ->assertDontSee('Timer poora hone tak tab band karna aur back jana band hai.')
+            ->assertDontSee('Timer neeche lock bar me chal raha hai')
+            ->assertDontSee('hidden" data-timer-display', false);
     }
 
     public function test_the_task_opens_the_real_page_in_a_new_tab(): void

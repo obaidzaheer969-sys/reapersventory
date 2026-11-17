@@ -147,7 +147,10 @@
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
                         <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-mint-300" data-timer-status>{{ $ready ? 'Ready to claim' : 'Seconds remaining' }}</p>
-                        <p class="mt-1 font-display text-4xl font-bold tabular-nums text-white" data-timer-display>{{ gmdate('i:s', $remaining) }}</p>
+                        <p class="mt-1 font-display text-4xl font-bold tabular-nums text-white {{ $ready ? '' : 'hidden' }}" data-timer-display>{{ gmdate('i:s', $remaining) }}</p>
+                        @if (! $ready)
+                            <p class="mt-1 text-sm font-semibold text-gold-300" data-timer-lock-note>Timer neeche lock bar me chal raha hai</p>
+                        @endif
                         <div class="mt-3 h-2 w-full max-w-xs overflow-hidden rounded-full bg-white/10">
                             <div class="h-full rounded-full bg-gradient-to-r from-mint-400 to-mint-500 transition-[width] duration-1000 ease-linear"
                                  data-timer-bar style="width: {{ $ready ? 100 : round((($totalSeconds - $remaining) / $totalSeconds) * 100) }}%"></div>
@@ -263,6 +266,7 @@
             var videoPlaying = false;
 
             var display = document.querySelector('[data-timer-display]');
+            var timerLockNote = document.querySelector('[data-timer-lock-note]');
             var bar = document.querySelector('[data-timer-bar]');
             var status = document.querySelector('[data-timer-status]');
             var button = document.querySelector('[data-claim-button]');
@@ -294,6 +298,30 @@
 
             function clock(seconds) {
                 return pad(Math.floor(seconds / 60)) + ':' + pad(seconds % 60);
+            }
+
+            function syncTimerDisplay() {
+                if (display) {
+                    display.classList.toggle('hidden', locked);
+                }
+
+                if (timerLockNote) {
+                    timerLockNote.classList.toggle('hidden', !locked);
+                }
+            }
+
+            function stopTicker() {
+                if (ticker === null) {
+                    return;
+                }
+
+                window.clearInterval(ticker);
+
+                if (window.__earningTaskTicker === ticker) {
+                    window.__earningTaskTicker = null;
+                }
+
+                ticker = null;
             }
 
             function progress() {
@@ -494,6 +522,8 @@
                     display.textContent = clock(remaining);
                 }
 
+                syncTimerDisplay();
+
                 var percent = progress();
 
                 if (bar) {
@@ -628,10 +658,8 @@
                 failed = true;
                 locked = false;
 
-                if (ticker) {
-                    window.clearInterval(ticker);
-                    ticker = null;
-                }
+                stopTicker();
+                syncTimerDisplay();
 
                 stopWatcher();
 
@@ -682,6 +710,8 @@
                 locked = false;
                 finished = true;
                 window.clearTimeout(warnTimeout);
+                stopTicker();
+                syncTimerDisplay();
                 stopWatcher();
 
                 if (status) {
@@ -989,16 +1019,21 @@
                 history.pushState({ earningTaskLock: true }, '', window.location.href);
             } catch (error) {}
 
-            ticker = window.setInterval(function () {
+            if (window.__earningTaskTicker) {
+                window.clearInterval(window.__earningTaskTicker);
+            }
+
+            window.__earningTaskTicker = window.setInterval(function () {
                 remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
                 render();
 
                 if (remaining <= 0) {
-                    window.clearInterval(ticker);
-                    ticker = null;
+                    stopTicker();
                     unlock();
                 }
             }, 1000);
+
+            ticker = window.__earningTaskTicker;
         })();
     </script>
 @endpush
