@@ -37,7 +37,7 @@ return [
     |
     | Users pay from their wallet to publish tasks for other users. Every
     | campaign action (subscribe, follow, like or video view) pays the earner
-    | 2 PKR, so 100 actions cost the owner 200 PKR. There is no platform fee.
+    | 2 PKR and the admin 1 PKR, so 100 actions cost the owner 300 PKR.
     | Owners choose any quantity from 1 up, even a single action.
     |
     */
@@ -49,8 +49,8 @@ return [
         // Price paid to each earner for one action.
         'action_reward' => (float) env('EARNING_CAMPAIGN_ACTION_REWARD', 2),
 
-        // Platform fee per campaign. Disabled: owners pay only the action budget.
-        'action_admin_fee' => (float) env('EARNING_CAMPAIGN_ACTION_ADMIN_FEE', 0),
+        // Admin fee charged for every delivered action, on top of the reward.
+        'action_admin_fee' => (float) env('EARNING_CAMPAIGN_ACTION_ADMIN_FEE', 1),
 
         // Video campaigns still require a minimum watch time, but every view
         // pays the earner the same flat reward as other campaign actions.

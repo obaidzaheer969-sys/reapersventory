@@ -34,12 +34,12 @@ class CampaignService
             ? $this->videoReward($this->normaliseDuration($durationSeconds))
             : (float) config('earning.campaign.action_reward', 2);
 
-        $fee = $isWatch ? 0.0 : (float) config('earning.campaign.action_admin_fee', 0);
+        $feePerAction = (float) config('earning.campaign.action_admin_fee', 1);
 
         return [
             'reward' => round($reward, 2),
-            'total' => round(($reward * $quantity) + $fee, 2),
-            'fee' => round($fee, 2),
+            'total' => round(($reward + $feePerAction) * $quantity, 2),
+            'fee' => round($feePerAction * $quantity, 2),
             'duration_seconds' => $isWatch
                 ? $this->normaliseDuration($durationSeconds)
                 : $type->defaultSeconds(),

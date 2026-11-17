@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\CampaignStatus;
 use App\Enums\TaskAttemptStatus;
+use App\Enums\UserRole;
 use App\Enums\WalletTransactionType;
 use App\Models\EarningTask;
 use App\Models\TaskAttempt;
@@ -418,7 +419,37 @@ class TaskService
 
         $locked->save();
 
+        $this->creditAdminFee($locked, $attempt);
+
         return $finished ? $locked->refresh() : null;
+    }
+
+    private function creditAdminFee(EarningTask $campaign, TaskAttempt $attempt): void
+    {
+        $fee = $campaign->feePerAction();
+
+        if ($fee <= 0) {
+            return;
+        }
+
+        /** @var User|null $admin */
+        $admin = User::query()
+            ->where('role', UserRole::SuperAdmin->value)
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->first();
+
+        if ($admin === null) {
+            return;
+        }
+
+        $this->wallet->credit(
+            $admin,
+            $fee,
+            WalletTransactionType::CampaignAdminFee,
+            'Campaign admin fee: '.$campaign->title.' (#'.$campaign->id.')',
+            $attempt,
+        );
     }
 
     private function assertCampaignCanBeWorkedOn(User $user, EarningTask $task): void

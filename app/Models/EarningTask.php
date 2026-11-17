@@ -158,14 +158,32 @@ class EarningTask extends Model
         return round((float) $this->reward * (int) $this->completed_quantity, 2);
     }
 
-    public function platformFee(): float
+    public function feeTotal(): float
     {
         return max(0, round((float) $this->total_cost - $this->budgetTotal(), 2));
     }
 
+    public function feePerAction(): float
+    {
+        $quantity = (int) $this->target_quantity;
+
+        if ($quantity <= 0) {
+            return 0.0;
+        }
+
+        return round($this->feeTotal() / $quantity, 2);
+    }
+
+    public function platformFee(): float
+    {
+        return round($this->feePerAction() * (int) $this->completed_quantity, 2);
+    }
+
     public function budgetRemaining(): float
     {
-        return max(0, round($this->budgetTotal() - $this->budgetSpent(), 2));
+        return max(0, round(
+            (float) $this->total_cost - $this->budgetSpent() - $this->platformFee(), 2
+        ));
     }
 
     public function platform(): string

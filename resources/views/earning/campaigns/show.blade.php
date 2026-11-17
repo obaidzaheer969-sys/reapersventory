@@ -166,7 +166,7 @@
                         </div>
                         @if ($campaign->platformFee() > 0)
                             <div class="flex items-center justify-between">
-                                <span class="text-slate-400">Platform fee</span>
+                                <span class="text-slate-400">Admin fee</span>
                                 <span class="font-semibold text-slate-300">{{ \App\Support\Currency::format($campaign->platformFee()) }}</span>
                             </div>
                         @endif

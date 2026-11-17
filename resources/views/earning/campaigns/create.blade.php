@@ -50,7 +50,7 @@
                             <option value="{{ $value }}" @selected($selectedType === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
-                    <p class="mt-1.5 text-[11px] text-slate-500">Har action (subscribe, follow, like ya video view) ka reward 2 PKR hai. Quantity aap khud set karein — 2 subscribers ya 1 view ka order bhi allowed hai. Koi platform fee nahi.</p>
+                    <p class="mt-1.5 text-[11px] text-slate-500">Har action (subscribe, follow, like ya video view) par earner ko 2 PKR aur admin ko 1 PKR — total 3 PKR per action. Quantity aap khud set karein — 2 subscribers ya 1 view ka order bhi allowed hai.</p>
                 </div>
 
                 <div>
@@ -88,7 +88,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        <p class="mt-1.5 text-[11px] text-slate-500">Duration sirf minimum watch time hai. Video view ka reward bhi 2 PKR hai.</p>
+                        <p class="mt-1.5 text-[11px] text-slate-500">Duration sirf minimum watch time hai. Video view par bhi 2 PKR earner + 1 PKR admin fee hai.</p>
                     </div>
                 </div>
 
@@ -117,17 +117,21 @@
                     <span id="quote-reward" class="font-bold text-white">PKR 0.00</span>
                 </div>
                 <div class="mt-2 flex items-center justify-between text-sm">
+                    <span class="text-slate-300">Admin fee per action</span>
+                    <span id="quote-fee" class="font-bold text-white">PKR 0.00</span>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-sm">
                     <span class="text-slate-300">Total campaign cost</span>
                     <span id="quote-total" class="font-display text-xl font-bold text-mint-300">PKR 0.00</span>
                 </div>
-                <p class="mt-3 text-[11px] leading-relaxed text-slate-400">Poora amount wallet se hold hota hai. Har action complete hone par earner ko 2 PKR milte hain.</p>
+                <p class="mt-3 text-[11px] leading-relaxed text-slate-400">Poora amount (3 PKR per action) wallet se hold hota hai. Har action complete hone par earner ko 2 PKR aur admin ko 1 PKR milte hain. Campaign cancel karne par adhoori actions ka poora 3 PKR wapis ho jata hai.</p>
             </div>
 
             <div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-xs leading-relaxed text-slate-400">
                 <h2 class="text-sm font-bold text-white">Campaign rules</h2>
                 <ul class="mt-2 list-inside list-disc space-y-1">
                     <li>Payment ke foran baad campaign live ho jati hai — approval ki zaroorat nahi.</li>
-                    <li>Har action ka reward 2 PKR hai, koi platform fee nahi.</li>
+                    <li>Har action par 2 PKR earner + 1 PKR admin fee (total 3 PKR) kharch hota hai.</li>
                     <li>Required quantity poori hone par campaign khud hide ho jati hai.</li>
                     <li>Ek earner aap ki campaign sirf ek dafa complete kar sakta hai.</li>
                     <li>Cancel karne par unused budget wallet me wapas aa jata hai.</li>
@@ -151,12 +155,14 @@
             var durationField = document.getElementById('duration-field');
             var durationSelect = document.getElementById('duration_seconds');
             var rewardOut = document.getElementById('quote-reward');
+            var feeOut = document.getElementById('quote-fee');
             var totalOut = document.getElementById('quote-total');
             var hintOut = document.getElementById('quote-hint');
             var submit = document.getElementById('campaign-submit');
 
             var watchMap = @js($watchMap);
             var reward = {{ (float) $campaignConfig['action_reward'] }};
+            var fee = {{ (float) $campaignConfig['action_admin_fee'] }};
             var wallet = {{ (float) $walletBalance }};
 
             function money(value) {
@@ -176,9 +182,10 @@
                     quantity = 0;
                 }
 
-                var total = reward * quantity;
+                var total = (reward + fee) * quantity;
 
                 rewardOut.textContent = money(reward);
+                feeOut.textContent = money(fee);
                 totalOut.textContent = money(total);
 
                 if (total <= 0) {

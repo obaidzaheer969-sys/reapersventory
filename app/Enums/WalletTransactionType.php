@@ -9,6 +9,7 @@ enum WalletTransactionType: string
     case PayoutRefund = 'payout_refund';
     case CampaignFunding = 'campaign_funding';
     case CampaignRefund = 'campaign_refund';
+    case CampaignAdminFee = 'campaign_admin_fee';
     case Deposit = 'deposit';
     case AdminCredit = 'admin_credit';
     case Bonus = 'bonus';
@@ -22,6 +23,7 @@ enum WalletTransactionType: string
             self::PayoutRefund => 'Payout refunded',
             self::CampaignFunding => 'Campaign payment',
             self::CampaignRefund => 'Campaign refund',
+            self::CampaignAdminFee => 'Campaign admin fee',
             self::Deposit => 'Wallet deposit',
             self::AdminCredit => 'Admin credit',
             self::Bonus => 'Bonus',

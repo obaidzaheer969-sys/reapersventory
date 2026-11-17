@@ -298,6 +298,8 @@ class TaskFlowTest extends TestCase
 
         $this->actingAs($user)->post(route('tasks.start', $task));
 
+        $this->freezeTime();
+
         $this->actingAs($user)
             ->postJson(route('tasks.progress', $task), ['playing' => true])
             ->assertOk()

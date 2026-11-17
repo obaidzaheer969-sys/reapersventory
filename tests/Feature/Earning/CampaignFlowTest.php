@@ -9,8 +9,10 @@ use App\Enums\WalletTransactionType;
 use App\Models\EarningTask;
 use App\Models\TaskAttempt;
 use App\Models\User;
+use App\Models\WalletTransaction;
 use App\Services\CampaignService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class CampaignFlowTest extends TestCase
@@ -25,27 +27,27 @@ class CampaignFlowTest extends TestCase
             $quote = $campaigns->quote(TaskType::YoutubeWatch, 100, $seconds);
 
             $this->assertSame(2.0, $quote['reward']);
-            $this->assertSame(0.0, $quote['fee']);
-            $this->assertSame(200.0, $quote['total']);
+            $this->assertSame(100.0, $quote['fee']);
+            $this->assertSame(300.0, $quote['total']);
             $this->assertSame($seconds, $quote['duration_seconds']);
         }
     }
 
-    public function test_quantity_campaign_pricing_has_no_platform_fee(): void
+    public function test_quantity_campaign_pricing_includes_one_rupee_admin_fee_per_action(): void
     {
         $campaigns = app(CampaignService::class);
 
         $quote = $campaigns->quote(TaskType::YoutubeSubscribe, 100);
 
         $this->assertSame(2.0, $quote['reward']);
-        $this->assertSame(0.0, $quote['fee']);
-        $this->assertSame(200.0, $quote['total']);
+        $this->assertSame(100.0, $quote['fee']);
+        $this->assertSame(300.0, $quote['total']);
 
         $bulk = $campaigns->quote(TaskType::InstagramFollow, 200);
 
         $this->assertSame(2.0, $bulk['reward']);
-        $this->assertSame(0.0, $bulk['fee']);
-        $this->assertSame(400.0, $bulk['total']);
+        $this->assertSame(200.0, $bulk['fee']);
+        $this->assertSame(600.0, $bulk['total']);
     }
 
     public function test_a_campaign_accepts_a_custom_quantity_of_one_action(): void
@@ -65,8 +67,8 @@ class CampaignFlowTest extends TestCase
         $campaign = EarningTask::query()->campaigns()->sole();
 
         $this->assertSame(1, $campaign->target_quantity);
-        $this->assertSame(2.0, (float) $campaign->total_cost);
-        $this->assertSame(8.0, (float) $owner->fresh()->wallet_balance);
+        $this->assertSame(3.0, (float) $campaign->total_cost);
+        $this->assertSame(7.0, (float) $owner->fresh()->wallet_balance);
     }
 
     public function test_a_campaign_accepts_a_custom_quantity_of_two_actions(): void
@@ -86,8 +88,8 @@ class CampaignFlowTest extends TestCase
         $campaign = EarningTask::query()->campaigns()->sole();
 
         $this->assertSame(2, $campaign->target_quantity);
-        $this->assertSame(4.0, (float) $campaign->total_cost);
-        $this->assertSame(6.0, (float) $owner->fresh()->wallet_balance);
+        $this->assertSame(6.0, (float) $campaign->total_cost);
+        $this->assertSame(4.0, (float) $owner->fresh()->wallet_balance);
     }
 
     public function test_creating_a_campaign_holds_the_payment_and_makes_it_live_immediately(): void
@@ -113,15 +115,15 @@ class CampaignFlowTest extends TestCase
         $this->assertSame(100, $campaign->target_quantity);
         $this->assertSame(0, $campaign->completed_quantity);
         $this->assertSame(2.0, (float) $campaign->reward);
-        $this->assertSame(200.0, (float) $campaign->total_cost);
+        $this->assertSame(300.0, (float) $campaign->total_cost);
         $this->assertSame(0.0, $campaign->platformFee());
         $this->assertTrue($campaign->isLiveCampaign());
 
-        $this->assertSame(300.0, (float) $owner->fresh()->wallet_balance);
+        $this->assertSame(200.0, (float) $owner->fresh()->wallet_balance);
         $this->assertDatabaseHas('wallet_transactions', [
             'user_id' => $owner->id,
             'type' => WalletTransactionType::CampaignFunding->value,
-            'amount' => 200,
+            'amount' => 300,
         ]);
     }
 
@@ -143,9 +145,101 @@ class CampaignFlowTest extends TestCase
 
         $this->assertSame(120, $campaign->duration_seconds);
         $this->assertSame(2.0, (float) $campaign->reward);
-        $this->assertSame(200.0, (float) $campaign->total_cost);
+        $this->assertSame(300.0, (float) $campaign->total_cost);
         $this->assertSame(0.0, $campaign->platformFee());
-        $this->assertSame(300.0, (float) $owner->fresh()->wallet_balance);
+        $this->assertSame(200.0, (float) $owner->fresh()->wallet_balance);
+    }
+
+    public function test_each_completed_campaign_action_credits_one_rupee_to_the_admin(): void
+    {
+        Notification::fake();
+
+        $admin = User::factory()->superAdmin()->create(['wallet_balance' => 0]);
+        $owner = User::factory()->earner()->create(['wallet_balance' => 20]);
+        $firstEarner = User::factory()->earner()->create();
+        $secondEarner = User::factory()->earner()->create();
+
+        $campaign = app(CampaignService::class)->create($owner, [
+            'task_type' => TaskType::YoutubeSubscribe->value,
+            'title' => 'Two subscribers',
+            'target_url' => 'https://www.youtube.com/@earnpk',
+            'target_quantity' => 2,
+        ]);
+
+        $this->completeTask($firstEarner, $campaign);
+        $this->completeTask($secondEarner, $campaign);
+
+        $campaign->refresh();
+
+        $this->assertSame(2, $campaign->completed_quantity);
+        $this->assertSame(2.0, $campaign->platformFee());
+        $this->assertSame(0.0, $campaign->budgetRemaining());
+        $this->assertSame(2.0, (float) $admin->fresh()->wallet_balance);
+        $this->assertSame(2.0, (float) $firstEarner->fresh()->wallet_balance);
+        $this->assertSame(2.0, (float) $secondEarner->fresh()->wallet_balance);
+        $this->assertSame(2, WalletTransaction::query()
+            ->where('user_id', $admin->id)
+            ->where('type', WalletTransactionType::CampaignAdminFee)
+            ->count());
+    }
+
+    public function test_cancelling_a_partially_delivered_campaign_refunds_the_undelivered_amount(): void
+    {
+        Notification::fake();
+
+        $admin = User::factory()->superAdmin()->create(['wallet_balance' => 0]);
+        $owner = User::factory()->earner()->create(['wallet_balance' => 20]);
+        $firstEarner = User::factory()->earner()->create();
+        $secondEarner = User::factory()->earner()->create();
+
+        $campaign = app(CampaignService::class)->create($owner, [
+            'task_type' => TaskType::YoutubeSubscribe->value,
+            'title' => 'Four subscribers',
+            'target_url' => 'https://www.youtube.com/@earnpk',
+            'target_quantity' => 4,
+        ]);
+
+        $this->assertSame(8.0, (float) $owner->fresh()->wallet_balance);
+
+        $this->completeTask($firstEarner, $campaign);
+        $this->completeTask($secondEarner, $campaign);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.cancel', $campaign))
+            ->assertRedirect();
+
+        $campaign->refresh();
+
+        $this->assertSame(CampaignStatus::Cancelled, $campaign->campaign_status);
+        $this->assertSame(2.0, $campaign->platformFee());
+        $this->assertSame(6.0, $campaign->budgetRemaining());
+        $this->assertSame(14.0, (float) $owner->fresh()->wallet_balance);
+        $this->assertSame(2.0, (float) $admin->fresh()->wallet_balance);
+        $this->assertDatabaseHas('wallet_transactions', [
+            'user_id' => $owner->id,
+            'type' => WalletTransactionType::CampaignRefund->value,
+            'amount' => 6,
+        ]);
+    }
+
+    public function test_cancelling_an_undelivered_campaign_refunds_the_full_amount(): void
+    {
+        Notification::fake();
+
+        $owner = User::factory()->earner()->create(['wallet_balance' => 20]);
+
+        $campaign = app(CampaignService::class)->create($owner, [
+            'task_type' => TaskType::YoutubeSubscribe->value,
+            'title' => 'Two subscribers',
+            'target_url' => 'https://www.youtube.com/@earnpk',
+            'target_quantity' => 2,
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.cancel', $campaign))
+            ->assertRedirect();
+
+        $this->assertSame(20.0, (float) $owner->fresh()->wallet_balance);
     }
 
     public function test_a_campaign_cannot_be_created_without_enough_wallet_balance(): void

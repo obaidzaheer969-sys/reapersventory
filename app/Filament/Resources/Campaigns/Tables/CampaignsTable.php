@@ -70,7 +70,7 @@ class CampaignsTable
                     ->label('Spent')
                     ->state(fn (EarningTask $record) => 'PKR '.number_format($record->budgetSpent(), 2)),
                 TextColumn::make('platform_fee')
-                    ->label('Platform fee')
+                    ->label('Admin fee')
                     ->state(fn (EarningTask $record) => 'PKR '.number_format($record->platformFee(), 2))
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('target_url')
@@ -129,7 +129,7 @@ class CampaignsTable
                             ->label('Spent')
                             ->state(fn (EarningTask $record) => 'PKR '.number_format($record->budgetSpent(), 2)),
                         TextEntry::make('platform_fee')
-                            ->label('Platform fee')
+                            ->label('Admin fee')
                             ->state(fn (EarningTask $record) => 'PKR '.number_format($record->platformFee(), 2)),
                         TextEntry::make('budget_remaining')
                             ->label('Remaining budget')

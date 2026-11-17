@@ -30,7 +30,7 @@
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total campaign spend</p>
             <p class="mt-2 font-display text-3xl font-bold text-white">{{ \App\Support\Currency::format($totalSpend) }}</p>
-            <p class="mt-2 text-xs text-slate-400">2 PKR per action · no platform fee</p>
+            <p class="mt-2 text-xs text-slate-400">2 PKR earner + 1 PKR admin fee per action</p>
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Live campaigns</p>
