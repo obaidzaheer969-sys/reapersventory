@@ -18,4 +18,18 @@ class PublicPagesTest extends TestCase
             ->assertOk()
             ->assertSee('Plans will appear here', false);
     }
+
+    public function test_public_pages_use_earning_seo_metadata(): void
+    {
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('<title>'.e(config('earning.meta_title')).'</title>', false)
+            ->assertSee('<meta name="description" content="'.config('earning.meta_description').'">', false)
+            ->assertDontSee('Inventory & Billing SaaS', false);
+
+        $this->get(route('pricing'))
+            ->assertOk()
+            ->assertSee('<title>Pricing — '.config('earning.brand').'</title>', false)
+            ->assertSee('<meta name="description" content="'.config('earning.meta_description').'">', false);
+    }
 }

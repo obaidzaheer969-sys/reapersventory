@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Set new password — ReapersVentory')
+@section('title', 'Set new password — '.config('earning.brand'))
 
 @section('content')
 <h1 class="font-display text-2xl font-bold text-navy-900">Set a new password</h1>

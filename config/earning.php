@@ -12,6 +12,10 @@ return [
 
     'tagline' => env('EARNING_TAGLINE', 'Watch. Follow. Earn.'),
 
+    'meta_title' => env('EARNING_META_TITLE', 'Earn To PKR — Watch Videos & Complete Tasks for PKR'),
+
+    'meta_description' => env('EARNING_META_DESCRIPTION', 'Earn PKR online with Earn To PKR. Watch YouTube videos, follow social accounts, complete simple tasks and withdraw via Easypaisa, JazzCash, UPaisa or NayaPay.'),
+
     'currency' => env('EARNING_CURRENCY', 'PKR'),
 
     // All daily task locks and "unlock after 12am" logic uses this timezone.

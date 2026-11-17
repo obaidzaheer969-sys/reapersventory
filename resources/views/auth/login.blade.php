@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Login — '.config('earning.brand'))
+@section('title', config('earning.meta_title'))
 
 @section('content')
     <div>

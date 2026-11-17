@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Pricing — ReapersVentory')
+@section('title', 'Pricing — '.config('earning.brand'))
 
 @section('content')
 <section class="bg-gradient-to-b from-navy-950 to-navy-900 px-4 py-16 text-white">

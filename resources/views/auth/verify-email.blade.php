@@ -1,11 +1,11 @@
 @extends('layouts.guest')
 
-@section('title', 'Verify email — ReapersVentory')
+@section('title', 'Verify email — '.config('earning.brand'))
 
 @section('content')
 <h1 class="font-display text-2xl font-bold text-navy-900">Verify your email</h1>
 <p class="mt-2 text-sm text-slate-600">
-    Thanks for joining ReapersVentory. If email is delayed on hosting, use the button below to verify instantly.
+    Thanks for joining {{ config('earning.brand') }}. If email is delayed on hosting, use the button below to verify instantly.
 </p>
 
 @php

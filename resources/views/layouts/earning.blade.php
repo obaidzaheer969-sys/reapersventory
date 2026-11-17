@@ -4,8 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('layouts.partials.seo')
     @include('ads.head')
-    <title>@yield('title', config('earning.brand').' — '.config('earning.tagline'))</title>
+    <title>@yield('title', config('earning.meta_title'))</title>
     <link rel="icon" href="{{ asset('images/reapersventory-logo.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
