@@ -48,6 +48,48 @@ class CampaignFlowTest extends TestCase
         $this->assertSame(400.0, $bulk['total']);
     }
 
+    public function test_a_campaign_accepts_a_custom_quantity_of_one_action(): void
+    {
+        $owner = User::factory()->earner()->create(['wallet_balance' => 10]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.store'), [
+                'task_type' => TaskType::YoutubeSubscribe->value,
+                'title' => 'One subscriber',
+                'target_url' => 'https://www.youtube.com/@earnpk',
+                'target_quantity' => 1,
+            ])
+            ->assertRedirect(route('campaigns.mine'))
+            ->assertSessionHasNoErrors();
+
+        $campaign = EarningTask::query()->campaigns()->sole();
+
+        $this->assertSame(1, $campaign->target_quantity);
+        $this->assertSame(2.0, (float) $campaign->total_cost);
+        $this->assertSame(8.0, (float) $owner->fresh()->wallet_balance);
+    }
+
+    public function test_a_campaign_accepts_a_custom_quantity_of_two_actions(): void
+    {
+        $owner = User::factory()->earner()->create(['wallet_balance' => 10]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.store'), [
+                'task_type' => TaskType::InstagramFollow->value,
+                'title' => 'Two followers',
+                'target_url' => 'https://www.instagram.com/earnpk/',
+                'target_quantity' => 2,
+            ])
+            ->assertRedirect(route('campaigns.mine'))
+            ->assertSessionHasNoErrors();
+
+        $campaign = EarningTask::query()->campaigns()->sole();
+
+        $this->assertSame(2, $campaign->target_quantity);
+        $this->assertSame(4.0, (float) $campaign->total_cost);
+        $this->assertSame(6.0, (float) $owner->fresh()->wallet_balance);
+    }
+
     public function test_creating_a_campaign_holds_the_payment_and_makes_it_live_immediately(): void
     {
         $owner = User::factory()->earner()->create(['wallet_balance' => 500]);

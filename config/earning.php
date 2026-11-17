@@ -20,6 +20,9 @@ return [
     // Minimum wallet balance a user can withdraw in one request.
     'min_payout' => (float) env('EARNING_MIN_PAYOUT', 500),
 
+    // Only one withdrawal request is allowed in this window.
+    'payout_cooldown_hours' => (int) env('EARNING_PAYOUT_COOLDOWN_HOURS', 24),
+
     'support_email' => env('EARNING_SUPPORT_EMAIL', 'support@earnpk.test'),
 
     'signup_bonus' => (float) env('EARNING_SIGNUP_BONUS', 0),
@@ -35,11 +38,12 @@ return [
     | Users pay from their wallet to publish tasks for other users. Every
     | campaign action (subscribe, follow, like or video view) pays the earner
     | 2 PKR, so 100 actions cost the owner 200 PKR. There is no platform fee.
+    | Owners choose any quantity from 1 up, even a single action.
     |
     */
 
     'campaign' => [
-        'min_quantity' => (int) env('EARNING_CAMPAIGN_MIN_QUANTITY', 100),
+        'min_quantity' => (int) env('EARNING_CAMPAIGN_MIN_QUANTITY', 1),
         'max_quantity' => (int) env('EARNING_CAMPAIGN_MAX_QUANTITY', 100000),
 
         // Price paid to each earner for one action.

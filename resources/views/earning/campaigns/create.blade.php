@@ -50,7 +50,7 @@
                             <option value="{{ $value }}" @selected($selectedType === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
-                    <p class="mt-1.5 text-[11px] text-slate-500">Har action (subscribe, follow, like ya video view) ka reward 2 PKR hai. 100 actions = PKR 200. Koi platform fee nahi.</p>
+                    <p class="mt-1.5 text-[11px] text-slate-500">Har action (subscribe, follow, like ya video view) ka reward 2 PKR hai. Quantity aap khud set karein — 2 subscribers ya 1 view ka order bhi allowed hai. Koi platform fee nahi.</p>
                 </div>
 
                 <div>

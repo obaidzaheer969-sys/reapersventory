@@ -82,6 +82,68 @@ class PayoutFlowTest extends TestCase
         $this->assertDatabaseCount('payout_requests', 0);
     }
 
+    public function test_a_second_withdrawal_within_twenty_four_hours_is_rejected(): void
+    {
+        $user = User::factory()->earner()->create(['wallet_balance' => 1200]);
+        $account = PayoutAccount::factory()->create(['user_id' => $user->id]);
+        $service = app(PayoutService::class);
+
+        $firstPayout = $service->requestPayout($user, $account, 500);
+        $firstPayout->forceFill(['created_at' => now()->subHours(23)])->saveQuietly();
+
+        $this->actingAs($user)
+            ->post(route('wallet.payouts.store'), [
+                'payout_account_id' => $account->id,
+                'amount' => 500,
+            ])
+            ->assertSessionHasErrors('amount');
+
+        $this->assertSame(1, PayoutRequest::query()->count());
+        $this->assertSame(700.0, (float) $user->fresh()->wallet_balance);
+    }
+
+    public function test_a_withdrawal_is_allowed_after_the_twenty_four_hour_period(): void
+    {
+        $user = User::factory()->earner()->create(['wallet_balance' => 1200]);
+        $account = PayoutAccount::factory()->create(['user_id' => $user->id]);
+        $service = app(PayoutService::class);
+
+        $firstPayout = $service->requestPayout($user, $account, 500);
+        $firstPayout->forceFill(['created_at' => now()->subHours(25)])->saveQuietly();
+
+        $this->actingAs($user)
+            ->post(route('wallet.payouts.store'), [
+                'payout_account_id' => $account->id,
+                'amount' => 500,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(2, PayoutRequest::query()->count());
+        $this->assertSame(200.0, (float) $user->fresh()->wallet_balance);
+    }
+
+    public function test_the_wallet_page_shows_the_twenty_four_hour_withdrawal_period_and_next_time(): void
+    {
+        $user = User::factory()->earner()->create(['wallet_balance' => 1200]);
+        $account = PayoutAccount::factory()->create(['user_id' => $user->id]);
+        $payout = app(PayoutService::class)->requestPayout($user, $account, 500);
+
+        $this->actingAs($user)
+            ->get(route('wallet.index'))
+            ->assertOk()
+            ->assertSee('Withdrawal period: 24 ghante')
+            ->assertSee('Agla withdrawal');
+
+        $payout->forceFill(['created_at' => now()->subHours(25)])->saveQuietly();
+
+        $this->actingAs($user)
+            ->get(route('wallet.index'))
+            ->assertOk()
+            ->assertSee('Withdrawal period: 24 ghante')
+            ->assertDontSee('Agla withdrawal');
+    }
+
     public function test_rejecting_a_payout_refunds_the_user_wallet(): void
     {
         Notification::fake();

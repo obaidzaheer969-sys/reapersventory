@@ -9,6 +9,11 @@
         $balance = (float) $user->wallet_balance;
         $defaultAccount = $accounts->firstWhere('is_default', true) ?? $accounts->first();
         $providers = \App\Enums\PayoutProvider::cases();
+        $cooldownHours = max(0, (int) $payoutCooldownHours);
+        $nextPayoutAt = $cooldownHours > 0 && $latestPayout?->created_at
+            ? $latestPayout->created_at->copy()->addHours($cooldownHours)
+            : null;
+        $payoutLocked = $nextPayoutAt?->isFuture() ?? false;
     @endphp
 
     <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -82,7 +87,7 @@
                         </div>
 
                         <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                                @disabled($balance < $minimumPayout)>
+                                @disabled($balance < $minimumPayout || $payoutLocked)>
                             Request payout
                         </button>
                     </form>
@@ -90,6 +95,17 @@
                     @if ($balance < $minimumPayout)
                         <p class="mt-3 text-[11px] text-slate-500">Payout ke liye kam az kam {{ \App\Support\Currency::format($minimumPayout, false) }} balance chahiye.</p>
                     @endif
+                @endif
+
+                <p class="mt-3 rounded-xl border border-mint-400/20 bg-mint-500/5 px-3 py-2.5 text-[11px] leading-relaxed text-slate-300">
+                    <span class="font-bold text-mint-300">Withdrawal period: {{ $cooldownHours }} ghante.</span>
+                    Ek baar payout request bhejne ke baad agla withdrawal {{ $cooldownHours }} ghante baad hi ho sakta hai. Payment {{ $cooldownHours }} ghanton me aap ke wallet account me bhej di jati hai.
+                </p>
+
+                @if ($payoutLocked)
+                    <p class="mt-2 rounded-xl border border-gold-400/30 bg-gold-400/10 px-3 py-2.5 text-[11px] leading-relaxed text-gold-200">
+                        Aapki last request ke {{ $cooldownHours }} ghante abhi pooray nahi hue. Agla withdrawal {{ $nextPayoutAt->timezone($tz)->format('d M, h:i A') }} ke baad allowed hoga.
+                    </p>
                 @endif
             </div>
 

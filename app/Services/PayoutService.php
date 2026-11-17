@@ -33,7 +33,30 @@ class PayoutService
             ]);
         }
 
-        $payout = DB::transaction(function () use ($user, $account, $amount) {
+        $cooldownHours = max(0, (int) config('earning.payout_cooldown_hours', 24));
+
+        $payout = DB::transaction(function () use ($user, $account, $amount, $cooldownHours): PayoutRequest {
+            /** @var PayoutRequest|null $latest */
+            $latest = PayoutRequest::query()
+                ->where('user_id', $user->id)
+                ->latest('created_at')
+                ->latest('id')
+                ->lockForUpdate()
+                ->first();
+
+            if ($cooldownHours > 0 && $latest?->created_at !== null) {
+                $nextRequestAt = $latest->created_at->copy()->addHours($cooldownHours);
+
+                if ($nextRequestAt->isFuture()) {
+                    throw ValidationException::withMessages([
+                        'amount' => 'Withdrawal ka period '.$cooldownHours
+                            .' ghante hai. Agla payout request '
+                            .$nextRequestAt->timezone((string) config('earning.timezone'))->format('d M, h:i A')
+                            .' ke baad bhej sakte hain.',
+                    ]);
+                }
+            }
+
             $payout = PayoutRequest::query()->create([
                 'user_id' => $user->id,
                 'payout_account_id' => $account->id,
