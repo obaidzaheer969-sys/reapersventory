@@ -56,7 +56,7 @@
                             @if ($isEmbedded)
                                 Video neeche official {{ $task->platform() }} player me chal rahi hai. Play button dabaein — watch time isi page par count hota hai. Timer poora hone aur required watch time mukammal hone par reward claim karein.
                             @else
-                                Pehle "Open real page" dabaein — asli page khulne tak seconds nahi chalenge. Wahan video play karein, like ya subscribe karein — YouTube/Facebook par views, watch time, likes aur subscribes real time count hote hain.
+                                Pehle "Open real page" dabaein — asli page khulne tak seconds nahi chalenge. Wahan video play karein, like ya subscribe karein — YouTube/Facebook par views, watch time, likes aur subscribes real time count hote hain. Timer isi task tab me chal raha hai; is tab ko band karne par task fail hoga.
                             @endif
                         </p>
                         <p class="mt-1.5 truncate text-[11px] text-slate-500" title="{{ $task->target_url }}">{{ $task->target_url }}</p>
@@ -133,7 +133,7 @@
                     </p>
                 @else
                     <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90" data-real-hint>
-                        🔒 Pehle "Open real page" dabaein — tab tak timer shuru nahi hoga. Real page khulte hi seconds chalne lagenge; us tab ko timer poora hone se pehle band kiya to task <span class="font-bold">FAIL</span> ho jayega.
+                        🔒 Pehle "Open real page" dabaein — tab tak timer shuru nahi hoga. Real page khulte hi seconds chalne lagenge; is task tab ko timer poora hone se pehle band kiya to task <span class="font-bold">FAIL</span> ho jayega.
                     </p>
                 @endif
 
@@ -143,7 +143,7 @@
                         @if ($isEmbedded)
                             Timer poora hone se pehle yeh tab band kar diya gaya. Is task ka reward nahi milega — dobara start karein aur video required waqt tak play rakhein.
                         @else
-                            Real page ka tab timer poora hone se pehle band kar diya gaya. Is task ka reward nahi milega — dobara start karein.
+                            Ye task tab timer poora hone se pehle band kar diya gaya. Is task ka reward nahi milega — dobara start karein.
                         @endif
                     </p>
                     <a href="{{ route('tasks.index') }}" class="mt-2.5 inline-flex rounded-lg bg-rose-500 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-rose-400">Dobara start karein →</a>
@@ -178,7 +178,7 @@
                     @if ($isEmbedded)
                         Is tab me timer chal raha hai aur isi tab ka title bar seconds dikhata hai. Timer poora hone tak yeh tab band karna aur back jana band rahega. Video play karte waqt hi timer aur watch time dono chalte hain — pause karne par dono ruk jate hain.
                     @else
-                        Pehle "Open real page" dabaein — real page khulte hi is tab me timer chalna shuru hoga aur title bar seconds dikhayega. Timer poora hone tak yeh tab band karna aur back jana band rahega — real page alag tab me hai, use bhi band na karein.
+                        Pehle "Open real page" dabaein — real page khulte hi is tab me timer chalna shuru hoga aur title bar seconds dikhayega. Timer poora hone tak yeh task tab band karna aur back jana band rahega. Real page alag tab me khulta hai; wahan action zaroor karein.
                     @endif
                 </p>
             </div>
@@ -265,10 +265,8 @@
             var locked = remaining > 0;
             var finished = remaining === 0;
             var failed = false;
-            var popup = null;
             var deadline = Date.now() + remaining * 1000;
             var ticker = null;
-            var watcher = null;
             var heartbeat = null;
             var videoPlaying = false;
             var timerPaused = @json((bool) ($timerPaused ?? false));
@@ -660,11 +658,11 @@
 
             function setOpenUi() {
                 if (openButton) {
-                    openButton.textContent = popup ? 'Real page khula hai ↗' : 'Real page dobara kholein ↗';
+                    openButton.textContent = opened ? 'Real page khula hai ↗' : 'Open real page ↗';
                 }
 
                 if (realHint) {
-                    realHint.textContent = '🔒 Real page ka tab band mat karein — timer poora hone se pehle band karne par task FAIL ho jayega.';
+                    realHint.textContent = '🔒 Is task tab ko timer poora hone se pehle band mat karein — band karne par task FAIL ho jayega. Real page alag tab me khula hai, wahan action poora karein.';
                 }
 
                 if (timerPaused) {
@@ -684,18 +682,6 @@
                     return;
                 }
 
-                if (popup && popup.closed === false) {
-                    try {
-                        popup.focus();
-                    } catch (error) {}
-
-                    if (! opened) {
-                        confirmRealPageOpened();
-                    }
-
-                    return;
-                }
-
                 var win = window.open(targetUrl, '_blank');
 
                 if (!win) {
@@ -708,8 +694,6 @@
                     return;
                 }
 
-                popup = win;
-
                 try {
                     win.opener = null;
                 } catch (error) {}
@@ -719,49 +703,7 @@
                 }
 
                 setRealStatus('Real page khula hai — timer shuru ho raha hai…', 'gold');
-                startWatcher();
                 confirmRealPageOpened();
-            }
-
-            function checkPopup() {
-                if (!popup) {
-                    return;
-                }
-
-                if (!popup.closed) {
-                    return;
-                }
-
-                popup = null;
-                stopWatcher();
-
-                if (!finished && !failed) {
-                    failTask();
-
-                    return;
-                }
-
-                setRealStatus('Real page band ho gaya — task mukammal', 'mint');
-                if (openButton) {
-                    openButton.textContent = 'Open real page ↗';
-                }
-            }
-
-            function startWatcher() {
-                if (watcher) {
-                    return;
-                }
-
-                watcher = window.setInterval(checkPopup, 1500);
-            }
-
-            function stopWatcher() {
-                if (!watcher) {
-                    return;
-                }
-
-                window.clearInterval(watcher);
-                watcher = null;
             }
 
             function startHeartbeat() {
@@ -791,8 +733,6 @@
                 syncTimerDisplay();
                 updateTimerPauseUi();
 
-                stopWatcher();
-
                 if (lockBar) {
                     lockBar.hidden = true;
                 }
@@ -817,7 +757,7 @@
                 }
 
                 setRealStatus(
-                    embedded ? 'Task fail — timer se pehle tab band ho gaya' : 'Task fail — real page tab timer se pehle band hua',
+                    embedded ? 'Task fail — timer se pehle tab band ho gaya' : 'Task fail — task tab timer se pehle band hua',
                     'rose'
                 );
                 document.title = '❌ Task failed — ' + brand;
@@ -844,7 +784,6 @@
                 stopTicker();
                 syncTimerDisplay();
                 updateTimerPauseUi();
-                stopWatcher();
 
                 if (status) {
                     status.textContent = 'Ready to claim';
@@ -1027,22 +966,12 @@
 
                             return;
                         }
-
-                        checkPopup();
-
-                        if (failed) {
-                            event.preventDefault();
-                        }
                     });
                 }
             }
 
             document.addEventListener('visibilitychange', function () {
                 if (!embedded) {
-                    if (!document.hidden && popup) {
-                        checkPopup();
-                    }
-
                     return;
                 }
 

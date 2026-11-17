@@ -455,6 +455,25 @@ class TaskFlowTest extends TestCase
             ->assertDontSee('<iframe', false);
     }
 
+    public function test_the_run_page_does_not_fail_a_detached_real_page_popup(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->adWatch(30)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertSee('Open real page', false)
+            ->assertSee('confirmRealPageOpened()', false)
+            ->assertSee('Is task tab ko timer poora hone se pehle band mat karein', false)
+            ->assertDontSee('popup.closed', false)
+            ->assertDontSee('checkPopup()', false)
+            ->assertDontSee('startWatcher()', false)
+            ->assertDontSee('Real page ka tab', false);
+    }
+
     public function test_the_dashboard_start_form_does_not_bypass_the_real_page_gate(): void
     {
         $user = User::factory()->earner()->create();
