@@ -15,6 +15,7 @@
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">{{ $greeting }}</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Assalam-o-Alaikum, {{ $user->name }}</h1>
             <p class="mt-2 text-sm text-slate-400">{{ $now->format('l, d M Y') }} · Admin tasks aur community campaigns complete karein aur wallet barhayen.</p>
+            <p class="mt-1 text-xs text-slate-500">Account: {{ $user->email }} · Task progress is linked to this account. Dono devices par yahi email use karein.</p>
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('tasks.index') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20">Admin Tasks</a>
@@ -77,8 +78,8 @@
                             <div class="flex items-center justify-between gap-3 sm:justify-end">
                                 <span class="text-sm font-bold text-mint-300">{{ \App\Support\Currency::format($task->reward) }}</span>
                                 @if ($isDone)
-                                    <span class="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-slate-400">
-                                        🔒 Unlock {{ $nextResetAt->format('h:i A') }}
+                                    <span class="rounded-lg border border-mint-400/25 bg-mint-500/10 px-3 py-1.5 text-[11px] font-semibold text-mint-200">
+                                        ✓ Complete · Unlock {{ $nextResetAt->format('h:i A') }}
                                     </span>
                                 @else
                                     <form method="POST" action="{{ route('tasks.start', $task) }}" onsubmit="window.open(@js($task->target_url), '_blank', 'noopener');">

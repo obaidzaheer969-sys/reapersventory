@@ -67,6 +67,37 @@ class TaskFlowTest extends TestCase
         ]);
     }
 
+    public function test_a_completed_task_shows_as_complete_after_a_fresh_login_on_another_device(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeSubscribe(15, 2)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+        $this->actingAs($user)->postJson(route('tasks.opened', $task))->assertOk();
+
+        $this->travel(16)->seconds();
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertRedirect(route('tasks.index'));
+
+        auth()->forgetGuards();
+
+        $this->actingAs($user)
+            ->get(route('tasks.index'))
+            ->assertOk()
+            ->assertSee('Aaj complete ho gaya')
+            ->assertSee('Task progress is linked to this account')
+            ->assertSee($user->email, false);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('✓ Complete')
+            ->assertSee('Task progress is linked to this account')
+            ->assertSee($user->email, false);
+    }
+
     public function test_the_task_tab_stays_locked_until_the_timer_finishes(): void
     {
         $user = User::factory()->earner()->create();

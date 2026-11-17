@@ -17,6 +17,7 @@
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
                 Admin ki taraf se diye gaye tasks — har task ka reward exactly 2 PKR hai. Video watch tasks isi page ke official player me chalti hain; subscribe, follow aur like tasks ka asli page naye tab me khulta hai. Timer aur required watch time poora hone par reward milta hai.
             </p>
+            <p class="mt-1 text-xs text-slate-500">Account: {{ auth()->user()?->email }} · Task progress is linked to this account. Dono devices par yahi email use karein.</p>
         </div>
         <div class="rounded-2xl border border-gold-400/25 bg-gold-400/5 px-4 py-3 text-right">
             <p class="text-[10px] font-bold uppercase tracking-wider text-gold-300/80">Next unlock</p>

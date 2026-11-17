@@ -116,6 +116,9 @@
         </div>
 
         <div data-mobile-menu class="hidden border-t border-white/10 bg-ink-900 px-4 pb-4 pt-2 lg:hidden">
+            @if ($navUser)
+                <p class="truncate px-3 pb-2 text-[11px] text-slate-400">{{ $navUser->email }}</p>
+            @endif
             @foreach ($navLinks as $link)
                 <a href="{{ route($link['route']) }}" class="block rounded-xl px-3 py-2.5 text-sm font-semibold {{ request()->routeIs($link['route']) ? 'bg-white/10 text-white' : 'text-slate-300' }}">{{ $link['label'] }}</a>
             @endforeach
