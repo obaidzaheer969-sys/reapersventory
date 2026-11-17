@@ -25,6 +25,8 @@ class DepositController extends Controller
             'deposits' => $user->deposits()->latest()->paginate(10),
             'minimum' => (float) config('earning.deposit.min', 100),
             'maximum' => (float) config('earning.deposit.max', 100000),
+            'depositQuote' => $this->deposits->quote((float) config('earning.deposit.min', 100)),
+            'adminFeePercent' => (float) config('earning.deposit.admin_fee_percent', 10),
             'cashmaalEnabled' => $this->gateway->isConfigured(),
             'totalDeposited' => $user->totalDeposited(),
             'walletBalance' => (float) $user->wallet_balance,

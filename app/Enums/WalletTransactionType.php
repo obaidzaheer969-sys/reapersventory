@@ -11,6 +11,9 @@ enum WalletTransactionType: string
     case CampaignRefund = 'campaign_refund';
     case CampaignAdminFee = 'campaign_admin_fee';
     case Deposit = 'deposit';
+    case DepositAdminFee = 'deposit_admin_fee';
+    case PayoutAdminFee = 'payout_admin_fee';
+    case PayoutFeeReversal = 'payout_fee_reversal';
     case AdminCredit = 'admin_credit';
     case Bonus = 'bonus';
     case Adjustment = 'adjustment';
@@ -25,6 +28,9 @@ enum WalletTransactionType: string
             self::CampaignRefund => 'Campaign refund',
             self::CampaignAdminFee => 'Campaign admin fee',
             self::Deposit => 'Wallet deposit',
+            self::DepositAdminFee => 'Deposit admin fee',
+            self::PayoutAdminFee => 'Withdrawal admin fee',
+            self::PayoutFeeReversal => 'Withdrawal fee refunded',
             self::AdminCredit => 'Admin credit',
             self::Bonus => 'Bonus',
             self::Adjustment => 'Adjustment',
@@ -34,7 +40,7 @@ enum WalletTransactionType: string
     public function isCredit(): bool
     {
         return match ($this) {
-            self::PayoutRequest, self::CampaignFunding => false,
+            self::PayoutRequest, self::PayoutFeeReversal, self::CampaignFunding => false,
             default => true,
         };
     }

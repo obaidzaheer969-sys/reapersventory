@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('ads.head')
     <title>@yield('title', config('app.name', 'ReapersVentory'))</title>
     <link rel="icon" href="{{ asset('images/reapersventory-logo.png') }}">
     <link rel="stylesheet" href="{{ asset('css/app-brand.css') }}?v=2">
@@ -43,12 +44,17 @@
     <div class="min-h-screen flex flex-col">
         @include('layouts.partials.nav')
 
+        @include('ads.slot', ['name' => 'top', 'variant' => 'light'])
+        @include('ads.slot', ['name' => 'content', 'variant' => 'light'])
+
         @isset($slot)
             {{ $slot }}
         @else
             @yield('content')
         @endisset
 
+        @include('ads.slot', ['name' => 'bottom', 'variant' => 'light'])
+        @include('ads.slot', ['name' => 'footer', 'variant' => 'light'])
         @include('layouts.partials.footer')
     </div>
 

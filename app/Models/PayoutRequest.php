@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'account_name',
     'account_number',
     'amount',
+    'gross_amount',
+    'fee',
     'status',
     'admin_notes',
     'processed_at',
@@ -34,6 +36,8 @@ class PayoutRequest extends Model
             'provider' => PayoutProvider::class,
             'status' => PayoutStatus::class,
             'amount' => 'decimal:2',
+            'gross_amount' => 'decimal:2',
+            'fee' => 'decimal:2',
             'processed_at' => 'datetime',
         ];
     }
@@ -64,5 +68,15 @@ class PayoutRequest extends Model
     public function isPending(): bool
     {
         return $this->status === PayoutStatus::Pending;
+    }
+
+    public function grossAmount(): float
+    {
+        return round((float) ($this->gross_amount ?? $this->amount), 2);
+    }
+
+    public function feeAmount(): float
+    {
+        return round((float) ($this->fee ?? 0), 2);
     }
 }

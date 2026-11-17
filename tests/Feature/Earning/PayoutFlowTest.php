@@ -22,7 +22,7 @@ class PayoutFlowTest extends TestCase
     {
         Notification::fake();
 
-        $admin = User::factory()->superAdmin()->create();
+        $admin = User::factory()->superAdmin()->create(['wallet_balance' => 0]);
         $user = User::factory()->earner()->create(['wallet_balance' => 1000]);
         $account = PayoutAccount::factory()->create(['user_id' => $user->id]);
 
@@ -39,15 +39,32 @@ class PayoutFlowTest extends TestCase
         $payout = PayoutRequest::query()->sole();
 
         $this->assertSame(PayoutStatus::Pending, $payout->status);
-        $this->assertSame(500.0, (float) $payout->amount);
-        $this->assertSame(500.0, $user->fresh()->pendingPayoutTotal());
+        $this->assertSame(450.0, (float) $payout->amount);
+        $this->assertSame(500.0, (float) $payout->gross_amount);
+        $this->assertSame(50.0, (float) $payout->fee);
+        $this->assertSame(450.0, $user->fresh()->pendingPayoutTotal());
+        $this->assertSame(50.0, (float) $admin->fresh()->wallet_balance);
         $this->assertDatabaseHas('wallet_transactions', [
             'user_id' => $user->id,
             'type' => WalletTransactionType::PayoutRequest->value,
             'amount' => 500,
         ]);
+        $this->assertDatabaseHas('wallet_transactions', [
+            'user_id' => $admin->id,
+            'type' => WalletTransactionType::PayoutAdminFee->value,
+            'amount' => 50,
+        ]);
 
         Notification::assertSentTo($admin, PayoutRequestedAdminNotification::class);
+    }
+
+    public function test_payout_quote_keeps_ten_percent_as_admin_fee(): void
+    {
+        $quote = app(PayoutService::class)->quote(500);
+
+        $this->assertSame(500.0, $quote['gross']);
+        $this->assertSame(50.0, $quote['fee']);
+        $this->assertSame(450.0, $quote['net']);
     }
 
     public function test_payout_below_the_minimum_is_rejected(): void
@@ -148,7 +165,7 @@ class PayoutFlowTest extends TestCase
     {
         Notification::fake();
 
-        $admin = User::factory()->superAdmin()->create();
+        $admin = User::factory()->superAdmin()->create(['wallet_balance' => 0]);
         $user = User::factory()->earner()->create(['wallet_balance' => 1000]);
         $account = PayoutAccount::factory()->create(['user_id' => $user->id]);
 
@@ -156,6 +173,7 @@ class PayoutFlowTest extends TestCase
         $payout = $service->requestPayout($user, $account, 500);
 
         $this->assertSame(500.0, (float) $user->fresh()->wallet_balance);
+        $this->assertSame(50.0, (float) $admin->fresh()->wallet_balance);
 
         $service->reject($payout, $admin, 'Account number mismatch.');
 
@@ -165,10 +183,16 @@ class PayoutFlowTest extends TestCase
         $this->assertSame('Account number mismatch.', $payout->admin_notes);
         $this->assertSame($admin->id, $payout->processed_by);
         $this->assertSame(1000.0, (float) $user->fresh()->wallet_balance);
+        $this->assertSame(0.0, (float) $admin->fresh()->wallet_balance);
         $this->assertDatabaseHas('wallet_transactions', [
             'user_id' => $user->id,
             'type' => WalletTransactionType::PayoutRefund->value,
             'amount' => 500,
+        ]);
+        $this->assertDatabaseHas('wallet_transactions', [
+            'user_id' => $admin->id,
+            'type' => WalletTransactionType::PayoutFeeReversal->value,
+            'amount' => 50,
         ]);
 
         Notification::assertSentTo($user, PayoutStatusNotification::class);
@@ -192,7 +216,7 @@ class PayoutFlowTest extends TestCase
         $this->assertSame($admin->id, $payout->processed_by);
         $this->assertNotNull($payout->processed_at);
         $this->assertSame(500.0, (float) $user->fresh()->wallet_balance);
-        $this->assertSame(500.0, $user->fresh()->totalWithdrawn());
+        $this->assertSame(450.0, $user->fresh()->totalWithdrawn());
         $this->assertSame(0.0, $user->fresh()->pendingPayoutTotal());
 
         Notification::assertSentTo($user, PayoutStatusNotification::class);

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\UserRole;
 use App\Enums\WalletTransactionType;
 use App\Models\User;
 use App\Models\WalletTransaction;
@@ -29,6 +30,33 @@ class WalletService
         ?Model $reference = null,
     ): WalletTransaction {
         return $this->apply($user, -abs($amount), $type, $description, $reference);
+    }
+
+    public function creditFirstActiveAdmin(
+        float $amount,
+        WalletTransactionType $type,
+        string $description,
+        ?Model $reference = null,
+    ): void {
+        $admin = $this->firstActiveAdmin();
+
+        if ($admin === null) {
+            return;
+        }
+
+        $this->credit($admin, $amount, $type, $description, $reference);
+    }
+
+    private function firstActiveAdmin(): ?User
+    {
+        /** @var User|null $admin */
+        $admin = User::query()
+            ->where('role', UserRole::SuperAdmin->value)
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->first();
+
+        return $admin;
     }
 
     private function apply(

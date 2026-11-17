@@ -29,6 +29,8 @@ class PayoutController extends Controller
             'transactions' => $user->walletTransactions()->latest()->limit(12)->get(),
             'minimumPayout' => (float) config('earning.min_payout', 500),
             'payoutCooldownHours' => max(0, (int) config('earning.payout_cooldown_hours', 24)),
+            'payoutQuote' => $this->payouts->quote((float) config('earning.min_payout', 500)),
+            'payoutFeePercent' => (float) config('earning.payout_admin_fee_percent', 10),
             'latestPayout' => $user->payoutRequests()->latest('created_at')->latest('id')->first(),
             'totalWithdrawn' => $user->totalWithdrawn(),
             'pendingPayout' => $user->pendingPayoutTotal(),

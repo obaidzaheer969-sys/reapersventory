@@ -53,12 +53,23 @@ class DepositFlowTest extends TestCase
         $fields = $response->viewData('fields');
 
         $this->assertSame(DepositStatus::Pending, $deposit->status);
-        $this->assertSame(250.0, (float) $deposit->amount);
+        $this->assertSame(275.0, (float) $deposit->amount);
+        $this->assertSame(25.0, (float) $deposit->fee);
+        $this->assertSame(250.0, (float) $deposit->credit_amount);
         $this->assertSame('WEB-12345', $fields['web_id']);
         $this->assertSame($deposit->order_id, $fields['order_id']);
-        $this->assertSame('250.00', $fields['amount']);
+        $this->assertSame('275.00', $fields['amount']);
         $this->assertSame(route('deposits.cashmaal.success'), $fields['succes_url']);
         $this->assertSame(route('deposits.cashmaal.cancel'), $fields['cancel_url']);
+    }
+
+    public function test_deposit_quote_adds_a_ten_percent_admin_fee(): void
+    {
+        $quote = app(DepositService::class)->quote(1000);
+
+        $this->assertSame(1000.0, $quote['amount']);
+        $this->assertSame(100.0, $quote['fee']);
+        $this->assertSame(1100.0, $quote['total']);
     }
 
     public function test_deposit_succeeds_when_a_stale_setting_object_is_cached(): void
@@ -82,6 +93,7 @@ class DepositFlowTest extends TestCase
     public function test_a_successful_ipn_credits_the_wallet_and_acknowledges(): void
     {
         $this->configureCashmaal();
+        $admin = User::factory()->superAdmin()->create(['wallet_balance' => 0]);
         $user = User::factory()->earner()->create(['wallet_balance' => 100]);
         $deposit = app(DepositService::class)->create($user, 500);
 
@@ -89,7 +101,7 @@ class DepositFlowTest extends TestCase
             'status' => '1',
             'ipn_key' => 'IPN-SECRET',
             'order_id' => $deposit->order_id,
-            'Amount' => '500.00',
+            'Amount' => '550.00',
             'CM_TID' => 'CM-TXN-1',
             'fee' => '0',
             'currency' => 'PKR',
@@ -114,6 +126,12 @@ class DepositFlowTest extends TestCase
             'user_id' => $user->id,
             'type' => WalletTransactionType::Deposit->value,
             'amount' => 500,
+        ]);
+        $this->assertSame(50.0, (float) $admin->fresh()->wallet_balance);
+        $this->assertDatabaseHas('wallet_transactions', [
+            'user_id' => $admin->id,
+            'type' => WalletTransactionType::DepositAdminFee->value,
+            'amount' => 50,
         ]);
     }
 
@@ -181,7 +199,7 @@ class DepositFlowTest extends TestCase
             'api.cmaal.com/*' => Http::response([
                 'status' => 1,
                 'order_id' => $deposit->order_id,
-                'PKR_amount' => 500,
+                'PKR_amount' => 550,
                 'fee_in_PKR' => 0,
             ]),
         ]);

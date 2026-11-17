@@ -23,6 +23,10 @@ return [
     // Only one withdrawal request is allowed in this window.
     'payout_cooldown_hours' => (int) env('EARNING_PAYOUT_COOLDOWN_HOURS', 24),
 
+    // Admin fee kept from each withdrawal. The user is debited the full amount,
+    // while the payout request shown to admin is the amount after this fee.
+    'payout_admin_fee_percent' => (float) env('EARNING_PAYOUT_ADMIN_FEE_PERCENT', 10),
+
     'support_email' => env('EARNING_SUPPORT_EMAIL', 'support@earnpk.test'),
 
     'signup_bonus' => (float) env('EARNING_SIGNUP_BONUS', 0),
@@ -70,6 +74,10 @@ return [
     'deposit' => [
         'min' => (float) env('EARNING_DEPOSIT_MIN', 100),
         'max' => (float) env('EARNING_DEPOSIT_MAX', 100000),
+
+        // User enters the amount they want credited. The gateway is charged
+        // this amount plus the admin fee; only the entered amount is credited.
+        'admin_fee_percent' => (float) env('EARNING_DEPOSIT_ADMIN_FEE_PERCENT', 10),
 
         'cashmaal' => [
             'enabled' => (bool) env('CASHMAAL_ENABLED', true),

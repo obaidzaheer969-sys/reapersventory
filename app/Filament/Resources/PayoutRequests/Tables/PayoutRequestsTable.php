@@ -45,8 +45,17 @@ class PayoutRequestsTable
                     ->label('Account number')
                     ->searchable(),
                 TextColumn::make('amount')
+                    ->label('Payout')
                     ->money('PKR')
                     ->sortable(),
+                TextColumn::make('gross_amount')
+                    ->label('Wallet debit')
+                    ->money('PKR')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('fee')
+                    ->label('Admin fee')
+                    ->money('PKR')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn (PayoutStatus $state) => $state->label())

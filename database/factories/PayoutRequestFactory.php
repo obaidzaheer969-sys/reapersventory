@@ -23,7 +23,9 @@ class PayoutRequestFactory extends Factory
             'provider' => PayoutProvider::Easypaisa,
             'account_name' => fake()->name(),
             'account_number' => '03'.fake()->numerify('#########'),
-            'amount' => 500,
+            'amount' => 450,
+            'gross_amount' => 500,
+            'fee' => 50,
             'status' => PayoutStatus::Pending,
         ];
     }

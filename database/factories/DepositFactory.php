@@ -18,14 +18,15 @@ class DepositFactory extends Factory
     public function definition(): array
     {
         $amount = fake()->randomFloat(2, 100, 5000);
+        $fee = round($amount * 0.10, 2);
 
         return [
             'user_id' => User::factory(),
             'provider' => 'cashmaal',
             'order_id' => 'DEP-'.Str::upper(Str::random(16)),
             'amount' => $amount,
-            'fee' => 0,
-            'credit_amount' => $amount,
+            'fee' => $fee,
+            'credit_amount' => round($amount - $fee, 2),
             'currency' => 'PKR',
             'status' => DepositStatus::Pending,
             'cm_tid' => null,

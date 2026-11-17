@@ -42,6 +42,7 @@ class DepositsTable
                     ->money('PKR')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('fee')
+                    ->label('Admin fee')
                     ->money('PKR')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
@@ -80,7 +81,7 @@ class DepositsTable
                         TextEntry::make('order_id')->label('Order')->copyable(),
                         TextEntry::make('provider')->label('Provider'),
                         TextEntry::make('amount')->label('Amount')->money('PKR'),
-                        TextEntry::make('fee')->label('Fee')->money('PKR'),
+                        TextEntry::make('fee')->label('Admin fee')->money('PKR'),
                         TextEntry::make('credit_amount')->label('Credited')->money('PKR'),
                         TextEntry::make('status')
                             ->label('Status')

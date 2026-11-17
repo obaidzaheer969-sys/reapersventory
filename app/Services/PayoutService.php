@@ -8,6 +8,7 @@ use App\Enums\WalletTransactionType;
 use App\Models\PayoutAccount;
 use App\Models\PayoutRequest;
 use App\Models\User;
+use App\Models\WalletTransaction;
 use App\Notifications\PayoutRequestedAdminNotification;
 use App\Notifications\PayoutStatusNotification;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,22 @@ class PayoutService
     public function __construct(
         private readonly WalletService $wallet,
     ) {}
+
+    /**
+     * @return array{gross: float, fee: float, net: float}
+     */
+    public function quote(float $amount): array
+    {
+        $gross = round($amount, 2);
+        $percent = max(0.0, (float) config('earning.payout_admin_fee_percent', 10));
+        $fee = round($gross * $percent / 100, 2);
+
+        return [
+            'gross' => $gross,
+            'fee' => $fee,
+            'net' => round(max(0, $gross - $fee), 2),
+        ];
+    }
 
     public function requestPayout(User $user, PayoutAccount $account, float $amount): PayoutRequest
     {
@@ -57,23 +74,36 @@ class PayoutService
                 }
             }
 
+            $quote = $this->quote($amount);
+
             $payout = PayoutRequest::query()->create([
                 'user_id' => $user->id,
                 'payout_account_id' => $account->id,
                 'provider' => $account->provider,
                 'account_name' => $account->account_name,
                 'account_number' => $account->account_number,
-                'amount' => round($amount, 2),
+                'amount' => $quote['net'],
+                'gross_amount' => $quote['gross'],
+                'fee' => $quote['fee'],
                 'status' => PayoutStatus::Pending,
             ]);
 
             $this->wallet->debit(
                 $user,
-                $amount,
+                $quote['gross'],
                 WalletTransactionType::PayoutRequest,
                 'Payout request #'.$payout->id.' ('.$account->provider->label().')',
                 $payout,
             );
+
+            if ($quote['fee'] > 0) {
+                $this->wallet->creditFirstActiveAdmin(
+                    $quote['fee'],
+                    WalletTransactionType::PayoutAdminFee,
+                    'Withdrawal admin fee: payout #'.$payout->id,
+                    $payout,
+                );
+            }
 
             return $payout;
         });
@@ -143,11 +173,28 @@ class PayoutService
 
             $this->wallet->credit(
                 $payout->user,
-                (float) $payout->amount,
+                $payout->grossAmount(),
                 WalletTransactionType::PayoutRefund,
                 'Payout #'.$payout->id.' rejected — amount refunded',
                 $payout,
             );
+
+            /** @var WalletTransaction|null $adminFee */
+            $adminFee = WalletTransaction::query()
+                ->where('reference_type', $payout->getMorphClass())
+                ->where('reference_id', $payout->id)
+                ->where('type', WalletTransactionType::PayoutAdminFee)
+                ->first();
+
+            if ($adminFee !== null && $adminFee->user !== null && $payout->feeAmount() > 0) {
+                $this->wallet->debit(
+                    $adminFee->user,
+                    $payout->feeAmount(),
+                    WalletTransactionType::PayoutFeeReversal,
+                    'Payout #'.$payout->id.' rejected — admin fee reversed',
+                    $payout,
+                );
+            }
 
             return $payout;
         });

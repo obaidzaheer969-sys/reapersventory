@@ -70,41 +70,70 @@ class AdminPanelTest extends TestCase
         Livewire::actingAs($admin)
             ->test(SiteAdsSettings::class)
             ->set('data.site_approved', true)
+            ->set('data.site_verification_tag', '<meta name="google-site-verification" content="verify-123">')
             ->set('data.ads_enabled', true)
-            ->set('data.ad_provider', 'custom')
-            ->set('data.ad_code', '<div data-test-ad>Admin ad</div>')
+            ->set('data.ad_provider', 'adsense')
+            ->set('data.ad_slot_top', '<div data-test-ad>Admin ad</div>')
             ->call('save')
             ->assertHasNoErrors();
 
         $this->assertTrue((bool) SystemSetting::getValue('site_approved', false));
         $this->assertTrue((bool) SystemSetting::getValue('ads_enabled', false));
-        $this->assertSame('<div data-test-ad>Admin ad</div>', SystemSetting::getValue('ad_code'));
+        $this->assertSame('<meta name="google-site-verification" content="verify-123">', SystemSetting::getValue('site_verification_tag'));
+        $this->assertSame('<div data-test-ad>Admin ad</div>', SystemSetting::getValue('ad_slot_top'));
     }
 
     public function test_approval_badge_and_ads_are_shown_to_users_when_enabled(): void
     {
         $user = User::factory()->earner()->create();
         SystemSetting::setValue('site_approved', true);
+        SystemSetting::setValue('site_verification_tag', '<meta name="google-site-verification" content="verify-123">');
         SystemSetting::setValue('ads_enabled', true);
-        SystemSetting::setValue('ad_code', '<div data-test-ad>Admin ad</div>');
+        SystemSetting::setValue('ad_slot_top', '<div data-test-ad>Admin ad</div>');
+        SystemSetting::setValue('ad_slot_footer', '<div data-test-footer-ad>Footer ad</div>');
 
         $this->actingAs($user)->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Approved')
+            ->assertSee('google-site-verification', false)
+            ->assertSee('data-test-ad', false)
+            ->assertSee('Admin ad', false)
+            ->assertSee('data-test-footer-ad', false)
+            ->assertSee('Footer ad', false);
+
+        $this->get(route('pricing'))
+            ->assertOk()
             ->assertSee('data-test-ad', false)
             ->assertSee('Admin ad', false);
+    }
+
+    public function test_ads_do_not_run_without_a_site_verification_tag(): void
+    {
+        $user = User::factory()->earner()->create();
+        SystemSetting::setValue('site_approved', true);
+        SystemSetting::setValue('site_verification_tag', '');
+        SystemSetting::setValue('ads_enabled', true);
+        SystemSetting::setValue('ad_slot_top', '<div data-test-ad>Admin ad</div>');
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Approved')
+            ->assertDontSee('data-test-ad', false)
+            ->assertDontSee('Admin ad', false);
     }
 
     public function test_approval_badge_and_ads_are_hidden_when_disabled(): void
     {
         $user = User::factory()->earner()->create();
         SystemSetting::setValue('site_approved', false);
+        SystemSetting::setValue('site_verification_tag', '<meta name="google-site-verification" content="verify-123">');
         SystemSetting::setValue('ads_enabled', false);
-        SystemSetting::setValue('ad_code', '<div data-test-ad>Admin ad</div>');
+        SystemSetting::setValue('ad_slot_top', '<div data-test-ad>Admin ad</div>');
 
         $this->actingAs($user)->get(route('dashboard'))
             ->assertOk()
             ->assertDontSee('Approved')
+            ->assertDontSee('google-site-verification', false)
             ->assertDontSee('data-test-ad', false)
             ->assertDontSee('Admin ad', false);
     }

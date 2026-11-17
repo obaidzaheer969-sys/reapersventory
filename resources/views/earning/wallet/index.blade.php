@@ -86,6 +86,21 @@
                             <p class="mt-1.5 text-[11px] text-slate-500">Available: {{ \App\Support\Currency::format($balance) }} · Minimum: {{ \App\Support\Currency::format($minimumPayout, false) }}</p>
                         </div>
 
+                        <div class="space-y-1.5 rounded-xl border border-gold-400/20 bg-gold-400/5 px-4 py-3 text-[11px]">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="text-slate-400">Wallet se cut hoga</span>
+                                <span id="payout-gross" class="font-bold text-white">{{ \App\Support\Currency::format($payoutQuote['gross']) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="text-slate-400">Admin fee ({{ number_format($payoutFeePercent, 0) }}%)</span>
+                                <span id="payout-fee" class="font-bold text-gold-300">{{ \App\Support\Currency::format($payoutQuote['fee']) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between gap-3 border-t border-white/10 pt-1.5">
+                                <span class="text-slate-300">Aapke wallet account me jayega</span>
+                                <span id="payout-net" class="font-bold text-mint-300">{{ \App\Support\Currency::format($payoutQuote['net']) }}</span>
+                            </div>
+                        </div>
+
                         <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                                 @disabled($balance < $minimumPayout || $payoutLocked)>
                             Request payout
@@ -99,7 +114,7 @@
 
                 <p class="mt-3 rounded-xl border border-mint-400/20 bg-mint-500/5 px-3 py-2.5 text-[11px] leading-relaxed text-slate-300">
                     <span class="font-bold text-mint-300">Withdrawal period: {{ $cooldownHours }} ghante.</span>
-                    Ek baar payout request bhejne ke baad agla withdrawal {{ $cooldownHours }} ghante baad hi ho sakta hai. Payment {{ $cooldownHours }} ghanton me aap ke wallet account me bhej di jati hai.
+                    Ek baar payout request bhejne ke baad agla withdrawal {{ $cooldownHours }} ghante baad hi ho sakta hai. Har withdrawal par {{ number_format($payoutFeePercent, 0) }}% admin fee cut hoti hai — wallet se poora amount debit hota hai, admin ko fee jaati hai aur baqi amount aap ke wallet account me bheja jata hai.
                 </p>
 
                 @if ($payoutLocked)
@@ -238,7 +253,7 @@
                             <tr>
                                 <th class="px-5 py-3 font-semibold">#</th>
                                 <th class="px-5 py-3 font-semibold">Wallet</th>
-                                <th class="px-5 py-3 text-right font-semibold">Amount</th>
+                                <th class="px-5 py-3 text-right font-semibold">Payout</th>
                                 <th class="px-5 py-3 font-semibold">Status</th>
                                 <th class="px-5 py-3 font-semibold">Date</th>
                             </tr>
@@ -251,7 +266,13 @@
                                         <p class="text-sm font-semibold text-white">{{ $payout->provider->label() }}</p>
                                         <p class="text-[11px] text-slate-500">{{ $payout->account_number }}</p>
                                     </td>
-                                    <td class="whitespace-nowrap px-5 py-3.5 text-right font-bold text-white">{{ \App\Support\Currency::format($payout->amount) }}</td>
+                                    <td class="whitespace-nowrap px-5 py-3.5 text-right">
+                                        <p class="font-bold text-white">{{ \App\Support\Currency::format($payout->amount) }}</p>
+                                        <p class="text-[10px] text-slate-500">Wallet cut {{ \App\Support\Currency::format($payout->grossAmount()) }}</p>
+                                        @if ($payout->feeAmount() > 0)
+                                            <p class="text-[10px] text-gold-300/80">Admin fee {{ \App\Support\Currency::format($payout->feeAmount()) }}</p>
+                                        @endif
+                                    </td>
                                     <td class="px-5 py-3.5">
                                         @php
                                             $statusClasses = match ($payout->status) {
@@ -312,3 +333,36 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        (function () {
+            var amountInput = document.getElementById('amount');
+            var grossOut = document.getElementById('payout-gross');
+            var feeOut = document.getElementById('payout-fee');
+            var netOut = document.getElementById('payout-net');
+
+            if (!amountInput || !grossOut || !feeOut || !netOut) {
+                return;
+            }
+
+            var feePercent = {{ (float) $payoutFeePercent }};
+
+            function money(value) {
+                return 'PKR ' + value.toFixed(2);
+            }
+
+            function update() {
+                var gross = Math.max(0, parseFloat(amountInput.value) || 0);
+                var fee = Math.round(gross * feePercent) / 100;
+
+                grossOut.textContent = money(gross);
+                feeOut.textContent = money(fee);
+                netOut.textContent = money(Math.max(0, gross - fee));
+            }
+
+            amountInput.addEventListener('input', update);
+            update();
+        })();
+    </script>
+@endpush

@@ -12,7 +12,10 @@
             <h1 class="mt-4 font-display text-2xl font-bold text-white">Cashmaal par redirect ho raha hai</h1>
             <p class="mt-2 text-sm text-slate-400">
                 Order <span class="font-mono text-slate-200">{{ $deposit->order_id }}</span> ·
-                {{ \App\Support\Currency::format($deposit->amount) }}
+                Total {{ \App\Support\Currency::format($deposit->amount) }}
+            </p>
+            <p class="mt-1 text-xs text-slate-500">
+                Wallet me aayega {{ \App\Support\Currency::format($deposit->credit_amount) }} · Admin fee {{ \App\Support\Currency::format($deposit->fee) }}
             </p>
             <p class="mt-1 text-xs text-slate-500">Please wait — payment page automatically khul rahi hai. Agar na khule to neeche button dabaein.</p>
 

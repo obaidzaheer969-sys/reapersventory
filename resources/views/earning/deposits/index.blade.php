@@ -12,7 +12,7 @@
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Deposit</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Wallet me paise add karein</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Cashmaal ke zariye online deposit karein. Payment confirm hote hi amount foran aap ke wallet me add ho jata hai.
+                Cashmaal ke zariye online deposit karein. Admin fee alag se payable hai — aap jo amount dein uska {{ number_format($adminFeePercent, 0) }}% admin fee total me add hota hai, aur sirf aapka amount wallet me credit hota hai.
             </p>
         </div>
         <div class="rounded-2xl border border-mint-400/25 bg-mint-500/10 px-4 py-3 text-right">
@@ -34,7 +34,7 @@
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Deposit limits</p>
             <p class="mt-2 font-display text-2xl font-bold text-white">{{ \App\Support\Currency::format($minimum, false) }}</p>
-            <p class="mt-2 text-xs text-slate-400">Maximum {{ \App\Support\Currency::format($maximum, false) }} per deposit</p>
+            <p class="mt-2 text-xs text-slate-400">Maximum {{ \App\Support\Currency::format($maximum, false) }} · Admin fee {{ number_format($adminFeePercent, 0) }}%</p>
         </div>
     </div>
 
@@ -58,6 +58,21 @@
                                    value="{{ old('amount', number_format($minimum, 0, '.', '')) }}"
                                    class="w-full rounded-xl border border-white/10 bg-ink-900 px-3.5 py-2.5 text-sm text-white focus:border-mint-400 focus:outline-none focus:ring-2 focus:ring-mint-400/20">
                             <p class="mt-1.5 text-[11px] text-slate-500">Minimum {{ \App\Support\Currency::format($minimum, false) }} · Maximum {{ \App\Support\Currency::format($maximum, false) }}</p>
+                        </div>
+
+                        <div class="space-y-1.5 rounded-xl border border-gold-400/20 bg-gold-400/5 px-4 py-3 text-[11px]">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="text-slate-400">Wallet me aayega</span>
+                                <span id="deposit-net" class="font-bold text-white">{{ \App\Support\Currency::format($depositQuote['amount']) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="text-slate-400">Admin fee ({{ number_format($adminFeePercent, 0) }}%)</span>
+                                <span id="deposit-fee" class="font-bold text-gold-300">{{ \App\Support\Currency::format($depositQuote['fee']) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between gap-3 border-t border-white/10 pt-1.5">
+                                <span class="text-slate-300">Cashmaal par total dein</span>
+                                <span id="deposit-total" class="font-bold text-mint-300">{{ \App\Support\Currency::format($depositQuote['total']) }}</span>
+                            </div>
                         </div>
 
                         <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20">
@@ -101,6 +116,9 @@
                                     <td class="whitespace-nowrap px-5 py-3.5 text-right">
                                         <p class="text-sm font-bold text-white">{{ \App\Support\Currency::format($deposit->amount) }}</p>
                                         <p class="text-[10px] text-slate-500">Credited {{ \App\Support\Currency::format($deposit->credit_amount) }}</p>
+                                        @if ((float) $deposit->fee > 0)
+                                            <p class="text-[10px] text-gold-300/80">Admin fee {{ \App\Support\Currency::format($deposit->fee) }}</p>
+                                        @endif
                                     </td>
                                     <td class="px-5 py-3.5">
                                         <span class="rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
@@ -132,3 +150,36 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        (function () {
+            var amountInput = document.getElementById('amount');
+            var netOut = document.getElementById('deposit-net');
+            var feeOut = document.getElementById('deposit-fee');
+            var totalOut = document.getElementById('deposit-total');
+
+            if (!amountInput || !netOut || !feeOut || !totalOut) {
+                return;
+            }
+
+            var feePercent = {{ (float) $adminFeePercent }};
+
+            function money(value) {
+                return 'PKR ' + value.toFixed(2);
+            }
+
+            function update() {
+                var net = Math.max(0, parseFloat(amountInput.value) || 0);
+                var fee = Math.round(net * feePercent) / 100;
+
+                netOut.textContent = money(net);
+                feeOut.textContent = money(fee);
+                totalOut.textContent = money(net + fee);
+            }
+
+            amountInput.addEventListener('input', update);
+            update();
+        })();
+    </script>
+@endpush

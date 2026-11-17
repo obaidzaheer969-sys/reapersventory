@@ -22,7 +22,9 @@ class PayoutRequestForm
                 Select::make('provider')->options(PayoutProvider::options())->disabled(),
                 TextInput::make('account_name')->disabled(),
                 TextInput::make('account_number')->disabled(),
-                TextInput::make('amount')->numeric()->prefix('PKR')->disabled(),
+                TextInput::make('amount')->label('Payout')->numeric()->prefix('PKR')->disabled(),
+                TextInput::make('gross_amount')->label('Wallet debit')->numeric()->prefix('PKR')->disabled(),
+                TextInput::make('fee')->label('Admin fee')->numeric()->prefix('PKR')->disabled(),
                 Select::make('status')->options(collect(PayoutStatus::cases())->mapWithKeys(
                     fn (PayoutStatus $status) => [$status->value => $status->label()]
                 ))->disabled(),

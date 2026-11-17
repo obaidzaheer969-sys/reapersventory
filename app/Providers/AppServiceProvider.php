@@ -30,6 +30,7 @@ use App\Policies\SubscriptionPolicy;
 use App\Policies\SupplierPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\WarehousePolicy;
+use App\Services\AdService;
 use App\Services\InventoryService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -84,6 +85,32 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ProductReturn::class, ProductReturnPolicy::class);
 
         Gate::define('access-super-admin', fn ($user) => $user->isSuperAdmin());
+
+        View::composer(['layouts.earning', 'layouts.app'], function ($view): void {
+            $adState = [
+                'siteApproved' => false,
+                'siteVerificationTag' => '',
+                'adsEnabled' => false,
+                'adAutoCode' => '',
+                'adSlots' => [],
+            ];
+
+            try {
+                /** @var AdService $ads */
+                $ads = app(AdService::class);
+                $adState = [
+                    'siteApproved' => $ads->isApproved(),
+                    'siteVerificationTag' => $ads->verificationTag(),
+                    'adsEnabled' => $ads->canRunAds(),
+                    'adAutoCode' => $ads->autoCode(),
+                    'adSlots' => $ads->slots(),
+                ];
+            } catch (Throwable) {
+                // Ads are optional: a missing settings table must not break the site.
+            }
+
+            $view->with($adState);
+        });
 
         View::composer('layouts.partials.nav', function ($view): void {
             $unread = 0;

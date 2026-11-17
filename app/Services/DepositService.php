@@ -22,6 +22,22 @@ class DepositService
         private readonly CashmaalGateway $gateway,
     ) {}
 
+    /**
+     * @return array{amount: float, fee: float, total: float}
+     */
+    public function quote(float $amount): array
+    {
+        $net = round($amount, 2);
+        $percent = max(0.0, (float) config('earning.deposit.admin_fee_percent', 10));
+        $fee = round($net * $percent / 100, 2);
+
+        return [
+            'amount' => $net,
+            'fee' => $fee,
+            'total' => round($net + $fee, 2),
+        ];
+    }
+
     public function create(User $user, float $amount): Deposit
     {
         $minimum = (float) config('earning.deposit.min', 100);
@@ -40,13 +56,15 @@ class DepositService
             ]);
         }
 
+        $quote = $this->quote($amount);
+
         return Deposit::query()->create([
             'user_id' => $user->id,
             'provider' => 'cashmaal',
             'order_id' => $this->uniqueOrderId(),
-            'amount' => round($amount, 2),
-            'fee' => 0,
-            'credit_amount' => round($amount, 2),
+            'amount' => $quote['total'],
+            'fee' => $quote['fee'],
+            'credit_amount' => $quote['amount'],
             'currency' => $this->gateway->currency(),
             'status' => DepositStatus::Pending,
             'client_email' => $user->email,
@@ -118,14 +136,19 @@ class DepositService
                 return $locked;
             }
 
-            $credit = $creditAmount ?? (float) $locked->amount;
+            $credit = $creditAmount ?? (float) $locked->credit_amount;
+            $adminFee = round((float) $locked->fee, 2);
 
             $locked->forceFill([
                 'status' => DepositStatus::Completed,
                 'cm_tid' => filled($cmTid) ? $cmTid : $locked->cm_tid,
-                'fee' => round($fee, 2),
+                'fee' => $adminFee,
                 'credit_amount' => round($credit, 2),
-                'payload' => array_merge($locked->payload ?? [], $payload),
+                'payload' => array_merge(
+                    $locked->payload ?? [],
+                    $fee > 0 ? ['gateway_fee' => round($fee, 2)] : [],
+                    $payload,
+                ),
                 'paid_at' => now(),
             ])->save();
 
@@ -136,6 +159,15 @@ class DepositService
                 'Cashmaal deposit '.$locked->order_id,
                 $locked,
             );
+
+            if ($adminFee > 0) {
+                $this->wallet->creditFirstActiveAdmin(
+                    $adminFee,
+                    WalletTransactionType::DepositAdminFee,
+                    'Deposit admin fee: '.$locked->order_id,
+                    $locked,
+                );
+            }
 
             $locked->user?->notify(new DepositCompletedNotification($locked));
             $this->notifyAdmins(new DepositAdminNotification($locked));

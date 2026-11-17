@@ -1,14 +1,10 @@
-@php
-    $siteApproved = (bool) \App\Models\SystemSetting::getValue('site_approved', false);
-    $adsEnabled = (bool) \App\Models\SystemSetting::getValue('ads_enabled', false);
-    $adCode = $adsEnabled ? (string) \App\Models\SystemSetting::getValue('ad_code', '') : '';
-@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('ads.head')
     <title>@yield('title', config('earning.brand').' — '.config('earning.tagline'))</title>
     <link rel="icon" href="{{ asset('images/reapersventory-logo.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -154,13 +150,13 @@
             </div>
         @endif
 
-        @if ($adCode !== '')
-            <div class="mb-5 overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-3 py-3" aria-label="Advertisement">
-                {!! $adCode !!}
-            </div>
-        @endif
+        @include('ads.slot', ['name' => 'top', 'variant' => 'dark'])
+        @include('ads.slot', ['name' => 'content', 'variant' => 'dark'])
 
         @yield('content')
+
+        @include('ads.slot', ['name' => 'bottom', 'variant' => 'dark'])
+        @include('ads.slot', ['name' => 'footer', 'variant' => 'dark'])
     </main>
 
     <footer class="relative mx-auto w-full max-w-7xl px-4 pb-8 pt-4 text-xs text-slate-500 sm:px-6 lg:px-8">
