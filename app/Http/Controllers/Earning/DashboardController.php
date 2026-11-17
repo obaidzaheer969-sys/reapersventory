@@ -5,14 +5,20 @@ namespace App\Http\Controllers\Earning;
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\EarningTask;
+use App\Models\User;
+use App\Services\AnnouncementNotificationService;
 use App\Services\TaskService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request, TaskService $tasks): View
-    {
+    public function __invoke(
+        Request $request,
+        TaskService $tasks,
+        AnnouncementNotificationService $announcementNotifications,
+    ): View {
+        /** @var User $user */
         $user = $request->user();
 
         $activeTasks = EarningTask::query()
@@ -60,6 +66,7 @@ class DashboardController extends Controller
             'remainingTodayCount' => $tasks->remainingTodayCount($user),
             'nextResetAt' => $tasks->nextResetAt(),
             'announcements' => $announcements,
+            'unreadAnnouncementIds' => $announcementNotifications->unreadAnnouncementIds($user),
             'recentAttempts' => $recentAttempts,
             'recentTransactions' => $recentTransactions,
             'myCampaignsCount' => $user->liveCampaigns()->count(),

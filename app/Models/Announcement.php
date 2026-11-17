@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\AnnouncementNotificationService;
 use Database\Factories\AnnouncementFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,6 +24,23 @@ class Announcement extends Model
     /** @use HasFactory<AnnouncementFactory> */
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::created(function (Announcement $announcement): void {
+            if ($announcement->isVisibleNow()) {
+                app(AnnouncementNotificationService::class)->publish($announcement);
+            }
+        });
+
+        static::updated(function (Announcement $announcement): void {
+            $visibilityChanged = $announcement->wasChanged(['is_active', 'published_at', 'expires_at']);
+
+            if ($visibilityChanged && $announcement->isVisibleNow()) {
+                app(AnnouncementNotificationService::class)->publish($announcement);
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -36,6 +54,13 @@ class Announcement extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function isVisibleNow(): bool
+    {
+        return $this->is_active
+            && ($this->published_at === null || $this->published_at->lessThanOrEqualTo(now()))
+            && ($this->expires_at === null || $this->expires_at->greaterThan(now()));
     }
 
     /**

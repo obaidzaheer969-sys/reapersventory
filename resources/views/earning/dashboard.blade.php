@@ -195,9 +195,14 @@
                 <div class="divide-y divide-white/5">
                     @forelse ($announcements as $announcement)
                         <div class="px-5 py-4">
-                            @if ($announcement->is_pinned)
-                                <span class="rounded-full bg-gold-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-300">Pinned</span>
-                            @endif
+                            <div class="flex flex-wrap items-center gap-2">
+                                @if ($unreadAnnouncementIds->contains($announcement->id))
+                                    <span class="rounded-full bg-mint-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-mint-300">New</span>
+                                @endif
+                                @if ($announcement->is_pinned)
+                                    <span class="rounded-full bg-gold-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-300">Pinned</span>
+                                @endif
+                            </div>
                             <h3 class="mt-1 text-sm font-semibold text-white">{{ $announcement->title }}</h3>
                             <p class="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-400">{{ $announcement->body }}</p>
                             <p class="mt-2 text-[10px] text-slate-500">{{ ($announcement->published_at ?? $announcement->created_at)?->format('d M Y') }}</p>

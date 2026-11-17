@@ -17,6 +17,9 @@
         @forelse ($announcements as $announcement)
             <article class="rounded-2xl border p-5 {{ $announcement->is_pinned ? 'border-gold-400/30 bg-gold-400/5' : 'border-white/10 bg-white/5' }}">
                 <div class="flex flex-wrap items-center gap-2">
+                    @if ($unreadAnnouncementIds->contains($announcement->id))
+                        <span class="rounded-full bg-mint-400/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-mint-300">New</span>
+                    @endif
                     @if ($announcement->is_pinned)
                         <span class="rounded-full bg-gold-400/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold-300">📌 Pinned</span>
                     @endif
