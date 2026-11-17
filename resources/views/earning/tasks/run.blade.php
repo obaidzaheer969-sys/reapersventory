@@ -8,10 +8,17 @@
         $remaining = max(0, (int) $remainingSeconds);
         $ready = $remaining === 0;
         $isEmbedded = (bool) ($embedded ?? false);
+        $timerPaused = (bool) ($timerPaused ?? false);
+        $waitingForPage = ! $isEmbedded && $timerPaused;
         $watchRequired = $isEmbedded ? max(1, (int) $requiredSeconds) : 0;
         $watched = $isEmbedded ? min($watchRequired, (int) $watchedSeconds) : 0;
         $watchReady = ! $isEmbedded || $watched >= $watchRequired;
         $claimable = $ready && $watchReady && ($isEmbedded || $realPageOpened);
+        $claimLabel = $claimable
+            ? 'Claim '.config('earning.currency').' '.number_format((float) $expectedReward, 2)
+            : (! $isEmbedded && ! $realPageOpened
+                ? 'Pehle real page kholein'
+                : ($isEmbedded && $ready ? 'Video '.(max(0, $watchRequired - $watched)).'s aur dekhein' : 'Please wait…'));
     @endphp
 
     <div class="mx-auto max-w-5xl {{ $ready ? '' : 'pb-40' }}">
@@ -41,7 +48,7 @@
                                 @if ($isEmbedded)
                                     {{ $ready && $watchReady ? 'Timer complete — ab claim karein' : 'Video play karein — watch time shuru karein' }}
                                 @else
-                                    {{ $ready ? 'Timer complete — ab claim karein' : 'Real page kholein — timer chalu hai' }}
+                                    {{ $ready ? 'Timer complete — ab claim karein' : ($waitingForPage ? 'Real page kholein — timer abhi shuru nahi hua' : 'Real page kholein — timer chalu hai') }}
                                 @endif
                             </span>
                         </p>
@@ -49,7 +56,7 @@
                             @if ($isEmbedded)
                                 Video neeche official {{ $task->platform() }} player me chal rahi hai. Play button dabaein — watch time isi page par count hota hai. Timer poora hone aur required watch time mukammal hone par reward claim karein.
                             @else
-                                Task ka asli page naye tab me khulta hai. Wahan video play karein, like ya subscribe karein — YouTube/Facebook par views, watch time, likes aur subscribes real time count hote hain.
+                                Pehle "Open real page" dabaein — asli page khulne tak seconds nahi chalenge. Wahan video play karein, like ya subscribe karein — YouTube/Facebook par views, watch time, likes aur subscribes real time count hote hain.
                             @endif
                         </p>
                         <p class="mt-1.5 truncate text-[11px] text-slate-500" title="{{ $task->target_url }}">{{ $task->target_url }}</p>
@@ -126,7 +133,7 @@
                     </p>
                 @else
                     <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90" data-real-hint>
-                        🔒 Real page ka tab timer poora hone se pehle band kiya to task <span class="font-bold">FAIL</span> ho jayega aur reward nahi milega. Us tab ko khula rakhein.
+                        🔒 Pehle "Open real page" dabaein — tab tak timer shuru nahi hoga. Real page khulte hi seconds chalne lagenge; us tab ko timer poora hone se pehle band kiya to task <span class="font-bold">FAIL</span> ho jayega.
                     </p>
                 @endif
 
@@ -149,7 +156,7 @@
                         <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-mint-300" data-timer-status>{{ $ready ? 'Ready to claim' : 'Seconds remaining' }}</p>
                         <p class="mt-1 font-display text-4xl font-bold tabular-nums text-white {{ $ready ? '' : 'hidden' }}" data-timer-display>{{ gmdate('i:s', $remaining) }}</p>
                         @if (! $ready)
-                            <p class="mt-1 text-sm font-semibold text-gold-300" data-timer-lock-note>Timer neeche lock bar me chal raha hai</p>
+                            <p class="mt-1 text-sm font-semibold text-gold-300" data-timer-lock-note>{{ $waitingForPage ? 'Timer real page khulne ka intezaar kar raha hai' : ($timerPaused ? 'Timer video pause hone ki wajah se ruk gaya hai' : 'Timer neeche lock bar me chal raha hai') }}</p>
                         @endif
                         <div class="mt-3 h-2 w-full max-w-xs overflow-hidden rounded-full bg-white/10">
                             <div class="h-full rounded-full bg-gradient-to-r from-mint-400 to-mint-500 transition-[width] duration-1000 ease-linear"
@@ -162,7 +169,7 @@
                         <button type="submit" data-claim-button
                                 class="w-full rounded-xl px-5 py-2.5 text-sm font-bold transition {{ $claimable ? 'bg-gradient-to-r from-mint-400 to-mint-500 text-ink-950 shadow-lg shadow-mint-500/20' : 'cursor-not-allowed bg-white/5 text-slate-500' }}"
                                 @disabled(! $claimable)>
-                            {{ $claimable ? 'Claim '.config('earning.currency').' '.number_format((float) $expectedReward, 2) : ($ready ? ($isEmbedded ? 'Video '.(max(0, $watchRequired - $watched)).'s aur dekhein' : 'Pehle real page kholein') : 'Please wait…') }}
+                            {{ $claimLabel }}
                         </button>
                     </form>
                 </div>
@@ -171,7 +178,7 @@
                     @if ($isEmbedded)
                         Is tab me timer chal raha hai aur isi tab ka title bar seconds dikhata hai. Timer poora hone tak yeh tab band karna aur back jana band rahega. Video play karte waqt hi timer aur watch time dono chalte hain — pause karne par dono ruk jate hain.
                     @else
-                        Is tab me timer chal raha hai aur isi tab ka title bar seconds dikhata hai. Timer poora hone tak yeh tab band karna aur back jana band rahega — real page alag tab me hai, use bhi band na karein.
+                        Pehle "Open real page" dabaein — real page khulte hi is tab me timer chalna shuru hoga aur title bar seconds dikhayega. Timer poora hone tak yeh tab band karna aur back jana band rahega — real page alag tab me hai, use bhi band na karein.
                     @endif
                 </p>
             </div>
@@ -267,6 +274,7 @@
             var timerPaused = @json((bool) ($timerPaused ?? false));
             var pausedRemaining = remaining;
             var progressSequence = 0;
+            var openSequence = 0;
 
             var display = document.querySelector('[data-timer-display]');
             var timerLockNote = document.querySelector('[data-timer-lock-note]');
@@ -332,21 +340,27 @@
             }
 
             function updateTimerPauseUi() {
-                var pausedNow = embedded && timerPaused && locked && !finished && !failed;
+                var pausedNow = timerPaused && locked && !finished && !failed;
 
                 if (lockLabel) {
-                    lockLabel.textContent = pausedNow ? 'Timer paused' : originalLockLabel;
+                    lockLabel.textContent = pausedNow
+                        ? (embedded ? 'Timer paused' : 'Waiting for real page')
+                        : originalLockLabel;
                 }
 
                 if (lockMessage) {
                     lockMessage.textContent = pausedNow
-                        ? 'Video paused hai — play karte hi timer dobara chalega.'
+                        ? (embedded
+                            ? 'Video paused hai — play karte hi timer dobara chalega.'
+                            : 'Real page abhi nahi khula — "Open real page" dabate hi timer shuru hoga.')
                         : originalLockMessage;
                 }
 
                 if (timerLockNote) {
                     timerLockNote.textContent = pausedNow
-                        ? 'Timer video pause hone ki wajah se ruk gaya hai'
+                        ? (embedded
+                            ? 'Timer video pause hone ki wajah se ruk gaya hai'
+                            : 'Timer real page khulne ka intezaar kar raha hai')
                         : 'Timer neeche lock bar me chal raha hai';
                 }
             }
@@ -377,23 +391,6 @@
 
             function progress() {
                 return Math.min(100, Math.round(((total - remaining) / total) * 100));
-            }
-
-            function post(url, payload) {
-                try {
-                    fetch(url, {
-                        method: 'POST',
-                        credentials: 'same-origin',
-                        keepalive: true,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': csrf,
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify(payload || {})
-                    }).catch(function () {});
-                } catch (error) {}
             }
 
             function notifyServerFailure() {
@@ -472,6 +469,58 @@
                         updateClaim();
                         updateEmbedStatus();
                     }).catch(function () {});
+                } catch (error) {}
+            }
+
+            function confirmRealPageOpened() {
+                if (failed || embedded) {
+                    return;
+                }
+
+                var sequence = ++openSequence;
+
+                try {
+                    fetch(openedUrl, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: '{}'
+                    }).then(function (response) {
+                        return response.ok ? response.json() : null;
+                    }).then(function (data) {
+                        if (!data || !data.ok || sequence !== openSequence || failed) {
+                            return;
+                        }
+
+                        opened = true;
+                        timerPaused = !!data.timer_paused;
+
+                        if (typeof data.timer_remaining_seconds === 'number' && locked && !finished) {
+                            remaining = Math.max(0, data.timer_remaining_seconds);
+                            pausedRemaining = remaining;
+                            deadline = Date.now() + remaining * 1000;
+                        }
+
+                        updateTimerPauseUi();
+                        render();
+                        setOpenUi();
+                        updateClaim();
+                    }).catch(function () {
+                        if (sequence !== openSequence || failed) {
+                            return;
+                        }
+
+                        setRealStatus('Real page confirm nahi hua — "Open real page" dobara dabaein', 'gold');
+
+                        if (realHint) {
+                            realHint.textContent = '⚠️ Timer abhi shuru nahi hua. Real page khula rakhein aur "Open real page" dobara dabaein.';
+                        }
+                    });
                 } catch (error) {}
             }
 
@@ -574,7 +623,7 @@
 
                 if (failed) {
                     button.textContent = 'Task failed';
-                } else if (!embedded && finished && !opened) {
+                } else if (!embedded && !opened) {
                     button.textContent = 'Pehle real page kholein';
                 } else if (embedded && finished && !watchReady) {
                     button.textContent = 'Video ' + Math.max(0, required - watched) + 's aur dekhein';
@@ -618,10 +667,14 @@
                     realHint.textContent = '🔒 Real page ka tab band mat karein — timer poora hone se pehle band karne par task FAIL ho jayega.';
                 }
 
-                setRealStatus(
-                    finished ? 'Timer complete — ab claim karein' : 'Real page khula hai — timer chal raha hai',
-                    'mint'
-                );
+                if (timerPaused) {
+                    setRealStatus('Real page khula hai — timer shuru hoga', 'gold');
+                } else {
+                    setRealStatus(
+                        finished ? 'Timer complete — ab claim karein' : 'Real page khula hai — timer chal raha hai',
+                        'mint'
+                    );
+                }
 
                 updateClaim();
             }
@@ -635,6 +688,10 @@
                     try {
                         popup.focus();
                     } catch (error) {}
+
+                    if (! opened) {
+                        confirmRealPageOpened();
+                    }
 
                     return;
                 }
@@ -657,10 +714,13 @@
                     win.opener = null;
                 } catch (error) {}
 
-                opened = true;
-                post(openedUrl);
-                setOpenUi();
+                if (openButton) {
+                    openButton.textContent = 'Real page khula hai ↗';
+                }
+
+                setRealStatus('Real page khula hai — timer shuru ho raha hai…', 'gold');
                 startWatcher();
+                confirmRealPageOpened();
             }
 
             function checkPopup() {

@@ -176,7 +176,7 @@ class TaskService
                 'status' => TaskAttemptStatus::InProgress,
                 'started_at' => $startedAt,
                 'expires_at' => $startedAt->copy()->addSeconds($task->duration_seconds),
-                'timer_paused_at' => $task->hasEmbeddedPlayer() ? $startedAt : null,
+                'timer_paused_at' => $startedAt,
                 'ip_address' => $ipAddress,
             ]);
         });

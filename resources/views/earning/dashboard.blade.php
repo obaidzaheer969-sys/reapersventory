@@ -82,7 +82,7 @@
                                         ✓ Complete · Unlock {{ $nextResetAt->format('h:i A') }}
                                     </span>
                                 @else
-                                    <form method="POST" action="{{ route('tasks.start', $task) }}" onsubmit="window.open(@js($task->target_url), '_blank', 'noopener');">
+                                    <form method="POST" action="{{ route('tasks.start', $task) }}">
                                         @csrf
                                         <button type="submit" class="rounded-lg bg-gradient-to-r from-mint-400 to-mint-500 px-3.5 py-1.5 text-[11px] font-bold text-ink-950">Start</button>
                                     </form>

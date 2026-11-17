@@ -58,7 +58,7 @@ class TaskController extends Controller
 
         $message = $task->hasEmbeddedPlayer()
             ? 'Task shuru ho gaya. Video isi page par play karein — required watch time aur timer poora hone par reward claim karein.'
-            : 'Task shuru ho gaya. "Open real page" dabaein — asli page naye tab me khulega. Timer poora hone se pehle real page ka tab band karne par task fail ho jayega.';
+            : 'Task shuru ho gaya. "Open real page" dabaein — asli page naye tab me khulega aur timer tabhi shuru hoga. Timer poora hone se pehle real page ka tab band karne par task fail ho jayega.';
 
         return redirect()
             ->route('tasks.run', $task)
@@ -90,7 +90,7 @@ class TaskController extends Controller
             'embedUrl' => $embedUrl,
             'embedPlatform' => $task->embedPlatform(),
             'embedPlayed' => $attempt->hasStartedEmbeddedPlayback(),
-            'timerPaused' => $isEmbedded && $attempt->isTimerPaused(),
+            'timerPaused' => $attempt->isTimerPaused(),
             'watchedSeconds' => $isEmbedded ? (int) $attempt->watched_seconds : 0,
             'requiredSeconds' => $isEmbedded ? (int) $task->duration_seconds : 0,
             'expectedReward' => $task->reward,
@@ -145,9 +145,19 @@ class TaskController extends Controller
             return response()->json(['ok' => false, 'message' => 'Task attempt nahi mila.'], 404);
         }
 
-        $this->tasks->markRealPageOpened($request->user(), $attempt);
+        $attempt = $this->tasks->markRealPageOpened($request->user(), $attempt);
 
-        return response()->json(['ok' => true]);
+        // Embedded players start the timer from their first playback heartbeat.
+        // Every other task starts counting only once the real page is reached.
+        if (! $task->hasEmbeddedPlayer()) {
+            $attempt = $this->tasks->resumeTimer($request->user(), $attempt);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'timer_paused' => $attempt->isTimerPaused(),
+            'timer_remaining_seconds' => $attempt->remainingSeconds(),
+        ]);
     }
 
     public function fail(Request $request, EarningTask $task): JsonResponse

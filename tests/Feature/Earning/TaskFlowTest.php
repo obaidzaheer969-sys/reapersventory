@@ -3,6 +3,7 @@
 namespace Tests\Feature\Earning;
 
 use App\Enums\TaskAttemptStatus;
+use App\Enums\TaskType;
 use App\Enums\WalletTransactionType;
 use App\Models\EarningTask;
 use App\Models\TaskAttempt;
@@ -109,12 +110,26 @@ class TaskFlowTest extends TestCase
             ->get(route('tasks.run', $task))
             ->assertOk()
             ->assertSee('Timer poora hone tak tab band karna aur back jana band hai.')
-            ->assertSee('Timer neeche lock bar me chal raha hai')
-            ->assertSee('data-timer-lock-note>Timer neeche lock bar me chal raha hai</p>', false)
+            ->assertSee('Timer real page khulne ka intezaar kar raha hai')
+            ->assertSee('data-timer-lock-note>Timer real page khulne ka intezaar kar raha hai</p>', false)
             ->assertSee('hidden" data-timer-display', false)
             ->assertSee('window.__earningTaskTicker', false)
             ->assertSee('function pauseLocalTimer()', false)
-            ->assertSee('function resumeLocalTimer()', false);
+            ->assertSee('function resumeLocalTimer()', false)
+            ->assertSee('var timerPaused = true;', false);
+
+        $this->travel(31)->seconds();
+
+        $this->actingAs($user)
+            ->get(route('tasks.run', $task))
+            ->assertOk()
+            ->assertSee('data-timer-lock-note>Timer real page khulne ka intezaar kar raha hai</p>', false)
+            ->assertSee('hidden" data-timer-display', false);
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.opened', $task))
+            ->assertOk()
+            ->assertJson(['timer_paused' => false, 'timer_remaining_seconds' => 30]);
 
         $this->travel(31)->seconds();
 
@@ -122,8 +137,98 @@ class TaskFlowTest extends TestCase
             ->get(route('tasks.run', $task))
             ->assertOk()
             ->assertDontSee('Timer poora hone tak tab band karna aur back jana band hai.')
-            ->assertDontSee('data-timer-lock-note>Timer neeche lock bar me chal raha hai</p>', false)
+            ->assertDontSee('data-timer-lock-note>Timer real page khulne ka intezaar kar raha hai</p>', false)
             ->assertDontSee('hidden" data-timer-display', false);
+    }
+
+    public function test_seconds_only_start_after_the_real_page_is_confirmed(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeSubscribe(15, 25)->create();
+
+        $this->actingAs($user)->post(route('tasks.start', $task));
+
+        $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+        $originalExpiresAt = $attempt->expires_at->getTimestamp();
+
+        $this->assertTrue($attempt->isTimerPaused());
+        $this->assertSame(15, $attempt->remainingSeconds());
+
+        $this->travel(20)->seconds();
+
+        $this->assertSame(15, $attempt->fresh()->remainingSeconds());
+
+        $this->actingAs($user)
+            ->post(route('tasks.complete', $task))
+            ->assertSessionHasErrors('task');
+
+        $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
+
+        $this->actingAs($user)
+            ->postJson(route('tasks.opened', $task))
+            ->assertOk()
+            ->assertJson(['ok' => true, 'timer_paused' => false, 'timer_remaining_seconds' => 15]);
+
+        $attempt->refresh();
+
+        $this->assertFalse($attempt->isTimerPaused());
+        $this->assertNotNull($attempt->opened_at);
+        $this->assertSame($originalExpiresAt + 20, $attempt->expires_at->getTimestamp());
+
+        $this->travel(16)->seconds();
+
+        $this->assertSame(0, $attempt->fresh()->remainingSeconds());
+    }
+
+    public function test_ad_watch_and_social_tasks_wait_for_the_real_page_before_claiming(): void
+    {
+        $taskTypes = [
+            TaskType::AdWatch,
+            TaskType::FacebookFollow,
+            TaskType::InstagramFollow,
+            TaskType::WhatsappChannel,
+            TaskType::YoutubeSubscribe,
+            TaskType::YoutubeLike,
+        ];
+
+        foreach ($taskTypes as $taskType) {
+            $user = User::factory()->earner()->create();
+            $task = EarningTask::factory()->create([
+                'task_type' => $taskType,
+                'target_url' => 'https://example.com/real-page',
+                'duration_seconds' => 10,
+                'reward' => 2,
+            ]);
+
+            $this->actingAs($user)->post(route('tasks.start', $task));
+
+            $attempt = TaskAttempt::query()->where('user_id', $user->id)->sole();
+
+            $this->assertTrue($attempt->isTimerPaused(), $taskType->value);
+            $this->assertSame(10, $attempt->remainingSeconds(), $taskType->value);
+
+            $this->travel(11)->seconds();
+
+            $this->assertSame(10, $attempt->fresh()->remainingSeconds(), $taskType->value);
+
+            $this->actingAs($user)
+                ->post(route('tasks.complete', $task))
+                ->assertSessionHasErrors('task');
+
+            $this->assertSame(0.0, (float) $user->fresh()->wallet_balance, $taskType->value);
+
+            $this->actingAs($user)->postJson(route('tasks.opened', $task))->assertOk();
+
+            $this->assertFalse($attempt->fresh()->isTimerPaused(), $taskType->value);
+
+            $this->travel(11)->seconds();
+
+            $this->actingAs($user)
+                ->post(route('tasks.complete', $task))
+                ->assertRedirect(route('tasks.index'));
+
+            $this->assertSame(2.0, (float) $user->fresh()->wallet_balance, $taskType->value);
+        }
     }
 
     public function test_the_task_opens_the_real_page_in_a_new_tab(): void
@@ -343,7 +448,26 @@ class TaskFlowTest extends TestCase
             ->assertOk()
             ->assertSee('<button type="button" data-open-real', false)
             ->assertSee('https://example.com/ad', false)
+            ->assertSee('Timer real page khulne ka intezaar kar raha hai')
+            ->assertSee('Pehle real page kholein', false)
+            ->assertSee('var timerPaused = true;', false)
+            ->assertSee('confirmRealPageOpened()', false)
             ->assertDontSee('<iframe', false);
+    }
+
+    public function test_the_dashboard_start_form_does_not_bypass_the_real_page_gate(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeSubscribe(15, 25)->create([
+            'target_url' => 'https://example.com/direct-bypass',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('window.open', false)
+            ->assertDontSee('https://example.com/direct-bypass', false)
+            ->assertSee(route('tasks.start', $task), false);
     }
 
     public function test_the_lock_page_reports_an_early_exit_with_a_beacon(): void
