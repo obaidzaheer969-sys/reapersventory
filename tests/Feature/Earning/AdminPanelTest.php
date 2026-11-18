@@ -190,6 +190,54 @@ class AdminPanelTest extends TestCase
         $this->assertSame(0, substr_count($html, 'data-ad-slot="bottom"'));
     }
 
+    public function test_onclick_ad_gate_loads_before_the_head_ad_script(): void
+    {
+        $user = User::factory()->earner()->create();
+        $autoCode = '<script src="https://bauval.org/14/aaaaaaaaaaaaaaaa"></script>';
+
+        SystemSetting::setValue('site_approved', true);
+        SystemSetting::setValue('site_verification_tag', '<meta name="google-site-verification" content="verify-123">');
+        SystemSetting::setValue('ads_enabled', true);
+        SystemSetting::setValue('ad_auto_code', $autoCode);
+
+        $html = $this->actingAs($user)->get(route('dashboard'))->getContent();
+
+        $this->assertStringContainsString('data-earn-ad-click-gate', $html);
+        $this->assertStringContainsString('earn-to-pkr-ad-clicked-links', $html);
+        $this->assertLessThan(
+            strpos($html, '/14/aaaaaaaaaaaaaaaa'),
+            strpos($html, 'data-earn-ad-click-gate'),
+        );
+    }
+
+    public function test_onclick_ad_gate_is_hidden_when_ads_are_disabled(): void
+    {
+        $user = User::factory()->earner()->create();
+
+        SystemSetting::setValue('site_approved', true);
+        SystemSetting::setValue('site_verification_tag', '<meta name="google-site-verification" content="verify-123">');
+        SystemSetting::setValue('ads_enabled', false);
+        SystemSetting::setValue('ad_auto_code', '<script src="https://bauval.org/14/aaaaaaaaaaaaaaaa"></script>');
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('data-earn-ad-click-gate', false);
+    }
+
+    public function test_onclick_ad_gate_is_hidden_without_a_head_ad_script(): void
+    {
+        $user = User::factory()->earner()->create();
+
+        SystemSetting::setValue('site_approved', true);
+        SystemSetting::setValue('site_verification_tag', '<meta name="google-site-verification" content="verify-123">');
+        SystemSetting::setValue('ads_enabled', true);
+        SystemSetting::setValue('ad_auto_code', '');
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('data-earn-ad-click-gate', false);
+    }
+
     public function test_guest_login_page_shows_ads_when_enabled(): void
     {
         SystemSetting::setValue('site_approved', true);

@@ -107,7 +107,7 @@ class SiteAdsSettings extends Page
                     Textarea::make('ad_auto_code')
                         ->label('Head / auto ads code')
                         ->rows(6)
-                        ->helperText('AdSense auto ads script or custom head script. It runs only when approved and a verification tag is present. Use each zone only once.')
+                        ->helperText('AdSense auto ads or an OnClick/popunder head script. It runs only when approved and a verification tag is present. Use each zone only once. For OnClick ads, the first click on each internal page opens the ad; later clicks open the page directly.')
                         ->columnSpanFull()
                         ->visible(fn (): bool => (bool) ($this->data['ads_enabled'] ?? false)),
                     ...collect(self::SLOT_FIELDS)
