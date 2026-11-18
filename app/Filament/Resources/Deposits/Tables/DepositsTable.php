@@ -102,7 +102,7 @@ class DepositsTable
                     ->icon('heroicon-o-check-circle')
                     ->requiresConfirmation()
                     ->modalHeading('Mark deposit as completed')
-                    ->modalDescription('Yeh confirm karein ke payment Cashmaal se receive ho gayi hai. Amount user ke wallet me add ho jayega.')
+                    ->modalDescription('Confirm that the payment was received from Cashmaal. The amount will be added to the user\'s wallet.')
                     ->visible(fn (Deposit $record) => $record->isPending())
                     ->form([
                         Textarea::make('admin_notes')
@@ -121,7 +121,7 @@ class DepositsTable
 
                             Notification::make()
                                 ->title('Deposit completed')
-                                ->body('Amount user ke wallet me add kar diya gaya hai.')
+                                ->body('The amount has been added to the user\'s wallet.')
                                 ->success()
                                 ->send();
                         } catch (Throwable $e) {
@@ -167,7 +167,7 @@ class DepositsTable
                         }
                     }),
             ])
-            ->emptyStateHeading('Koi deposit nahi')
-            ->emptyStateDescription('Cashmaal se aane wali deposits yahan dikhengi.');
+            ->emptyStateHeading('No deposits')
+            ->emptyStateDescription('Deposits received from Cashmaal will appear here.');
     }
 }

@@ -87,7 +87,7 @@ class TaskFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('tasks.index'))
             ->assertOk()
-            ->assertSee('Aaj complete ho gaya')
+            ->assertSee('Completed today')
             ->assertSee('Task progress is linked to this account')
             ->assertSee($user->email, false);
 
@@ -109,9 +109,9 @@ class TaskFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('tasks.run', $task))
             ->assertOk()
-            ->assertSee('Timer poora hone tak tab band karna aur back jana band hai.')
-            ->assertSee('Timer real page khulne ka intezaar kar raha hai')
-            ->assertSee('data-timer-lock-note>Timer real page khulne ka intezaar kar raha hai</p>', false)
+            ->assertSee('Do not close this tab or go back until the timer finishes.')
+            ->assertSee('Timer is waiting for the real page to open')
+            ->assertSee('data-timer-lock-note>Timer is waiting for the real page to open</p>', false)
             ->assertSee('hidden" data-timer-display', false)
             ->assertSee('window.__earningTaskTicker', false)
             ->assertSee('function pauseLocalTimer()', false)
@@ -123,7 +123,7 @@ class TaskFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('tasks.run', $task))
             ->assertOk()
-            ->assertSee('data-timer-lock-note>Timer real page khulne ka intezaar kar raha hai</p>', false)
+            ->assertSee('data-timer-lock-note>Timer is waiting for the real page to open</p>', false)
             ->assertSee('hidden" data-timer-display', false);
 
         $this->actingAs($user)
@@ -136,8 +136,8 @@ class TaskFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('tasks.run', $task))
             ->assertOk()
-            ->assertDontSee('Timer poora hone tak tab band karna aur back jana band hai.')
-            ->assertDontSee('data-timer-lock-note>Timer real page khulne ka intezaar kar raha hai</p>', false)
+            ->assertDontSee('Do not close this tab or go back until the timer finishes.')
+            ->assertDontSee('data-timer-lock-note>Timer is waiting for the real page to open</p>', false)
             ->assertDontSee('hidden" data-timer-display', false);
     }
 
@@ -246,7 +246,7 @@ class TaskFlowTest extends TestCase
             ->assertDontSee('<iframe', false)
             ->assertSee('Open real page', false)
             ->assertSee('https://www.youtube.com/watch?v=dQw4w9WgXcQ', false)
-            ->assertSee('Timer poora hone tak tab band karna aur back jana band hai.');
+            ->assertSee('Do not close this tab or go back until the timer finishes.');
     }
 
     public function test_a_task_cannot_be_claimed_without_opening_the_real_page(): void
@@ -397,7 +397,7 @@ class TaskFlowTest extends TestCase
             ->assertSee('enablejsapi=1', false)
             ->assertDontSee('<button type="button" data-open-real', false)
             ->assertSee('data-watch-seconds', false)
-            ->assertSee('Video pause karne par timer bhi ruk jayega')
+            ->assertSee('Pausing the video pauses the timer')
             ->assertSee('var timerPaused = true;', false);
     }
 
@@ -448,8 +448,8 @@ class TaskFlowTest extends TestCase
             ->assertOk()
             ->assertSee('<button type="button" data-open-real', false)
             ->assertSee('https://example.com/ad', false)
-            ->assertSee('Timer real page khulne ka intezaar kar raha hai')
-            ->assertSee('Pehle real page kholein', false)
+            ->assertSee('Timer is waiting for the real page to open')
+            ->assertSee('Open the real page first', false)
             ->assertSee('var timerPaused = true;', false)
             ->assertSee('confirmRealPageOpened()', false)
             ->assertDontSee('<iframe', false);
@@ -467,11 +467,11 @@ class TaskFlowTest extends TestCase
             ->assertOk()
             ->assertSee('Open real page', false)
             ->assertSee('confirmRealPageOpened()', false)
-            ->assertSee('Is task tab ko timer poora hone se pehle band mat karein', false)
+            ->assertSee('Do not close this task tab before the timer finishes', false)
             ->assertDontSee('popup.closed', false)
             ->assertDontSee('checkPopup()', false)
             ->assertDontSee('startWatcher()', false)
-            ->assertDontSee('Real page ka tab', false);
+            ->assertDontSee('Real page tab', false);
     }
 
     public function test_the_dashboard_start_form_does_not_bypass_the_real_page_gate(): void

@@ -306,11 +306,11 @@ class CampaignFlowTest extends TestCase
             'total_cost' => 200,
         ]);
 
-        $rejected = app(CampaignService::class)->reject($campaign, 'Link sahi nahi hai.');
+        $rejected = app(CampaignService::class)->reject($campaign, 'The link is invalid.');
 
         $this->assertSame(CampaignStatus::Rejected, $rejected->campaign_status);
         $this->assertFalse($rejected->is_active);
-        $this->assertSame('Link sahi nahi hai.', $rejected->admin_notes);
+        $this->assertSame('The link is invalid.', $rejected->admin_notes);
         $this->assertSame(200.0, (float) $owner->fresh()->wallet_balance);
         $this->assertDatabaseHas('wallet_transactions', [
             'user_id' => $owner->id,

@@ -66,23 +66,23 @@ class CashmaalSettings extends Page
         return $schema->components([
             Toggle::make('cashmaal_enabled')
                 ->label('Enable Cashmaal deposits')
-                ->helperText('Off karne par users naye deposits start nahi kar sakenge.'),
+                ->helperText('When off, users cannot start new deposits.'),
             TextInput::make('cashmaal_web_id')
                 ->label('Cashmaal Web ID')
                 ->required()
                 ->maxLength(120)
-                ->helperText('Cashmaal merchant settings me site add karne ke baad milne wala Web ID.'),
+                ->helperText('The Web ID you get after adding this site in Cashmaal merchant settings.'),
             TextInput::make('cashmaal_ipn_key')
                 ->label('IPN key')
                 ->password()
                 ->revealable()
                 ->required()
                 ->maxLength(255)
-                ->helperText('IPN notifications verify karne ke liye Cashmaal ka IPN key.'),
+                ->helperText('Cashmaal\'s IPN key for verifying IPN notifications.'),
             TextInput::make('cashmaal_pay_method')
                 ->label('Pay method (optional)')
                 ->maxLength(60)
-                ->helperText('Khali chhorein to Cashmaal apne default methods dikhayega.'),
+                ->helperText('Leave empty to let Cashmaal show its default methods.'),
         ]);
     }
 

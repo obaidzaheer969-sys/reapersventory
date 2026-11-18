@@ -10,9 +10,9 @@
     <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Deposit</p>
-            <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Wallet me paise add karein</h1>
+            <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Add money to your wallet</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Cashmaal ke zariye online deposit karein. Admin fee alag se payable hai — aap jo amount dein uska {{ number_format($adminFeePercent, 0) }}% admin fee total me add hota hai, aur sirf aapka amount wallet me credit hota hai.
+                Deposit online via Cashmaal. The admin fee is payable separately — {{ number_format($adminFeePercent, 0) }}% of the amount you pay is added to the total, and only your amount is credited to your wallet.
             </p>
         </div>
         <div class="rounded-2xl border border-mint-400/25 bg-mint-500/10 px-4 py-3 text-right">
@@ -42,11 +42,11 @@
         <div class="xl:col-span-2">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
                 <h2 class="text-base font-bold text-white">New deposit</h2>
-                <p class="mt-1 text-xs text-slate-400">Amount daalein aur Cashmaal par payment complete karein.</p>
+                <p class="mt-1 text-xs text-slate-400">Enter the amount and complete the payment on Cashmaal.</p>
 
                 @if (! $cashmaalEnabled)
                     <div class="mt-4 rounded-xl border border-gold-400/30 bg-gold-400/10 px-4 py-3 text-xs text-gold-200">
-                        Cashmaal deposits filhal available nahi hain. Admin se rabta karein ya baad me koshish karein.
+                        Cashmaal deposits are not available right now. Contact the admin or try again later.
                     </div>
                 @else
                     <form method="POST" action="{{ route('deposits.store') }}" class="mt-4 space-y-4">
@@ -62,7 +62,7 @@
 
                         <div class="space-y-1.5 rounded-xl border border-gold-400/20 bg-gold-400/5 px-4 py-3 text-[11px]">
                             <div class="flex items-center justify-between gap-3">
-                                <span class="text-slate-400">Wallet me aayega</span>
+                                <span class="text-slate-400">Credited to your wallet</span>
                                 <span id="deposit-net" class="font-bold text-white">{{ \App\Support\Currency::format($depositQuote['amount']) }}</span>
                             </div>
                             <div class="flex items-center justify-between gap-3">
@@ -70,7 +70,7 @@
                                 <span id="deposit-fee" class="font-bold text-gold-300">{{ \App\Support\Currency::format($depositQuote['fee']) }}</span>
                             </div>
                             <div class="flex items-center justify-between gap-3 border-t border-white/10 pt-1.5">
-                                <span class="text-slate-300">Cashmaal par total dein</span>
+                                <span class="text-slate-300">Total to pay on Cashmaal</span>
                                 <span id="deposit-total" class="font-bold text-mint-300">{{ \App\Support\Currency::format($depositQuote['total']) }}</span>
                             </div>
                         </div>
@@ -83,7 +83,7 @@
 
                 <div class="mt-4 rounded-xl border border-white/10 bg-ink-900/40 px-4 py-3 text-[11px] leading-relaxed text-slate-400">
                     <p class="font-semibold text-slate-300">Note</p>
-                    <p class="mt-1">Payment confirm hone me kuch seconds lag sakte hain. Agar wallet update na ho to thori der baad yeh page refresh karein.</p>
+                    <p class="mt-1">Confirmation may take a few seconds. If your wallet does not update, refresh this page shortly.</p>
                 </div>
             </div>
         </div>
@@ -92,7 +92,7 @@
             <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
                 <div class="border-b border-white/10 px-5 py-4">
                     <h2 class="text-base font-bold text-white">Deposit history</h2>
-                    <p class="text-xs text-slate-400">Cashmaal orders, amounts aur status</p>
+                    <p class="text-xs text-slate-400">Cashmaal orders, amounts, and status</p>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -136,7 +136,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-5 py-12 text-center text-sm text-slate-400">Abhi koi deposit nahi hai. Pehla deposit upar se karein.</td>
+                                    <td colspan="5" class="px-5 py-12 text-center text-sm text-slate-400">No deposits yet. Make your first deposit above.</td>
                                 </tr>
                             @endforelse
                         </tbody>

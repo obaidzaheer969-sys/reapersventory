@@ -26,9 +26,9 @@
     <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Create campaign</p>
-            <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Apna task publish karein</h1>
+            <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Publish your task</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Campaign ka poora budget wallet se foran hold hoga aur campaign turant live ho jayegi — kisi admin approval ka intezar nahi. Cancel karne par unused budget wallet me wapas aa jata hai.
+                The full campaign budget is held from your wallet immediately and the campaign goes live at once — no admin approval needed. If you cancel, the unused budget returns to your wallet.
             </p>
         </div>
         <div class="rounded-2xl border border-mint-400/25 bg-mint-500/10 px-4 py-3 text-right">
@@ -50,13 +50,13 @@
                             <option value="{{ $value }}" @selected($selectedType === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
-                    <p class="mt-1.5 text-[11px] text-slate-500">Har action (subscribe, follow, like ya video view) par earner ko 2 PKR aur admin ko 1 PKR — total 3 PKR per action. Quantity aap khud set karein — 2 subscribers ya 1 view ka order bhi allowed hai.</p>
+                    <p class="mt-1.5 text-[11px] text-slate-500">Each action (subscribe, follow, like, or video view) pays the earner 2 PKR and the admin 1 PKR — 3 PKR total per action. You set the quantity — an order for 2 subscribers or 1 view is allowed too.</p>
                 </div>
 
                 <div>
                     <label for="title" class="mb-1.5 block text-xs font-semibold text-slate-300">Campaign title</label>
                     <input type="text" name="title" id="title" required maxlength="255" value="{{ old('title') }}"
-                           placeholder="e.g. Naya vlog release — views barhayen"
+                           placeholder="e.g. New vlog release — grow views"
                            class="w-full rounded-xl border border-white/10 bg-ink-900 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-mint-400 focus:outline-none focus:ring-2 focus:ring-mint-400/20">
                 </div>
 
@@ -65,8 +65,8 @@
                     <input type="url" name="target_url" id="target_url" required maxlength="2048" value="{{ old('target_url') }}"
                            placeholder="https://..."
                            class="w-full rounded-xl border border-white/10 bg-ink-900 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-mint-400 focus:outline-none focus:ring-2 focus:ring-mint-400/20">
-                    <p class="mt-1.5 text-[11px] text-slate-500">YouTube/Facebook video watch tasks isi lock page ke official player me chalti hain; subscribe, follow aur like links naye tab me khulte hain.</p>
-                    <p class="mt-1.5 text-[11px] leading-relaxed text-gold-200/90">⚠️ Monetization ke liye YouTube Studio me video ka monetization aur embedding dono on hona chahiye. Ads sirf YouTube apne rules me chalata hai; paid/incentivized views ko YouTube invalid traffic mana sakta hai, isliye ad chalne ka guarantee nahi hai.</p>
+                    <p class="mt-1.5 text-[11px] text-slate-500">YouTube/Facebook video watch tasks run in the official player on this locked page; subscribe, follow, and like links open in a new tab.</p>
+                    <p class="mt-1.5 text-[11px] leading-relaxed text-gold-200/90">⚠️ For monetization, both monetization and embedding must be enabled for the video in YouTube Studio. YouTube runs ads according to its own rules and may treat paid or incentivized views as invalid traffic, so ads are not guaranteed.</p>
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
@@ -76,7 +76,7 @@
                                min="{{ $minQuantity }}" max="{{ $maxQuantity }}" step="1"
                                value="{{ old('target_quantity', $minQuantity) }}"
                                class="w-full rounded-xl border border-white/10 bg-ink-900 px-3.5 py-2.5 text-sm text-white focus:border-mint-400 focus:outline-none focus:ring-2 focus:ring-mint-400/20">
-                        <p class="mt-1.5 text-[11px] text-slate-500">{{ number_format($minQuantity) }} se {{ number_format($maxQuantity) }} actions.</p>
+                        <p class="mt-1.5 text-[11px] text-slate-500">Between {{ number_format($minQuantity) }} and {{ number_format($maxQuantity) }} actions.</p>
                     </div>
 
                     <div id="duration-field">
@@ -89,19 +89,19 @@
                                 </option>
                             @endforeach
                         </select>
-                        <p class="mt-1.5 text-[11px] text-slate-500">Duration sirf minimum watch time hai. Video view par bhi 2 PKR earner + 1 PKR admin fee hai.</p>
+                        <p class="mt-1.5 text-[11px] text-slate-500">Duration is only the minimum watch time. A video view also pays 2 PKR to the earner plus a 1 PKR admin fee.</p>
                     </div>
                 </div>
 
                 <div>
                     <label for="instructions" class="mb-1.5 block text-xs font-semibold text-slate-300">Instructions <span class="font-normal text-slate-500">(optional)</span></label>
                     <textarea name="instructions" id="instructions" rows="3" maxlength="1000"
-                              placeholder="Earners ko batayen ke unhein kya karna hai."
+                              placeholder="Tell earners what they need to do."
                               class="w-full rounded-xl border border-white/10 bg-ink-900 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-mint-400 focus:outline-none focus:ring-2 focus:ring-mint-400/20">{{ old('instructions') }}</textarea>
                 </div>
 
                 <div class="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                    <p id="quote-hint" class="text-[11px] text-slate-500">Quantity daalein — total cost yahan dikhega.</p>
+                    <p id="quote-hint" class="text-[11px] text-slate-500">Enter the quantity — the total cost will appear here.</p>
                     <button type="submit" id="campaign-submit"
                             class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-5 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20 disabled:cursor-not-allowed disabled:opacity-50">
                         Publish campaign
@@ -125,17 +125,17 @@
                     <span class="text-slate-300">Total campaign cost</span>
                     <span id="quote-total" class="font-display text-xl font-bold text-mint-300">PKR 0.00</span>
                 </div>
-                <p class="mt-3 text-[11px] leading-relaxed text-slate-400">Poora amount (3 PKR per action) wallet se hold hota hai. Har action complete hone par earner ko 2 PKR aur admin ko 1 PKR milte hain. Campaign cancel karne par adhoori actions ka poora 3 PKR wapis ho jata hai.</p>
+                <p class="mt-3 text-[11px] leading-relaxed text-slate-400">The full amount (3 PKR per action) is held from your wallet. Each completed action pays 2 PKR to the earner and 1 PKR to the admin. If you cancel the campaign, the full 3 PKR for unfinished actions is refunded.</p>
             </div>
 
             <div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-xs leading-relaxed text-slate-400">
                 <h2 class="text-sm font-bold text-white">Campaign rules</h2>
                 <ul class="mt-2 list-inside list-disc space-y-1">
-                    <li>Payment ke foran baad campaign live ho jati hai — approval ki zaroorat nahi.</li>
-                    <li>Har action par 2 PKR earner + 1 PKR admin fee (total 3 PKR) kharch hota hai.</li>
-                    <li>Required quantity poori hone par campaign khud hide ho jati hai.</li>
-                    <li>Ek earner aap ki campaign sirf ek dafa complete kar sakta hai.</li>
-                    <li>Cancel karne par unused budget wallet me wapas aa jata hai.</li>
+                    <li>The campaign goes live immediately after payment — no approval needed.</li>
+                    <li>Each action costs 2 PKR for the earner plus a 1 PKR admin fee (3 PKR total).</li>
+                    <li>The campaign hides itself once the required quantity is complete.</li>
+                    <li>Each earner can complete your campaign only once.</li>
+                    <li>Cancelling returns the unused budget to your wallet.</li>
                 </ul>
             </div>
         </div>
@@ -190,15 +190,15 @@
                 totalOut.textContent = money(total);
 
                 if (total <= 0) {
-                    hintOut.textContent = 'Quantity daalein — total cost yahan dikhega.';
+                    hintOut.textContent = 'Enter the quantity — the total cost will appear here.';
                     hintOut.className = 'text-[11px] text-slate-500';
                     submit.disabled = true;
                 } else if (total > wallet + 0.001) {
-                    hintOut.textContent = 'Wallet balance kaafi nahi — ' + money(total) + ' chahiye, available ' + money(wallet) + '.';
+                    hintOut.textContent = 'Insufficient wallet balance — ' + money(total) + ' required, available ' + money(wallet) + '.';
                     hintOut.className = 'text-[11px] text-rose-300';
                     submit.disabled = true;
                 } else {
-                    hintOut.textContent = 'Payment wallet se foran hold hogi aur campaign turant live ho jayegi.';
+                    hintOut.textContent = 'The payment will be held from your wallet immediately and the campaign will go live at once.';
                     hintOut.className = 'text-[11px] text-mint-300';
                     submit.disabled = false;
                 }

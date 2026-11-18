@@ -82,7 +82,7 @@ class CampaignController extends Controller
 
         return redirect()
             ->route('campaigns.mine')
-            ->with('status', 'Campaign #'.$campaign->id.' live ho gayi hai! Payment wallet se hold ho gayi aur campaign foran doosre users ko dikhne lag gayi hai.');
+            ->with('status', 'Campaign #'.$campaign->id.' is live! The payment is held from your wallet and the campaign is now visible to other users.');
     }
 
     public function show(Request $request, EarningTask $campaign): View
@@ -113,8 +113,8 @@ class CampaignController extends Controller
 
         $campaign = $this->campaigns->cancel($request->user(), $campaign);
 
-        return back()->with('status', 'Campaign cancel ho gayi. PKR '
+        return back()->with('status', 'Campaign cancelled. PKR '
             .number_format($campaign->budgetRemaining(), 2)
-            .' ka unused budget wallet me wapas aa gaya hai.');
+            .' of unused budget has been returned to your wallet.');
     }
 }

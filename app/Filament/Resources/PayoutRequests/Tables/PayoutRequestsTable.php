@@ -93,7 +93,7 @@ class PayoutRequestsTable
                     ->icon('heroicon-o-check-circle')
                     ->requiresConfirmation()
                     ->modalHeading('Mark payout as paid')
-                    ->modalDescription('Yeh confirm karein ke payment user ke wallet me bhej di gayi hai.')
+                    ->modalDescription('Confirm that the payment has been sent to the user\'s wallet account.')
                     ->visible(fn (PayoutRequest $record) => $record->isPending())
                     ->form([
                         Textarea::make('admin_notes')

@@ -11,7 +11,7 @@
     <div>
         <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Account</p>
         <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Profile settings</h1>
-        <p class="mt-2 text-sm text-slate-400">Apna naam, email aur password update karein.</p>
+        <p class="mt-2 text-sm text-slate-400">Update your name, email, and password.</p>
     </div>
 
     <div class="mt-6 grid gap-6 xl:grid-cols-3">
@@ -38,7 +38,7 @@
 
                     <div class="border-t border-white/10 pt-4">
                         <h3 class="text-sm font-bold text-white">Change password</h3>
-                        <p class="mt-1 text-xs text-slate-400">Password change karna ho tab hi neeche fields bharein.</p>
+                        <p class="mt-1 text-xs text-slate-400">Fill the fields below only if you want to change your password.</p>
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-3">
@@ -113,7 +113,7 @@
 
             <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
                 <h2 class="text-base font-bold text-white">Need help?</h2>
-                <p class="mt-1 text-xs text-slate-400">Payout ya account issue ke liye support se rabta karein.</p>
+                <p class="mt-1 text-xs text-slate-400">Contact support for payout or account issues.</p>
                 <a href="mailto:{{ config('earning.support_email') }}" class="mt-3 block text-xs font-semibold text-mint-300 hover:text-mint-200">{{ config('earning.support_email') }}</a>
             </div>
         </div>

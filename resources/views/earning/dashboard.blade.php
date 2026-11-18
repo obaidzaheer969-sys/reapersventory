@@ -13,9 +13,9 @@
     <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">{{ $greeting }}</p>
-            <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Assalam-o-Alaikum, {{ $user->name }}</h1>
-            <p class="mt-2 text-sm text-slate-400">{{ $now->format('l, d M Y') }} · Admin tasks aur community campaigns complete karein aur wallet barhayen.</p>
-            <p class="mt-1 text-xs text-slate-500">Account: {{ $user->email }} · Task progress is linked to this account. Dono devices par yahi email use karein.</p>
+            <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Welcome, {{ $user->name }}</h1>
+            <p class="mt-2 text-sm text-slate-400">{{ $now->format('l, d M Y') }} · Complete admin tasks and community campaigns to grow your wallet.</p>
+            <p class="mt-1 text-xs text-slate-500">Account: {{ $user->email }} · Task progress is linked to this account. Use this same email on all devices.</p>
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('tasks.index') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20">Admin Tasks</a>
@@ -34,15 +34,15 @@
         </div>
 
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Admin tasks aaj</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Admin tasks today</p>
             <p class="mt-2 font-display text-3xl font-bold text-white">{{ $completedTodayCount }}<span class="text-lg text-slate-500">/{{ $activeTasks->count() }}</span></p>
             <p class="mt-2 text-xs text-slate-400">Completed today · 2 PKR each</p>
         </div>
 
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Baaki admin tasks</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Remaining admin tasks</p>
             <p class="mt-2 font-display text-3xl font-bold text-white">{{ $remainingTodayCount }}</p>
-            <p class="mt-2 text-xs text-slate-400">Unlock: {{ $nextResetAt->format('h:i A') }} (raat 12 baje)</p>
+            <p class="mt-2 text-xs text-slate-400">Unlock: {{ $nextResetAt->format('h:i A') }} (12:00 midnight)</p>
         </div>
 
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -91,7 +91,7 @@
                         </div>
                     @empty
                         <div class="px-5 py-10 text-center">
-                            <p class="text-sm text-slate-400">Abhi koi admin task available nahi. Admin jald naye tasks add karega.</p>
+                            <p class="text-sm text-slate-400">No admin tasks are available right now. The admin will add new tasks soon.</p>
                         </div>
                     @endforelse
                 </div>
@@ -135,7 +135,7 @@
                         </div>
                     @empty
                         <div class="px-5 py-10 text-center">
-                            <p class="text-sm text-slate-400">Abhi koi community campaign live nahi. Aap pehli campaign publish kar sakte hain.</p>
+                            <p class="text-sm text-slate-400">No community campaigns are live right now. You can publish the first campaign.</p>
                             <a href="{{ route('campaigns.create') }}" class="mt-3 inline-flex rounded-lg bg-gradient-to-r from-mint-400 to-mint-500 px-3.5 py-1.5 text-[11px] font-bold text-ink-950">Create campaign</a>
                         </div>
                     @endforelse
@@ -159,7 +159,7 @@
                             <span class="text-sm font-bold text-mint-300">+{{ \App\Support\Currency::format($attempt->reward_amount) }}</span>
                         </div>
                     @empty
-                        <div class="px-5 py-10 text-center text-sm text-slate-400">Abhi koi earning nahi. Pehla task complete karein.</div>
+                        <div class="px-5 py-10 text-center text-sm text-slate-400">No earnings yet. Complete your first task.</div>
                     @endforelse
                 </div>
             </div>
@@ -208,7 +208,7 @@
                             <p class="mt-2 text-[10px] text-slate-500">{{ ($announcement->published_at ?? $announcement->created_at)?->format('d M Y') }}</p>
                         </div>
                     @empty
-                        <div class="px-5 py-8 text-center text-sm text-slate-400">Koi announcement nahi.</div>
+                        <div class="px-5 py-8 text-center text-sm text-slate-400">No announcements.</div>
                     @endforelse
                 </div>
             </div>
@@ -224,7 +224,7 @@
                             </span>
                         </div>
                     @empty
-                        <p class="text-sm text-slate-400">Koi transaction nahi.</p>
+                        <p class="text-sm text-slate-400">No transactions.</p>
                     @endforelse
                 </div>
                 <a href="{{ route('wallet.index') }}" class="mt-4 block text-xs font-semibold text-mint-300 hover:text-mint-200">Open wallet →</a>

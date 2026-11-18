@@ -45,7 +45,7 @@ class UpdatePlan extends Component
 
         session()->flash(
             'status',
-            'Package change requested: '.$plan->name.'. Naya package tabhi milega jab aap payment proof upload karein aur Super Admin approve kare.'
+            'Package change requested: '.$plan->name.'. You will receive the new package only after you upload payment proof and a Super Admin approves it.'
         );
 
         $this->redirectAndRefresh(route('business.subscription.index'));

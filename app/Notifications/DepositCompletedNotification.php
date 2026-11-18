@@ -22,7 +22,7 @@ class DepositCompletedNotification extends Notification
         return (new MailMessage)
             ->subject('Wallet deposit received — '.config('earning.brand'))
             ->greeting('Hello '.$notifiable->name.',')
-            ->line('Aap ka Cashmaal deposit wallet me add ho gaya hai.')
+            ->line('Your Cashmaal deposit has been added to your wallet.')
             ->line('Amount: PKR '.number_format((float) $this->deposit->credit_amount, 2))
             ->line('Order: '.$this->deposit->order_id)
             ->line('Cashmaal TID: '.($this->deposit->cm_tid ?? '—'))
@@ -37,7 +37,7 @@ class DepositCompletedNotification extends Notification
         return [
             'title' => 'Deposit received',
             'body' => 'PKR '.number_format((float) $this->deposit->credit_amount, 2)
-                .' wallet me add ho gaye · '.$this->deposit->order_id,
+                .' added to your wallet · '.$this->deposit->order_id,
             'url' => url('/wallet'),
             'level' => 'success',
         ];

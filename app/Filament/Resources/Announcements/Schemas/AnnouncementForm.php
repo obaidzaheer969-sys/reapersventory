@@ -30,7 +30,7 @@ class AnnouncementForm
                 Toggle::make('is_active')
                     ->label('Published')
                     ->default(true)
-                    ->helperText('Inactive announcements users ko nahi dikhengi.'),
+                    ->helperText('Inactive announcements will not be shown to users.'),
                 Toggle::make('is_pinned')
                     ->label('Pin to top')
                     ->default(false),

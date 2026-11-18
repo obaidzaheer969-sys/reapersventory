@@ -57,8 +57,8 @@ class TaskController extends Controller
         $attempt = $this->tasks->startAttempt($request->user(), $task, $request->ip());
 
         $message = $task->hasEmbeddedPlayer()
-            ? 'Task shuru ho gaya. Video isi page par play karein — required watch time aur timer poora hone par reward claim karein.'
-            : 'Task shuru ho gaya. "Open real page" dabaein — asli page naye tab me khulega aur timer tabhi shuru hoga. Timer poora hone se pehle real page ka tab band karne par task fail ho jayega.';
+            ? 'Task started. Play the video on this page — claim the reward after the required watch time and timer finish.'
+            : 'Task started. Click "Open real page" — the real page opens in a new tab and the timer starts only then. Closing this task tab before the timer finishes will fail the task.';
 
         return redirect()
             ->route('tasks.run', $task)
@@ -74,7 +74,7 @@ class TaskController extends Controller
         if (! $attempt) {
             return redirect()
                 ->route('tasks.index')
-                ->withErrors(['task' => 'Pehle task start karein.']);
+                ->withErrors(['task' => 'Start the task first.']);
         }
 
         $embedUrl = $task->embedUrl($request->getSchemeAndHttpHost());
@@ -102,7 +102,7 @@ class TaskController extends Controller
         $attempt = $this->currentAttempt($request->user(), $task);
 
         if (! $attempt) {
-            return response()->json(['ok' => false, 'message' => 'Task attempt nahi mila.'], 404);
+            return response()->json(['ok' => false, 'message' => 'Task attempt not found.'], 404);
         }
 
         $validated = $request->validate([
@@ -142,7 +142,7 @@ class TaskController extends Controller
         $attempt = $this->currentAttempt($request->user(), $task);
 
         if (! $attempt) {
-            return response()->json(['ok' => false, 'message' => 'Task attempt nahi mila.'], 404);
+            return response()->json(['ok' => false, 'message' => 'Task attempt not found.'], 404);
         }
 
         $attempt = $this->tasks->markRealPageOpened($request->user(), $attempt);
@@ -165,7 +165,7 @@ class TaskController extends Controller
         $attempt = $this->currentAttempt($request->user(), $task);
 
         if (! $attempt) {
-            return response()->json(['ok' => false, 'message' => 'Task attempt nahi mila.'], 404);
+            return response()->json(['ok' => false, 'message' => 'Task attempt not found.'], 404);
         }
 
         $failed = $this->tasks->failAttempt($request->user(), $attempt);
@@ -182,14 +182,14 @@ class TaskController extends Controller
         if (! $attempt) {
             return redirect()
                 ->route('tasks.index')
-                ->withErrors(['task' => 'Task attempt nahi mila. Dobara start karein.']);
+                ->withErrors(['task' => 'Task attempt not found. Start again.']);
         }
 
         $this->tasks->completeAttempt($user, $attempt);
 
         return redirect()
             ->route('tasks.index')
-            ->with('status', 'Task complete! PKR '.number_format((float) $task->reward, 2).' aap ke wallet me add ho gaye.');
+            ->with('status', 'Task complete! PKR '.number_format((float) $task->reward, 2).' has been added to your wallet.');
     }
 
     private function currentAttempt(User $user, EarningTask $task): ?TaskAttempt

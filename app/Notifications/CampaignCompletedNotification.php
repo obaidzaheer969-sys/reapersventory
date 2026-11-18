@@ -22,7 +22,7 @@ class CampaignCompletedNotification extends Notification
         return (new MailMessage)
             ->subject('Campaign completed — '.config('earning.brand'))
             ->greeting('Hello '.$notifiable->name.',')
-            ->line('Aap ki campaign ki poori quantity complete ho gayi hai.')
+            ->line('Your campaign has reached its full quantity.')
             ->line('Task: '.$this->campaign->task_type->label().' — '.$this->campaign->title)
             ->line('Completed: '.number_format((int) $this->campaign->completed_quantity).' / '.number_format((int) $this->campaign->target_quantity))
             ->line('Total spent: PKR '.number_format((float) $this->campaign->total_cost, 2))

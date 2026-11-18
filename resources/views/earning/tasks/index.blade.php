@@ -15,14 +15,14 @@
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Daily admin tasks</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Admin Tasks</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Admin ki taraf se diye gaye tasks — har task ka reward exactly 2 PKR hai. Video watch tasks isi page ke official player me chalti hain; subscribe, follow aur like tasks ka asli page naye tab me khulta hai. Timer aur required watch time poora hone par reward milta hai.
+                Tasks provided by the admin — each task pays exactly 2 PKR. Video watch tasks run in the official player on this page; subscribe, follow, and like tasks open the real page in a new tab. You receive the reward after the timer and required watch time finish.
             </p>
-            <p class="mt-1 text-xs text-slate-500">Account: {{ auth()->user()?->email }} · Task progress is linked to this account. Dono devices par yahi email use karein.</p>
+            <p class="mt-1 text-xs text-slate-500">Account: {{ auth()->user()?->email }} · Task progress is linked to this account. Use this same email on all devices.</p>
         </div>
         <div class="rounded-2xl border border-gold-400/25 bg-gold-400/5 px-4 py-3 text-right">
             <p class="text-[10px] font-bold uppercase tracking-wider text-gold-300/80">Next unlock</p>
             <p class="font-display text-lg font-bold text-gold-300" data-countdown-to="{{ $nextResetAt->getTimestamp() * 1000 }}" data-countdown-reload>—</p>
-            <p class="text-[10px] text-slate-400">{{ $nextResetAt->format('d M, h:i A') }} (raat 12 baje)</p>
+            <p class="text-[10px] text-slate-400">{{ $nextResetAt->format('d M, h:i A') }} (12:00 midnight)</p>
         </div>
     </div>
 
@@ -44,8 +44,8 @@
     @if ($tasks->isEmpty())
         <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 px-6 py-16 text-center">
             <p class="text-4xl">📭</p>
-            <h2 class="mt-3 text-lg font-bold text-white">Abhi koi admin task available nahi</h2>
-            <p class="mt-1 text-sm text-slate-400">Admin jald naye tasks add karega. Neeche doosre users ke community tasks check karein.</p>
+            <h2 class="mt-3 text-lg font-bold text-white">No admin tasks available right now</h2>
+            <p class="mt-1 text-sm text-slate-400">The admin will add new tasks soon. Check other users' community tasks below.</p>
         </div>
     @else
         <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -77,7 +77,7 @@
                     <div class="mt-auto pt-4">
                         @if ($isDone)
                             <div class="flex items-center justify-between rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2.5">
-                                <span class="text-xs font-semibold text-slate-400">🔒 Aaj complete ho gaya</span>
+                                <span class="text-xs font-semibold text-slate-400">🔒 Completed today</span>
                                 <span class="text-[11px] text-slate-500" data-countdown-to="{{ $nextResetAt->getTimestamp() * 1000 }}">Unlock {{ $nextResetAt->format('h:i A') }}</span>
                             </div>
                         @elseif ($attempt)
@@ -111,7 +111,7 @@
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-gold-300">Community</p>
             <h2 class="mt-1.5 font-display text-2xl font-bold text-white sm:text-3xl">Other Users Tasks</h2>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Doosre users ki live campaigns — har action (subscribe, follow, like ya video view) par exactly 2 PKR. Ek campaign aap sirf ek dafa complete kar sakte hain.
+                Live campaigns from other users — each action (subscribe, follow, like, or video view) pays exactly 2 PKR. You can complete each campaign only once.
             </p>
         </div>
         <a href="{{ route('campaigns.index') }}" class="shrink-0 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">View all community tasks →</a>
@@ -120,8 +120,8 @@
     @if ($campaigns->isEmpty())
         <div class="mt-5 rounded-2xl border border-white/10 bg-white/5 px-6 py-12 text-center">
             <p class="text-4xl">🌱</p>
-            <h3 class="mt-3 text-lg font-bold text-white">Abhi koi community task live nahi</h3>
-            <p class="mt-1 text-sm text-slate-400">Aap khud campaign publish karke doosre users ko task de sakte hain.</p>
+            <h3 class="mt-3 text-lg font-bold text-white">No community tasks are live right now</h3>
+            <p class="mt-1 text-sm text-slate-400">You can publish your own campaign and give tasks to other users.</p>
             <a href="{{ route('campaigns.create') }}" class="mt-4 inline-flex rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950">Create campaign</a>
         </div>
     @else
@@ -163,7 +163,7 @@
 
                     <div class="mt-auto pt-4">
                         @if ($isDone)
-                            <div class="rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2.5 text-center text-xs font-semibold text-slate-400">✓ Aap yeh campaign complete kar chuke hain</div>
+                            <div class="rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2.5 text-center text-xs font-semibold text-slate-400">✓ You have already completed this campaign</div>
                         @elseif ($attempt)
                             @if ($attempt->canClaim($campaign))
                                 <a href="{{ route('tasks.run', $campaign) }}" class="block rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 px-4 py-2.5 text-center text-sm font-bold text-ink-950">Claim reward →</a>
@@ -190,5 +190,5 @@
         </div>
     @endif
 
-    <p class="mt-8 text-center text-xs text-slate-500">Rewards har task complete hone ke foran baad wallet me add hote hain. Balance: {{ \App\Support\Currency::format($walletBalance) }}</p>
+    <p class="mt-8 text-center text-xs text-slate-500">Rewards are added to your wallet immediately after each task is completed. Balance: {{ \App\Support\Currency::format($walletBalance) }}</p>
 @endsection

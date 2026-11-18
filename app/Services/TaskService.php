@@ -138,7 +138,7 @@ class TaskService
     {
         if (! $task->is_active) {
             throw ValidationException::withMessages([
-                'task' => 'Yeh task filhal available nahi hai.',
+                'task' => 'This task is not available right now.',
             ]);
         }
 
@@ -146,7 +146,7 @@ class TaskService
             $this->assertCampaignCanBeWorkedOn($user, $task);
         } elseif ($this->completedToday($user, $task)) {
             throw ValidationException::withMessages([
-                'task' => 'Yeh task aaj complete ho chuka hai. Kal raat 12:00 baje dobara unlock hoga.',
+                'task' => 'You have already completed this task today. It unlocks again at 12:00 midnight.',
             ]);
         }
 
@@ -266,7 +266,7 @@ class TaskService
 
             if (! $task->hasEmbeddedPlayer()) {
                 throw ValidationException::withMessages([
-                    'task' => 'Yeh task embedded player support nahi karta.',
+                    'task' => 'This task does not support an embedded player.',
                 ]);
             }
 
@@ -347,7 +347,7 @@ class TaskService
 
             if ($attempt->isFailed() || $attempt->failed_at !== null) {
                 throw ValidationException::withMessages([
-                    'task' => 'Task fail ho gaya tha — timer poora hone se pehle task chhor diya gaya. Task dobara start karein.',
+                    'task' => 'The task failed — it was left before the timer finished. Start the task again.',
                 ]);
             }
 
@@ -355,14 +355,14 @@ class TaskService
 
             if (! $attempt->isReadyToClaim()) {
                 throw ValidationException::withMessages([
-                    'task' => 'Timer abhi poora nahi hua. '.$attempt->remainingSeconds().' seconds baaki hain.',
+                    'task' => 'The timer has not finished yet. '.$attempt->remainingSeconds().' seconds remaining.',
                 ]);
             }
 
             if ($task->hasEmbeddedPlayer()) {
                 if (! $attempt->hasStartedEmbeddedPlayback()) {
                     throw ValidationException::withMessages([
-                        'task' => 'Pehle video play karein — play ke bagair watch time count nahi hoga.',
+                        'task' => 'Play the video first — watch time will not count without playback.',
                     ]);
                 }
 
@@ -370,12 +370,12 @@ class TaskService
 
                 if ($missingSeconds > 0) {
                     throw ValidationException::withMessages([
-                        'task' => 'Video abhi poora nahi chala. '.$missingSeconds.' seconds aur play karein, phir claim karein.',
+                        'task' => 'The video has not played long enough. '.$missingSeconds.' more seconds of playback, then claim.',
                     ]);
                 }
             } elseif (! $attempt->hasOpenedRealPage()) {
                 throw ValidationException::withMessages([
-                    'task' => 'Pehle task ka real page kholein — bina task dekhe reward nahi milega.',
+                    'task' => 'Open the task\'s real page first — you will not receive a reward without viewing the task.',
                 ]);
             }
 
@@ -399,7 +399,7 @@ class TaskService
     {
         if ($this->completedToday($user, $task)) {
             throw ValidationException::withMessages([
-                'task' => 'Yeh task aaj pehle hi complete ho chuka hai.',
+                'task' => 'You have already completed this task today.',
             ]);
         }
 
@@ -426,19 +426,19 @@ class TaskService
 
         if (! $locked->isLiveCampaign()) {
             throw ValidationException::withMessages([
-                'task' => 'Yeh campaign filhal available nahi hai ya poori ho chuki hai.',
+                'task' => 'This campaign is not available right now or is already complete.',
             ]);
         }
 
         if ($locked->user_id === $user->id) {
             throw ValidationException::withMessages([
-                'task' => 'Apni campaign khud complete nahi kar sakte.',
+                'task' => 'You cannot complete your own campaign.',
             ]);
         }
 
         if ($this->hasCompletedEver($user, $locked)) {
             throw ValidationException::withMessages([
-                'task' => 'Aap yeh campaign task pehle complete kar chuke hain.',
+                'task' => 'You have already completed this campaign task.',
             ]);
         }
 
@@ -506,25 +506,25 @@ class TaskService
     {
         if ($task->campaign_status !== CampaignStatus::Active) {
             throw ValidationException::withMessages([
-                'task' => 'Yeh campaign filhal live nahi hai.',
+                'task' => 'This campaign is not live right now.',
             ]);
         }
 
         if ($task->user_id === $user->id) {
             throw ValidationException::withMessages([
-                'task' => 'Apni campaign khud complete nahi kar sakte.',
+                'task' => 'You cannot complete your own campaign.',
             ]);
         }
 
         if ($task->isSoldOut()) {
             throw ValidationException::withMessages([
-                'task' => 'Yeh campaign ki required quantity poori ho chuki hai.',
+                'task' => 'This campaign has reached its required quantity.',
             ]);
         }
 
         if ($this->hasCompletedEver($user, $task)) {
             throw ValidationException::withMessages([
-                'task' => 'Aap yeh campaign task pehle complete kar chuke hain.',
+                'task' => 'You have already completed this campaign task.',
             ]);
         }
     }

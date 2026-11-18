@@ -73,12 +73,12 @@
                     </span>
 
                     <h1 class="mt-6 font-display text-4xl font-bold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                        Simple tasks complete karein.<br>
-                        <span class="bg-gradient-to-r from-mint-300 via-mint-400 to-gold-300 bg-clip-text text-transparent">Real PKR kamayen.</span>
+                        Complete simple tasks.<br>
+                        <span class="bg-gradient-to-r from-mint-300 via-mint-400 to-gold-300 bg-clip-text text-transparent">Earn real PKR.</span>
                     </h1>
 
                     <p class="mt-5 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
-                        YouTube subscribe, video watch, Facebook page follow, Instagram, WhatsApp channel aur ads — har task ka reward seedha aap ke wallet me. Payout Easypaisa, JazzCash, UPaisa ya NayaPay par.
+                        YouTube subscriptions, video watches, Facebook page follows, Instagram, WhatsApp channels, and ads — every task pays directly into your wallet. Withdraw via Easypaisa, JazzCash, UPaisa, or NayaPay.
                     </p>
 
                     <div class="mt-8 flex flex-wrap items-center gap-3">
@@ -154,8 +154,8 @@
         <section id="platforms" class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <div class="max-w-2xl">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Admin task categories</p>
-                <h2 class="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Har platform ka apna task system</h2>
-                <p class="mt-3 text-slate-400">Admin jo seconds set karega, utni der task khula rahega. Timer poora hone ke baad hi reward claim hota hai.</p>
+                <h2 class="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">A task system for every platform</h2>
+                <p class="mt-3 text-slate-400">The admin sets the timer, and the task stays open for that long. You can claim the reward only after the timer finishes.</p>
             </div>
 
             <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -185,7 +185,7 @@
 
                 <div class="rounded-2xl border border-mint-400/25 bg-mint-500/10 p-5">
                     <p class="text-xs font-bold uppercase tracking-wider text-mint-200">Daily reset</p>
-                    <p class="mt-2 text-sm leading-relaxed text-slate-200">Ek task din me sirf ek baar complete hota hai. Raat 12:00 baje ke baad dobara unlock — admin update kare ya na kare.</p>
+                    <p class="mt-2 text-sm leading-relaxed text-slate-200">Each task can be completed once a day. It unlocks again after 12:00 midnight — no admin update needed.</p>
                 </div>
             </div>
         </section>
@@ -199,10 +199,10 @@
 
                 <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     @foreach ([
-                        ['01', 'Account banayen', 'Gmail ya email se free register karein.'],
-                        ['02', 'Task start karein', 'Link new tab me khulega — login zaroori hai.'],
-                        ['03', 'Timer poora karein', 'Admin ke set kiye seconds tak wapas na aayen.'],
-                        ['04', 'Wallet me reward', 'Claim karein aur payout request bhejen.'],
+                        ['01', 'Create an account', 'Register for free with Gmail or email.'],
+                        ['02', 'Start a task', 'The link opens in a new tab — login is required.'],
+                        ['03', 'Complete the timer', 'Do not come back before the admin-set seconds finish.'],
+                        ['04', 'Reward in your wallet', 'Claim it and submit a payout request.'],
                     ] as [$step, $title, $text])
                         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
                             <span class="text-xs font-black tracking-widest text-mint-300">{{ $step }}</span>
@@ -218,8 +218,8 @@
             <div class="grid gap-10 lg:grid-cols-2 lg:items-center">
                 <div>
                     <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Payouts</p>
-                    <h2 class="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Apne wallet me cash nikalen</h2>
-                    <p class="mt-3 text-slate-400">Payout request bhejen — admin verify karke payment bhejta hai. Poora record wallet history me visible rehta hai.</p>
+                    <h2 class="mt-2 font-display text-3xl font-bold text-white sm:text-4xl">Withdraw cash to your wallet</h2>
+                    <p class="mt-3 text-slate-400">Submit a payout request — the admin verifies it and sends the payment. The full record stays visible in your wallet history.</p>
 
                     <div class="mt-6 grid grid-cols-2 gap-3">
                         @foreach ([['Easypaisa', 'emerald'], ['JazzCash', 'rose'], ['UPaisa', 'violet'], ['NayaPay', 'teal']] as [$wallet, $color])
@@ -273,10 +273,10 @@
             <h2 class="text-center font-display text-3xl font-bold text-white">Frequently asked questions</h2>
             <div class="mt-8 space-y-3">
                 @foreach ([
-                    ['Task dobara kab unlock hota hai?', 'Har task din me ek dafa complete hota hai. Raat 12:00 baje (Pakistan time) ke baad automatically unlock ho jata hai — admin action ki zaroorat nahi.'],
-                    ['Reward wallet me kab add hota hai?', 'Timer poora hone ke baad jab aap “Claim reward” karte hain, reward foran wallet me add ho jata hai.'],
-                    ['Payout kaise milta hai?', 'Wallet page se Easypaisa, JazzCash, UPaisa ya NayaPay account select karein aur payout request bhejen. Admin approve kar ke payment bhejta hai.'],
-                    ['Kya main multiple accounts bana sakta hoon?', 'Nahi. Ek user ke liye ek account hai. Duplicate accounts block kiye ja sakte hain.'],
+                    ['When does a task unlock again?', 'Each task can be completed once per day. It unlocks automatically after 12:00 midnight (Pakistan time) — no admin action needed.'],
+                    ['When is the reward added to my wallet?', 'After the timer finishes, when you click "Claim reward", the reward is added to your wallet immediately.'],
+                    ['How do I receive a payout?', 'Select an Easypaisa, JazzCash, UPaisa, or NayaPay account on the Wallet page and submit a payout request. The admin approves it and sends the payment.'],
+                    ['Can I create multiple accounts?', 'No. One account per user. Duplicate accounts may be blocked.'],
                 ] as [$question, $answer])
                     <details class="group rounded-2xl border border-white/10 bg-white/5 p-5">
                         <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-white">
@@ -292,7 +292,7 @@
         <section class="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
             <div class="relative overflow-hidden rounded-3xl border border-mint-400/25 bg-gradient-to-br from-mint-500/20 via-ink-900 to-ink-900 px-6 py-12 text-center sm:px-12">
                 <div class="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-mint-400/20 blur-3xl"></div>
-                <h2 class="font-display text-3xl font-bold text-white sm:text-4xl">Aaj hi earning shuru karein</h2>
+                <h2 class="font-display text-3xl font-bold text-white sm:text-4xl">Start earning today</h2>
                 <p class="mx-auto mt-3 max-w-xl text-slate-300">Free registration · Daily tasks · PKR wallet · Fast payouts</p>
                 <a href="{{ auth()->check() ? route('dashboard') : route('register') }}" class="mt-7 inline-flex rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-7 py-3.5 text-sm font-bold text-ink-950 shadow-xl shadow-mint-500/25">
                     {{ auth()->check() ? 'Open dashboard' : 'Create free account' }}

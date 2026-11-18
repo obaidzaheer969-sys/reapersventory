@@ -56,7 +56,7 @@ class CampaignService
 
         if (! $type->isCampaignEligible()) {
             throw ValidationException::withMessages([
-                'task_type' => 'Yeh task type campaign ke liye available nahi hai.',
+                'task_type' => 'This task type is not available for campaigns.',
             ]);
         }
 
@@ -68,9 +68,9 @@ class CampaignService
 
         if ((float) $user->wallet_balance < $total) {
             throw ValidationException::withMessages([
-                'amount' => 'Wallet balance kaafi nahi hai. Campaign ke liye '
-                    .number_format($total, 2).' PKR chahiye, available '
-                    .number_format((float) $user->wallet_balance, 2).' PKR hai.',
+                'amount' => 'Insufficient wallet balance. For this campaign, '
+                    .number_format($total, 2).' PKR is required, available '
+                    .number_format((float) $user->wallet_balance, 2).' PKR.',
             ]);
         }
 
@@ -173,7 +173,7 @@ class CampaignService
 
         if (! $campaign->isCampaign() || $campaign->campaign_status->isFinal()) {
             throw ValidationException::withMessages([
-                'campaign' => 'Yeh campaign ab cancel nahi ho sakti.',
+                'campaign' => 'This campaign cannot be cancelled now.',
             ]);
         }
 
@@ -183,7 +183,7 @@ class CampaignService
 
             if ($locked->campaign_status->isFinal()) {
                 throw ValidationException::withMessages([
-                    'campaign' => 'Yeh campaign ab cancel nahi ho sakti.',
+                    'campaign' => 'This campaign cannot be cancelled now.',
                 ]);
             }
 
@@ -232,8 +232,7 @@ class CampaignService
 
         if ($duration < $min || $duration > $max || $duration % $step !== 0) {
             throw ValidationException::withMessages([
-                'duration_seconds' => 'Video duration '.$min.' se '.$max.' seconds ke darmiyan aur '
-                    .$step.' seconds ke multiples me honi chahiye.',
+                'duration_seconds' => 'Video duration must be between '.$min.' and '.$max.' seconds and in multiples of '.$step.' seconds.',
             ]);
         }
 
@@ -247,7 +246,7 @@ class CampaignService
 
         if ($quantity < $min || $quantity > $max) {
             throw ValidationException::withMessages([
-                'target_quantity' => 'Quantity '.$min.' se '.$max.' ke darmiyan honi chahiye.',
+                'target_quantity' => 'Quantity must be between '.$min.' and '.$max.'.',
             ]);
         }
     }
@@ -256,7 +255,7 @@ class CampaignService
     {
         if (! $campaign->isCampaign() || $campaign->campaign_status !== CampaignStatus::Pending) {
             throw ValidationException::withMessages([
-                'campaign' => 'Sirf pending campaigns approve ya reject ho sakti hain.',
+                'campaign' => 'Only pending campaigns can be approved or rejected.',
             ]);
         }
     }

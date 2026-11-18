@@ -11,7 +11,7 @@
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Inbox</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Notifications</h1>
-            <p class="mt-2 text-sm text-slate-400">{{ $unreadCount }} unread · payout updates aur announcements.</p>
+            <p class="mt-2 text-sm text-slate-400">{{ $unreadCount }} unread · payout updates and announcements.</p>
         </div>
         @if ($unreadCount > 0)
             <form method="POST" action="{{ route('notifications.read-all') }}">
@@ -72,8 +72,8 @@
         @empty
             <div class="rounded-2xl border border-white/10 bg-white/5 px-6 py-16 text-center">
                 <p class="text-4xl">🔔</p>
-                <h2 class="mt-3 text-lg font-bold text-white">Koi notification nahi</h2>
-                <p class="mt-1 text-sm text-slate-400">Payout status aur nayi announcements yahan nazar aayengi.</p>
+                <h2 class="mt-3 text-lg font-bold text-white">No notifications</h2>
+                <p class="mt-1 text-sm text-slate-400">Payout status and new announcements will appear here.</p>
             </div>
         @endforelse
     </div>

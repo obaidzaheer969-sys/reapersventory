@@ -26,10 +26,10 @@ use UnitEnum;
 class SiteAdsSettings extends Page
 {
     private const SLOT_FIELDS = [
-        'ad_slot_top' => 'Top banner — header ke niche (sab pages)',
-        'ad_slot_content' => 'Content banner — page content se pehle',
-        'ad_slot_bottom' => 'Bottom banner — content ke baad',
-        'ad_slot_footer' => 'Footer banner — footer se pehle',
+        'ad_slot_top' => 'Top banner — below the header (all pages)',
+        'ad_slot_content' => 'Content banner — before the page content',
+        'ad_slot_bottom' => 'Bottom banner — after the content',
+        'ad_slot_footer' => 'Footer banner — before the footer',
     ];
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMegaphone;
@@ -74,26 +74,26 @@ class SiteAdsSettings extends Page
     {
         return $schema->components([
             Section::make('Website approval')
-                ->description('Ad network verification tag yahan save karein. Iske bina ads nahi chalenge.')
+                ->description('Save the ad network verification tag here. Ads will not run without it.')
                 ->schema([
                     Toggle::make('site_approved')
                         ->label('Website Approved')
-                        ->helperText('On karne par public pages par “Approved” badge dikhayega.')
+                        ->helperText('When enabled, it shows an "Approved" badge on public pages.')
                         ->live(),
                     Textarea::make('site_verification_tag')
                         ->label('Verification tag')
                         ->rows(3)
                         ->placeholder('<meta name="google-site-verification" content="...">')
-                        ->helperText('Ad network ka meta tag ya verification snippet yahan paste karein. Ye har page ke <head> me show hoga.')
+                        ->helperText('Paste the ad network meta tag or verification snippet here. It will appear in the <head> of every page.')
                         ->columnSpanFull()
                         ->required(fn (): bool => (bool) ($this->data['ads_enabled'] ?? false)),
                 ]),
             Section::make('Ads')
-                ->description('Approved hona aur verification tag save hona zaroori hai. Har slot alag se chalaya ja sakta hai.')
+                ->description('Approval and a saved verification tag are required. Each slot can be enabled separately.')
                 ->schema([
                     Toggle::make('ads_enabled')
                         ->label('Run site ads')
-                        ->helperText('Master switch. Off karne par koi bhi ad nahi chalega.')
+                        ->helperText('Master switch. When off, no ads will run.')
                         ->live(),
                     Select::make('ad_provider')
                         ->label('Ad provider')
@@ -107,14 +107,14 @@ class SiteAdsSettings extends Page
                     Textarea::make('ad_auto_code')
                         ->label('Head / auto ads code')
                         ->rows(6)
-                        ->helperText('AdSense auto ads script ya custom head script. Approved aur verification tag hone par hi chalega.')
+                        ->helperText('AdSense auto ads script or custom head script. It runs only when approved and a verification tag is present.')
                         ->columnSpanFull()
                         ->visible(fn (): bool => (bool) ($this->data['ads_enabled'] ?? false)),
                     ...collect(self::SLOT_FIELDS)
                         ->map(fn (string $label, string $key) => Textarea::make($key)
                             ->label($label)
                             ->rows(4)
-                            ->helperText('Khali chhorein to ye slot band rahega. Ad network ka banner/script yahan paste karein.')
+                            ->helperText('Leave empty to keep this slot disabled. Paste the ad network banner/script here.')
                             ->columnSpanFull()
                             ->visible(fn (): bool => (bool) ($this->data['ads_enabled'] ?? false)))
                         ->all(),

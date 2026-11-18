@@ -12,16 +12,16 @@
             @if ($isSuccess)
                 <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-mint-500/20 text-2xl text-mint-300">✓</div>
                 <h1 class="mt-4 font-display text-2xl font-bold text-white">Deposit successful</h1>
-                <p class="mt-2 text-sm text-slate-400">Aap ka payment confirm ho gaya aur wallet me add ho gaya hai.</p>
+                <p class="mt-2 text-sm text-slate-400">Your payment was confirmed and added to your wallet.</p>
             @elseif ($isCancelled)
                 <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-400/15 text-2xl text-gold-300">!</div>
                 <h1 class="mt-4 font-display text-2xl font-bold text-white">Payment cancelled</h1>
-                <p class="mt-2 text-sm text-slate-400">Cashmaal payment cancel ho gayi. Koi paisa wallet se nahi kata gaya.</p>
+                <p class="mt-2 text-sm text-slate-400">The Cashmaal payment was cancelled. No money was deducted from your wallet.</p>
             @else
                 <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-400/15 text-2xl text-gold-300">⏳</div>
-                <h1 class="mt-4 font-display text-2xl font-bold text-white">Payment check ho rahi hai</h1>
+                <h1 class="mt-4 font-display text-2xl font-bold text-white">Checking payment</h1>
                 <p class="mt-2 text-sm text-slate-400">
-                    Cashmaal ne abhi confirmation nahi bheji. Agar paisa kat gaya hai to thori der me wallet update ho jayega — page refresh karte rahein.
+                    Cashmaal has not sent confirmation yet. If the money was deducted, your wallet will update shortly — keep refreshing the page.
                 </p>
             @endif
 

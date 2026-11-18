@@ -75,7 +75,7 @@ class WalletService
 
             if ($after < 0) {
                 throw ValidationException::withMessages([
-                    'amount' => 'Wallet balance kaafi nahi hai. Available: '.number_format($current, 2).' PKR.',
+                    'amount' => 'Insufficient wallet balance. Available: '.number_format($current, 2).' PKR.',
                 ]);
             }
 

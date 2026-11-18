@@ -48,7 +48,7 @@ class PayoutController extends Controller
 
         if ($user->payoutAccounts()->count() >= 10) {
             throw ValidationException::withMessages([
-                'account_number' => 'Aap zyada se zyada 10 wallets save kar sakte hain.',
+                'account_number' => 'You can save up to 10 wallets.',
             ]);
         }
 
@@ -69,7 +69,7 @@ class PayoutController extends Controller
             ]);
         });
 
-        return back()->with('status', 'Wallet account save ho gaya.');
+        return back()->with('status', 'Wallet account saved.');
     }
 
     public function updateAccount(Request $request, PayoutAccount $account): RedirectResponse
@@ -94,7 +94,7 @@ class PayoutController extends Controller
             ]);
         });
 
-        return back()->with('status', 'Wallet account update ho gaya.');
+        return back()->with('status', 'Wallet account updated.');
     }
 
     public function destroyAccount(Request $request, PayoutAccount $account): RedirectResponse
@@ -110,7 +110,7 @@ class PayoutController extends Controller
             }
         });
 
-        return back()->with('status', 'Wallet account delete ho gaya.');
+        return back()->with('status', 'Wallet account deleted.');
     }
 
     public function storePayout(Request $request): RedirectResponse
@@ -124,8 +124,8 @@ class PayoutController extends Controller
             'payout_account_id' => ['required', 'integer'],
             'amount' => ['required', 'numeric', 'min:'.$minimum, 'max:'.$maximum],
         ], [
-            'amount.min' => 'Minimum payout PKR '.number_format($minimum, 0).' hai.',
-            'amount.max' => 'Maximum payout PKR '.number_format($maximum, 0).' hai.',
+            'amount.min' => 'Minimum payout is PKR '.number_format($minimum, 0).'.',
+            'amount.max' => 'Maximum payout is PKR '.number_format($maximum, 0).'.',
         ], [
             'payout_account_id' => 'wallet account',
             'amount' => 'amount',
@@ -135,13 +135,13 @@ class PayoutController extends Controller
 
         if (! $account) {
             throw ValidationException::withMessages([
-                'payout_account_id' => 'Pehle wallet account save karein.',
+                'payout_account_id' => 'Save a wallet account first.',
             ]);
         }
 
         $payout = $this->payouts->requestPayout($user, $account, (float) $data['amount']);
 
-        return back()->with('status', 'Payout request #'.$payout->id.' bhej di gayi. Admin review ke baad payment bhejega.');
+        return back()->with('status', 'Payout request #'.$payout->id.' submitted. The admin will send the payment after review.');
     }
 
     /**
@@ -156,7 +156,7 @@ class PayoutController extends Controller
             'account_number' => ['required', 'string', 'max:30', 'regex:/^[0-9+\-\s]{7,30}$/'],
             'is_default' => ['nullable', 'boolean'],
         ], [
-            'account_number.regex' => 'Account number sirf digits, +, - aur spaces par mushtamil ho.',
+            'account_number.regex' => 'The account number may contain only digits, +, -, and spaces.',
         ]);
 
         return $data;
@@ -173,7 +173,7 @@ class PayoutController extends Controller
 
         if ($exists) {
             throw ValidationException::withMessages([
-                'account_number' => 'Yeh wallet account pehle se save hai.',
+                'account_number' => 'This wallet account is already saved.',
             ]);
         }
     }

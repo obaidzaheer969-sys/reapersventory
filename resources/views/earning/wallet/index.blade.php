@@ -20,7 +20,7 @@
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Wallet</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Wallet &amp; payouts</h1>
-            <p class="mt-2 text-sm text-slate-400">Easypaisa, JazzCash, UPaisa ya NayaPay me withdrawal request bhejein.</p>
+            <p class="mt-2 text-sm text-slate-400">Submit a withdrawal request to Easypaisa, JazzCash, UPaisa, or NayaPay.</p>
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('deposits.index') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20">Deposit money</a>
@@ -56,11 +56,11 @@
         <div class="space-y-6 xl:col-span-2">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
                 <h2 class="text-base font-bold text-white">Request a payout</h2>
-                <p class="mt-1 text-xs text-slate-400">Amount foran balance se hold ho jayega. Reject hone par wapas add ho jayega.</p>
+                <p class="mt-1 text-xs text-slate-400">The amount will be held from your balance immediately. If rejected, it will be added back.</p>
 
                 @if ($accounts->isEmpty())
                     <div class="mt-4 rounded-xl border border-gold-400/30 bg-gold-400/10 px-4 py-3 text-xs text-gold-200">
-                        Pehle neeche se koi wallet account save karein, phir payout request bhej sakein.
+                        Save a wallet account below first, then you can submit a payout request.
                     </div>
                 @else
                     <form method="POST" action="{{ route('wallet.payouts.store') }}" class="mt-4 space-y-4">
@@ -88,7 +88,7 @@
 
                         <div class="space-y-1.5 rounded-xl border border-gold-400/20 bg-gold-400/5 px-4 py-3 text-[11px]">
                             <div class="flex items-center justify-between gap-3">
-                                <span class="text-slate-400">Wallet se cut hoga</span>
+                                <span class="text-slate-400">Deducted from your wallet</span>
                                 <span id="payout-gross" class="font-bold text-white">{{ \App\Support\Currency::format($payoutQuote['gross']) }}</span>
                             </div>
                             <div class="flex items-center justify-between gap-3">
@@ -96,7 +96,7 @@
                                 <span id="payout-fee" class="font-bold text-gold-300">{{ \App\Support\Currency::format($payoutQuote['fee']) }}</span>
                             </div>
                             <div class="flex items-center justify-between gap-3 border-t border-white/10 pt-1.5">
-                                <span class="text-slate-300">Aapke wallet account me jayega</span>
+                                <span class="text-slate-300">Sent to your wallet account</span>
                                 <span id="payout-net" class="font-bold text-mint-300">{{ \App\Support\Currency::format($payoutQuote['net']) }}</span>
                             </div>
                         </div>
@@ -108,18 +108,18 @@
                     </form>
 
                     @if ($balance < $minimumPayout)
-                        <p class="mt-3 text-[11px] text-slate-500">Payout ke liye kam az kam {{ \App\Support\Currency::format($minimumPayout, false) }} balance chahiye.</p>
+                        <p class="mt-3 text-[11px] text-slate-500">You need at least {{ \App\Support\Currency::format($minimumPayout, false) }} balance for a payout.</p>
                     @endif
                 @endif
 
                 <p class="mt-3 rounded-xl border border-mint-400/20 bg-mint-500/5 px-3 py-2.5 text-[11px] leading-relaxed text-slate-300">
-                    <span class="font-bold text-mint-300">Withdrawal period: {{ $cooldownHours }} ghante.</span>
-                    Ek baar payout request bhejne ke baad agla withdrawal {{ $cooldownHours }} ghante baad hi ho sakta hai. Har withdrawal par {{ number_format($payoutFeePercent, 0) }}% tax - fee cut hoti hai — wallet se poora amount debit hota hai, fee admin ko jaati hai aur baqi amount aap ke wallet account me bheja jata hai.
+                    <span class="font-bold text-mint-300">Withdrawal period: {{ $cooldownHours }} hours.</span>
+                    After submitting one payout request, the next withdrawal {{ $cooldownHours }} hours later. Each withdrawal has a {{ number_format($payoutFeePercent, 0) }}% tax - fee deducted — the full amount is debited from your wallet, the fee goes to the admin, and the remaining amount is sent to your wallet account.
                 </p>
 
                 @if ($payoutLocked)
                     <p class="mt-2 rounded-xl border border-gold-400/30 bg-gold-400/10 px-3 py-2.5 text-[11px] leading-relaxed text-gold-200">
-                        Aapki last request ke {{ $cooldownHours }} ghante abhi pooray nahi hue. Agla withdrawal {{ $nextPayoutAt->timezone($tz)->format('d M, h:i A') }} ke baad allowed hoga.
+                        Your last request was {{ $cooldownHours }} hours ago, and that period is not complete yet. The next withdrawal {{ $nextPayoutAt->timezone($tz)->format('d M, h:i A') }} will be allowed after that.
                     </p>
                 @endif
             </div>
@@ -128,7 +128,7 @@
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <h2 class="text-base font-bold text-white">Add money</h2>
-                        <p class="mt-1 text-xs text-slate-400">Cashmaal se wallet deposit karein.</p>
+                        <p class="mt-1 text-xs text-slate-400">Deposit into your wallet via Cashmaal.</p>
                     </div>
                     <span class="rounded-lg bg-mint-500/15 px-2.5 py-1 text-[11px] font-bold text-mint-300">{{ \App\Support\Currency::format($totalDeposited) }}</span>
                 </div>
@@ -148,7 +148,7 @@
                             </div>
                         </div>
                     @empty
-                        <p class="rounded-lg border border-dashed border-white/15 px-3 py-4 text-center text-[11px] text-slate-400">Abhi koi deposit nahi.</p>
+                        <p class="rounded-lg border border-dashed border-white/15 px-3 py-4 text-center text-[11px] text-slate-400">No deposits yet.</p>
                     @endforelse
                 </div>
             </div>
@@ -157,7 +157,7 @@
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <h2 class="text-base font-bold text-white">Saved wallet accounts</h2>
-                        <p class="mt-1 text-xs text-slate-400">Account name, number aur provider.</p>
+                        <p class="mt-1 text-xs text-slate-400">Account name, number, and provider.</p>
                     </div>
                 </div>
 
@@ -176,7 +176,7 @@
                                     <p class="mt-1.5 truncate text-sm font-semibold text-white">{{ $account->account_name }}</p>
                                     <p class="text-xs text-slate-400">{{ $account->account_number }}</p>
                                 </div>
-                                <form method="POST" action="{{ route('wallet.accounts.destroy', $account) }}" onsubmit="return confirm('Yeh wallet account delete karna hai?')">
+                                <form method="POST" action="{{ route('wallet.accounts.destroy', $account) }}" onsubmit="return confirm('Delete this wallet account?')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="rounded-lg border border-rose-400/25 bg-rose-500/10 px-2.5 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/20">Delete</button>
@@ -208,7 +208,7 @@
                             </details>
                         </div>
                     @empty
-                        <p class="rounded-xl border border-dashed border-white/15 px-4 py-6 text-center text-xs text-slate-400">Abhi koi wallet account save nahi hai.</p>
+                        <p class="rounded-xl border border-dashed border-white/15 px-4 py-6 text-center text-xs text-slate-400">No wallet account saved yet.</p>
                     @endforelse
                 </div>
 
@@ -244,7 +244,7 @@
             <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
                 <div class="border-b border-white/10 px-5 py-4">
                     <h2 class="text-base font-bold text-white">Payout requests</h2>
-                    <p class="text-xs text-slate-400">Status aur admin notes</p>
+                    <p class="text-xs text-slate-400">Status and admin notes</p>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -290,7 +290,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-5 py-12 text-center text-sm text-slate-400">Abhi koi payout request nahi bheji.</td>
+                                    <td colspan="5" class="px-5 py-12 text-center text-sm text-slate-400">No payout request submitted yet.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -326,7 +326,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="px-5 py-10 text-center text-sm text-slate-400">Koi wallet transaction nahi.</div>
+                        <div class="px-5 py-10 text-center text-sm text-slate-400">No wallet transactions.</div>
                     @endforelse
                 </div>
             </div>

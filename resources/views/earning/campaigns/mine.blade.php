@@ -12,7 +12,7 @@
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">My campaigns</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Campaign dashboard</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Aap ki publish ki hui campaigns, unki quantity, spending aur completion status — sab yahan. Nayi campaign payment ke foran baad live ho jati hai.
+                Your published campaigns, their quantity, spending, and completion status — all here. New campaigns go live immediately after payment.
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -25,7 +25,7 @@
         <div class="relative overflow-hidden rounded-2xl border border-mint-400/25 bg-gradient-to-br from-mint-500/20 via-ink-850 to-ink-900 p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-mint-200/80">Wallet balance</p>
             <p class="mt-2 font-display text-3xl font-bold text-white">{{ \App\Support\Currency::format($walletBalance) }}</p>
-            <p class="mt-2 text-xs text-slate-400">New campaigns isi balance se pay hoti hain</p>
+            <p class="mt-2 text-xs text-slate-400">New campaigns are paid from this balance</p>
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total campaign spend</p>
@@ -47,15 +47,15 @@
     @if ($campaigns->isEmpty())
         <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 px-6 py-16 text-center">
             <p class="text-4xl">📣</p>
-            <h2 class="mt-3 text-lg font-bold text-white">Abhi koi campaign nahi</h2>
-            <p class="mt-1 text-sm text-slate-400">Apni pehli campaign banayen — YouTube, Facebook, Instagram ya WhatsApp ke liye.</p>
+            <h2 class="mt-3 text-lg font-bold text-white">No campaigns yet</h2>
+            <p class="mt-1 text-sm text-slate-400">Create your first campaign — for YouTube, Facebook, Instagram, or WhatsApp.</p>
             <a href="{{ route('campaigns.create') }}" class="mt-4 inline-flex rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950">Create campaign</a>
         </div>
     @else
         <div class="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
             <div class="border-b border-white/10 px-5 py-4">
                 <h2 class="text-base font-bold text-white">All campaigns</h2>
-                <p class="text-xs text-slate-400">Status, quantity, spending aur refunds</p>
+                <p class="text-xs text-slate-400">Status, quantity, spending, and refunds</p>
             </div>
 
             <div class="overflow-x-auto">
@@ -110,7 +110,7 @@
                                 <td class="whitespace-nowrap px-5 py-3.5 text-right">
                                     <a href="{{ route('campaigns.show', $campaign) }}" class="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:bg-white/10">Details</a>
                                     @if ($cancellable)
-                                        <form method="POST" action="{{ route('campaigns.cancel', $campaign) }}" class="mt-1 inline" onsubmit="return confirm('Campaign cancel karni hai? Unused budget wallet me wapas aa jayega.')">
+                                        <form method="POST" action="{{ route('campaigns.cancel', $campaign) }}" class="mt-1 inline" onsubmit="return confirm('Cancel this campaign? The unused budget will return to your wallet.')">
                                             @csrf
                                             <button type="submit" class="rounded-lg border border-rose-400/25 bg-rose-500/10 px-2.5 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/20">Cancel</button>
                                         </form>

@@ -47,13 +47,13 @@ class PayoutService
 
         if ($amount < $minimum) {
             throw ValidationException::withMessages([
-                'amount' => 'Minimum payout PKR '.number_format($minimum, 0).' hai.',
+                'amount' => 'Minimum payout is PKR '.number_format($minimum, 0).'.',
             ]);
         }
 
         if ($amount > $maximum) {
             throw ValidationException::withMessages([
-                'amount' => 'Maximum payout PKR '.number_format($maximum, 0).' hai.',
+                'amount' => 'Maximum payout is PKR '.number_format($maximum, 0).'.',
             ]);
         }
 
@@ -73,10 +73,10 @@ class PayoutService
 
                 if ($nextRequestAt->isFuture()) {
                     throw ValidationException::withMessages([
-                        'amount' => 'Withdrawal ka period '.$cooldownHours
-                            .' ghante hai. Agla payout request '
+                        'amount' => 'The withdrawal period is '.$cooldownHours
+                            .' hours. The next payout request '
                             .$nextRequestAt->timezone((string) config('earning.timezone'))->format('d M, h:i A')
-                            .' ke baad bhej sakte hain.',
+                            .' can be sent after that.',
                     ]);
                 }
             }
@@ -134,7 +134,7 @@ class PayoutService
 
             if ($payout->status !== PayoutStatus::Pending) {
                 throw ValidationException::withMessages([
-                    'status' => 'Sirf pending payout ko paid mark kiya ja sakta hai.',
+                    'status' => 'Only a pending payout can be marked as paid.',
                 ]);
             }
 
@@ -167,7 +167,7 @@ class PayoutService
 
             if ($payout->status !== PayoutStatus::Pending) {
                 throw ValidationException::withMessages([
-                    'status' => 'Sirf pending payout reject ki ja sakti hai.',
+                    'status' => 'Only a pending payout can be rejected.',
                 ]);
             }
 

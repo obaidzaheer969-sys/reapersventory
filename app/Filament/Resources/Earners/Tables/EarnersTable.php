@@ -70,7 +70,7 @@ class EarnersTable
                     ->icon('heroicon-o-banknotes')
                     ->color('success')
                     ->modalHeading(fn (User $record) => 'Add wallet balance — '.$record->name)
-                    ->modalDescription('Yeh amount seedha user ke wallet me add ho jayegi aur wallet history me "Admin credit" ke tor par dikhegi.')
+                    ->modalDescription('This amount will be added directly to the user\'s wallet and shown as "Admin credit" in wallet history.')
                     ->form([
                         TextInput::make('amount')
                             ->label('Amount (PKR)')
@@ -97,7 +97,7 @@ class EarnersTable
 
                         Notification::make()
                             ->title('Wallet balance added')
-                            ->body('PKR '.number_format((float) $data['amount'], 2).' '.$record->name.' ke wallet me add ho gaye. New balance: PKR '.number_format((float) $record->wallet_balance, 2).'.')
+                            ->body('PKR '.number_format((float) $data['amount'], 2).' was added to '.$record->name.'\'s wallet. New balance: PKR '.number_format((float) $record->wallet_balance, 2).'.')
                             ->success()
                             ->send();
                     }),
@@ -118,7 +118,7 @@ class EarnersTable
                 DeleteAction::make()
                     ->label('Delete earner')
                     ->modalHeading(fn (User $record) => 'Delete earner — '.$record->name)
-                    ->modalDescription('Yeh earner aur uska wallet/task/payout history permanently delete ho jayegi. Yeh action wapas nahi ho sakta.')
+                    ->modalDescription('This earner and their wallet/task/payout history will be permanently deleted. This action cannot be undone.')
                     ->successNotificationTitle('Earner deleted')
                     ->visible(fn (User $record): bool => $record->id !== auth()->id()),
             ]);

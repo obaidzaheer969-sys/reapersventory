@@ -151,7 +151,7 @@ class CampaignsTable
                     ->icon('heroicon-o-check-circle')
                     ->requiresConfirmation()
                     ->modalHeading('Approve campaign')
-                    ->modalDescription('Campaign live ho jayegi aur earners ko dikhegi. Payment already wallet se hold hai.')
+                    ->modalDescription('The campaign will go live and be visible to earners. The payment is already held from the wallet.')
                     ->visible(fn (EarningTask $record) => $record->campaign_status === CampaignStatus::Pending)
                     ->action(function (EarningTask $record, CampaignService $campaigns): void {
                         try {
@@ -159,13 +159,13 @@ class CampaignsTable
 
                             Notification::make()
                                 ->title('Campaign approved')
-                                ->body('Campaign ab live hai aur earners ko dikhegi.')
+                                ->body('The campaign is now live and visible to earners.')
                                 ->success()
                                 ->send();
                         } catch (ValidationException $e) {
                             Notification::make()
                                 ->title('Cannot approve campaign')
-                                ->body(collect($e->errors())->flatten()->first() ?: 'Campaign approve nahi ho saki.')
+                                ->body(collect($e->errors())->flatten()->first() ?: 'The campaign could not be approved.')
                                 ->danger()
                                 ->send();
                         } catch (Throwable $e) {
@@ -184,7 +184,7 @@ class CampaignsTable
                     ->icon('heroicon-o-x-circle')
                     ->requiresConfirmation()
                     ->modalHeading('Reject campaign')
-                    ->modalDescription('Campaign reject hone par poora amount user ke wallet me refund ho jayega.')
+                    ->modalDescription('Rejecting the campaign will refund the full amount to the user\'s wallet.')
                     ->visible(fn (EarningTask $record) => $record->campaign_status === CampaignStatus::Pending)
                     ->form([
                         Textarea::make('admin_notes')
@@ -198,13 +198,13 @@ class CampaignsTable
 
                             Notification::make()
                                 ->title('Campaign rejected')
-                                ->body('Amount user ke wallet me refund kar diya gaya hai.')
+                                ->body('The amount has been refunded to the user\'s wallet.')
                                 ->danger()
                                 ->send();
                         } catch (ValidationException $e) {
                             Notification::make()
                                 ->title('Cannot reject campaign')
-                                ->body(collect($e->errors())->flatten()->first() ?: 'Campaign reject nahi ho saki.')
+                                ->body(collect($e->errors())->flatten()->first() ?: 'The campaign could not be rejected.')
                                 ->danger()
                                 ->send();
                         } catch (Throwable $e) {
@@ -218,7 +218,7 @@ class CampaignsTable
                         }
                     }),
             ])
-            ->emptyStateHeading('Koi campaign nahi')
-            ->emptyStateDescription('Users ki publish ki hui campaigns yahan dikhengi.');
+            ->emptyStateHeading('No campaigns')
+            ->emptyStateDescription('Campaigns published by users will appear here.');
     }
 }

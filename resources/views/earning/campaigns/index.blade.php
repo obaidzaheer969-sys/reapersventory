@@ -13,7 +13,7 @@
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Community</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Other users ke tasks</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                Yeh campaigns doosre users ne publish kiye hain. Har action (subscribe, follow, like ya video view) ka reward exactly 2 PKR hai. Har campaign ki quantity poori hone par woh khud ba khud hide ho jati hai. Ek campaign aap sirf ek dafa complete kar sakte hain.
+                These campaigns were published by other users. Each action (subscribe, follow, like, or video view) pays exactly 2 PKR. A campaign hides itself automatically when its quantity is complete. You can complete each campaign only once.
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -40,8 +40,8 @@
     @if ($campaigns->isEmpty())
         <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 px-6 py-16 text-center">
             <p class="text-4xl">🌱</p>
-            <h2 class="mt-3 text-lg font-bold text-white">Abhi koi live campaign nahi</h2>
-            <p class="mt-1 text-sm text-slate-400">Pehli campaign aap bhi publish kar sakte hain — wallet se payment karke apna task live karwayen.</p>
+            <h2 class="mt-3 text-lg font-bold text-white">No live campaigns right now</h2>
+            <p class="mt-1 text-sm text-slate-400">You can publish the first campaign too — pay from your wallet to put your task live.</p>
             <a href="{{ route('campaigns.create') }}" class="mt-4 inline-flex rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950">Create campaign</a>
         </div>
     @else
@@ -86,7 +86,7 @@
                         @if ($isMine)
                             <a href="{{ route('campaigns.mine') }}" class="block rounded-xl border border-gold-400/30 bg-gold-400/10 px-4 py-2.5 text-center text-sm font-bold text-gold-300">Your campaign — manage</a>
                         @elseif ($isDone)
-                            <div class="rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2.5 text-center text-xs font-semibold text-slate-400">✓ Aap yeh campaign complete kar chuke hain</div>
+                            <div class="rounded-xl border border-white/10 bg-ink-900/60 px-3 py-2.5 text-center text-xs font-semibold text-slate-400">✓ You have already completed this campaign</div>
                         @elseif ($attempt)
                             @if ($attempt->canClaim($campaign))
                                 <a href="{{ route('tasks.run', $campaign) }}" class="block rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 px-4 py-2.5 text-center text-sm font-bold text-ink-950">Claim reward →</a>

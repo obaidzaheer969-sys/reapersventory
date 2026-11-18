@@ -5,8 +5,8 @@
 @section('content')
     <div>
         <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Free account</p>
-        <h1 class="mt-2 font-display text-2xl font-bold text-white">Earning shuru karein</h1>
-        <p class="mt-1 text-sm text-slate-400">Register karein, tasks complete karein aur PKR kamayen.</p>
+        <h1 class="mt-2 font-display text-2xl font-bold text-white">Start earning</h1>
+        <p class="mt-1 text-sm text-slate-400">Register, complete tasks, and earn PKR.</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" class="mt-6 space-y-4">
@@ -35,7 +35,7 @@
         <div>
             <label class="block text-sm font-semibold text-slate-200" for="email">Gmail</label>
             <input id="email" name="email" type="email" value="{{ old('email') }}" required autocomplete="email"
-                   placeholder="apna@gmail.com"
+                   placeholder="you@example.com"
                    class="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-mint-400 focus:outline-none focus:ring-2 focus:ring-mint-400/20">
             @foreach ($errors->get('email') as $message)
                 <p class="mt-1 text-xs text-rose-300">{{ $message }}</p>
@@ -60,7 +60,7 @@
         <label class="flex items-start gap-2.5 text-sm text-slate-300">
             <input type="checkbox" name="terms" value="1" @checked(old('terms'))
                    class="mt-0.5 rounded border-white/20 bg-white/5 text-mint-500 focus:ring-mint-400">
-            <span>Main <span class="font-semibold text-slate-200">Terms and Conditions</span> ko accept karta/karti hoon.</span>
+            <span>I accept the <span class="font-semibold text-slate-200">Terms and Conditions</span>.</span>
         </label>
         @foreach ($errors->get('terms') as $message)
             <p class="text-xs text-rose-300">{{ $message }}</p>
@@ -72,7 +72,7 @@
     </form>
 
     <p class="mt-6 text-center text-sm text-slate-400">
-        Pehle se account hai?
+        Already have an account?
         <a href="{{ route('login') }}" class="font-semibold text-mint-300 hover:text-mint-200">Login</a>
     </p>
 @endsection

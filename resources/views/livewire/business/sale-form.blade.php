@@ -34,7 +34,7 @@
                             <option value="customer:{{ $customer->id }}">{{ $customer->name }}</option>
                         @endforeach
                     </select>
-                    <p class="mt-1 text-xs text-slate-500">Walk-in, online order, ya customer name select karo.</p>
+                    <p class="mt-1 text-xs text-slate-500">Select a walk-in customer, online order, or customer name.</p>
                     @error('customerId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     @error('customerSelection') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>

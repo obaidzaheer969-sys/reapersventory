@@ -17,8 +17,8 @@
         $claimLabel = $claimable
             ? 'Claim '.config('earning.currency').' '.number_format((float) $expectedReward, 2)
             : (! $isEmbedded && ! $realPageOpened
-                ? 'Pehle real page kholein'
-                : ($isEmbedded && $ready ? 'Video '.(max(0, $watchRequired - $watched)).'s aur dekhein' : 'Please wait…'));
+                ? 'Open the real page first'
+                : ($isEmbedded && $ready ? 'Watch '.(max(0, $watchRequired - $watched)).'s more' : 'Please wait…'));
     @endphp
 
     <div class="mx-auto max-w-5xl {{ $ready ? '' : 'pb-40' }}">
@@ -46,17 +46,17 @@
                             <span class="h-2 w-2 rounded-full {{ $ready && $watchReady ? 'bg-mint-400' : 'animate-pulse bg-gold-400' }}" data-real-dot></span>
                             <span data-real-status>
                                 @if ($isEmbedded)
-                                    {{ $ready && $watchReady ? 'Timer complete — ab claim karein' : 'Video play karein — watch time shuru karein' }}
+                                    {{ $ready && $watchReady ? 'Timer complete — claim now' : 'Play the video — start watch time' }}
                                 @else
-                                    {{ $ready ? 'Timer complete — ab claim karein' : ($waitingForPage ? 'Real page kholein — timer abhi shuru nahi hua' : 'Real page kholein — timer chalu hai') }}
+                                    {{ $ready ? 'Timer complete — claim now' : ($waitingForPage ? 'Open the real page — the timer has not started' : 'Open the real page — the timer is running') }}
                                 @endif
                             </span>
                         </p>
                         <p class="mt-2 max-w-xl text-sm leading-relaxed text-slate-300">
                             @if ($isEmbedded)
-                                Video neeche official {{ $task->platform() }} player me chal rahi hai. Play button dabaein — watch time isi page par count hota hai. Timer poora hone aur required watch time mukammal hone par reward claim karein.
+                                The video is playing in the official {{ $task->platform() }} player below. Click Play — watch time is counted on this page. Claim the reward after the timer and required watch time finish.
                             @else
-                                Pehle "Open real page" dabaein — asli page khulne tak seconds nahi chalenge. Wahan video play karein, like ya subscribe karein — YouTube/Facebook par views, watch time, likes aur subscribes real time count hote hain. Timer isi task tab me chal raha hai; is tab ko band karne par task fail hoga.
+                                Click "Open real page" first — the seconds will not start until the real page opens. Play the video there, like, or subscribe — views, watch time, likes, and subscribers are counted in real time on YouTube/Facebook. The timer runs in this task tab; closing this tab will fail the task.
                             @endif
                         </p>
                         <p class="mt-1.5 truncate text-[11px] text-slate-500" title="{{ $task->target_url }}">{{ $task->target_url }}</p>
@@ -118,35 +118,35 @@
                                  data-watch-bar style="width: {{ $watchRequired > 0 ? round(($watched / $watchRequired) * 100) : 0 }}%"></div>
                         </div>
                         <p class="mt-2 text-[11px] leading-relaxed text-slate-500" data-play-hint>
-                            Video play button dabaein. Play na karne par watch time count nahi hoga aur claim band rahega.
+                            Click the video play button. Without playback, watch time will not count and the claim stays locked.
                         </p>
                     </div>
 
                     @if ($embedPlatform === 'youtube')
                         <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90">
-                            💡 Monetized videos me ads YouTube apne rules ke mutabiq chalata hai. Creator ke liye zaroori hai ke video monetized ho aur embedding allowed ho; viewer YouTube Premium ya ad-blocker use na kare. Hum ads force nahi kar sakte aur paid/incentivized views ko YouTube invalid traffic mana sakta hai.
+                            💡 YouTube runs ads on monetized videos according to its own rules. The creator must have monetization and embedding enabled, and the viewer must not use YouTube Premium or an ad blocker. We cannot force ads, and YouTube may treat paid or incentivized views as invalid traffic.
                         </p>
                     @endif
 
                     <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90">
-                        🔒 Timer poora hone tak tab band karna, reload karna aur back jana band hai. Video pause karne par timer bhi ruk jayega aur watch time bhi nahi badhega.
+                        🔒 Do not close, reload, or go back from this tab until the timer finishes. Pausing the video pauses the timer and stops watch time from increasing.
                     </p>
                 @else
                     <p class="mt-3 rounded-xl border border-gold-400/25 bg-gold-400/5 px-3 py-2 text-[11px] leading-relaxed text-gold-200/90" data-real-hint>
-                        🔒 Pehle "Open real page" dabaein — tab tak timer shuru nahi hoga. Real page khulte hi seconds chalne lagenge; is task tab ko timer poora hone se pehle band kiya to task <span class="font-bold">FAIL</span> ho jayega.
+                        🔒 Click "Open real page" first — the timer will not start until then. The seconds start as soon as the real page opens; closing this task tab before the timer finishes will <span class="font-bold">FAIL</span> the task.
                     </p>
                 @endif
 
                 <div data-fail-banner class="mt-3 hidden rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-3">
-                    <p class="text-sm font-bold text-rose-200">❌ Task fail ho gaya</p>
+                    <p class="text-sm font-bold text-rose-200">❌ Task failed</p>
                     <p class="mt-1 text-[11px] leading-relaxed text-rose-100/80">
                         @if ($isEmbedded)
-                            Timer poora hone se pehle yeh tab band kar diya gaya. Is task ka reward nahi milega — dobara start karein aur video required waqt tak play rakhein.
+                            This tab was closed before the timer finished. You will not receive the reward — start again and keep the video playing for the required time.
                         @else
-                            Ye task tab timer poora hone se pehle band kar diya gaya. Is task ka reward nahi milega — dobara start karein.
+                            This task tab was closed before the timer finished. You will not receive the reward — start again.
                         @endif
                     </p>
-                    <a href="{{ route('tasks.index') }}" class="mt-2.5 inline-flex rounded-lg bg-rose-500 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-rose-400">Dobara start karein →</a>
+                    <a href="{{ route('tasks.index') }}" class="mt-2.5 inline-flex rounded-lg bg-rose-500 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-rose-400">Start again →</a>
                 </div>
             </div>
 
@@ -156,7 +156,7 @@
                         <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-mint-300" data-timer-status>{{ $ready ? 'Ready to claim' : 'Seconds remaining' }}</p>
                         <p class="mt-1 font-display text-4xl font-bold tabular-nums text-white {{ $ready ? '' : 'hidden' }}" data-timer-display>{{ gmdate('i:s', $remaining) }}</p>
                         @if (! $ready)
-                            <p class="mt-1 text-sm font-semibold text-gold-300" data-timer-lock-note>{{ $waitingForPage ? 'Timer real page khulne ka intezaar kar raha hai' : ($timerPaused ? 'Timer video pause hone ki wajah se ruk gaya hai' : 'Timer neeche lock bar me chal raha hai') }}</p>
+                            <p class="mt-1 text-sm font-semibold text-gold-300" data-timer-lock-note>{{ $waitingForPage ? 'Timer is waiting for the real page to open' : ($timerPaused ? 'Timer paused because the video is paused' : 'The timer is running in the lock bar below') }}</p>
                         @endif
                         <div class="mt-3 h-2 w-full max-w-xs overflow-hidden rounded-full bg-white/10">
                             <div class="h-full rounded-full bg-gradient-to-r from-mint-400 to-mint-500 transition-[width] duration-1000 ease-linear"
@@ -176,9 +176,9 @@
 
                 <p class="mt-4 text-xs leading-relaxed text-slate-500">
                     @if ($isEmbedded)
-                        Is tab me timer chal raha hai aur isi tab ka title bar seconds dikhata hai. Timer poora hone tak yeh tab band karna aur back jana band rahega. Video play karte waqt hi timer aur watch time dono chalte hain — pause karne par dono ruk jate hain.
+                        The timer runs in this tab and the title bar shows the seconds. Do not close this tab or go back until the timer finishes. The timer and watch time run only while the video is playing — both pause when the video pauses.
                     @else
-                        Pehle "Open real page" dabaein — real page khulte hi is tab me timer chalna shuru hoga aur title bar seconds dikhayega. Timer poora hone tak yeh task tab band karna aur back jana band rahega. Real page alag tab me khulta hai; wahan action zaroor karein.
+                        Click "Open real page" first — the timer starts in this tab as soon as the real page opens and the title bar shows the seconds. Do not close this task tab or go back until the timer finishes. The real page opens in a separate tab; complete the action there.
                     @endif
                 </p>
             </div>
@@ -201,7 +201,7 @@
                     <div class="min-w-0 flex-1">
                         <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-gold-300" data-lock-label>Task locked</p>
                         <p class="truncate text-sm font-semibold text-white" data-lock-message>
-                            Timer poora hone tak tab band karna aur back jana band hai.
+                            Do not close this tab or go back until the timer finishes.
                         </p>
                     </div>
                     <div class="shrink-0 text-right">
@@ -217,7 +217,7 @@
 
                 <div class="mt-2.5 flex items-center justify-between gap-3">
                     <p class="text-[11px] leading-snug text-slate-500" data-lock-hint>
-                        Back button, tab close aur page reload timer ke baad hi chalenge.
+                        The back button, tab close, and page reload will work after the timer finishes.
                     </p>
                     <a href="{{ route('tasks.index') }}" data-lock-back aria-disabled="true" tabindex="-1"
                        class="shrink-0 cursor-not-allowed rounded-lg bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-500">
@@ -349,17 +349,17 @@
                 if (lockMessage) {
                     lockMessage.textContent = pausedNow
                         ? (embedded
-                            ? 'Video paused hai — play karte hi timer dobara chalega.'
-                            : 'Real page abhi nahi khula — "Open real page" dabate hi timer shuru hoga.')
+                            ? 'Video paused — the timer will resume when you press Play.'
+                            : 'The real page is not open yet — the timer will start when you click "Open real page".')
                         : originalLockMessage;
                 }
 
                 if (timerLockNote) {
                     timerLockNote.textContent = pausedNow
                         ? (embedded
-                            ? 'Timer video pause hone ki wajah se ruk gaya hai'
-                            : 'Timer real page khulne ka intezaar kar raha hai')
-                        : 'Timer neeche lock bar me chal raha hai';
+                            ? 'Timer paused because the video is paused'
+                            : 'Timer is waiting for the real page to open')
+                        : 'The timer is running in the lock bar below';
                 }
             }
 
@@ -513,10 +513,10 @@
                             return;
                         }
 
-                        setRealStatus('Real page confirm nahi hua — "Open real page" dobara dabaein', 'gold');
+                        setRealStatus('Real page not confirmed — click "Open real page" again', 'gold');
 
                         if (realHint) {
-                            realHint.textContent = '⚠️ Timer abhi shuru nahi hua. Real page khula rakhein aur "Open real page" dobara dabaein.';
+                            realHint.textContent = '⚠️ The timer has not started yet. Keep the real page open and click "Open real page" again.';
                         }
                     });
                 } catch (error) {}
@@ -552,30 +552,30 @@
                 }
 
                 if (finished && watched >= required) {
-                    setRealStatus('Timer complete — ab claim karein', 'mint');
+                    setRealStatus('Timer complete — claim now', 'mint');
 
                     return;
                 }
 
                 if (finished) {
-                    setRealStatus('Timer complete — video ' + Math.max(0, required - watched) + 's aur play karein', 'gold');
+                    setRealStatus('Timer complete — watch ' + Math.max(0, required - watched) + 's more of the video', 'gold');
 
                     return;
                 }
 
                 if (videoPlaying) {
-                    setRealStatus('Video chal rahi hai — watch time count ho raha hai', 'mint');
+                    setRealStatus('Video is playing — watch time is being counted', 'mint');
 
                     return;
                 }
 
                 if (opened) {
-                    setRealStatus('Video paused — play karein, watch time aur timer dono ruke hain', 'gold');
+                    setRealStatus('Video paused — press Play; watch time and the timer are both paused', 'gold');
 
                     return;
                 }
 
-                setRealStatus('Video play button dabaein — watch time shuru karein', 'gold');
+                setRealStatus('Click the video play button — start watch time', 'gold');
             }
 
             function renderWatch() {
@@ -589,13 +589,13 @@
 
                 if (playHint) {
                     if (finished && watched < required) {
-                        playHint.textContent = 'Timer poora ho gaya, lekin video abhi ' + Math.max(0, required - watched) + ' seconds aur play karni hai.';
+                        playHint.textContent = 'The timer finished, but the video still needs ' + Math.max(0, required - watched) + ' more seconds of playback.';
                     } else if (videoPlaying) {
-                        playHint.textContent = 'Video play ho rahi hai — watch time count ho raha hai. Yeh tab khula rakhein.';
+                        playHint.textContent = 'Video is playing — watch time is being counted. Keep this tab open.';
                     } else if (opened) {
-                        playHint.textContent = 'Video paused hai — play dabaein, watch time aur timer dono dobara shuru honge.';
+                        playHint.textContent = 'Video paused — press Play; watch time and the timer will resume.';
                     } else {
-                        playHint.textContent = 'Video play button dabaein. Play na karne par watch time count nahi hoga.';
+                        playHint.textContent = 'Click the video play button. Without playback, watch time will not count.';
                     }
                 }
             }
@@ -622,9 +622,9 @@
                 if (failed) {
                     button.textContent = 'Task failed';
                 } else if (!embedded && !opened) {
-                    button.textContent = 'Pehle real page kholein';
+                    button.textContent = 'Open the real page first';
                 } else if (embedded && finished && !watchReady) {
-                    button.textContent = 'Video ' + Math.max(0, required - watched) + 's aur dekhein';
+                    button.textContent = 'Watch ' + Math.max(0, required - watched) + 's more';
                 } else if (claimable) {
                     button.textContent = 'Claim ' + currency + ' ' + reward;
                 } else {
@@ -658,18 +658,18 @@
 
             function setOpenUi() {
                 if (openButton) {
-                    openButton.textContent = opened ? 'Real page khula hai ↗' : 'Open real page ↗';
+                    openButton.textContent = opened ? 'Real page is open ↗' : 'Open real page ↗';
                 }
 
                 if (realHint) {
-                    realHint.textContent = '🔒 Is task tab ko timer poora hone se pehle band mat karein — band karne par task FAIL ho jayega. Real page alag tab me khula hai, wahan action poora karein.';
+                    realHint.textContent = '🔒 Do not close this task tab before the timer finishes — closing it will FAIL the task. The real page is open in a separate tab; complete the action there.';
                 }
 
                 if (timerPaused) {
-                    setRealStatus('Real page khula hai — timer shuru hoga', 'gold');
+                    setRealStatus('Real page is open — the timer will start', 'gold');
                 } else {
                     setRealStatus(
-                        finished ? 'Timer complete — ab claim karein' : 'Real page khula hai — timer chal raha hai',
+                        finished ? 'Timer complete — claim now' : 'Real page is open — the timer is running',
                         'mint'
                     );
                 }
@@ -685,10 +685,10 @@
                 var win = window.open(targetUrl, '_blank');
 
                 if (!win) {
-                    setRealStatus('Popup block ho gaya — "Open real page" dobara dabaein', 'gold');
+                    setRealStatus('Popup blocked — click "Open real page" again', 'gold');
 
                     if (realHint) {
-                        realHint.textContent = '⚠️ Browser ne naya tab block kiya. Address bar ke popup icon se allow karein, phir "Open real page" dobara dabaein.';
+                        realHint.textContent = '⚠️ Your browser blocked the new tab. Allow pop-ups from the address bar icon, then click "Open real page" again.';
                     }
 
                     return;
@@ -699,10 +699,10 @@
                 } catch (error) {}
 
                 if (openButton) {
-                    openButton.textContent = 'Real page khula hai ↗';
+                    openButton.textContent = 'Real page is open ↗';
                 }
 
-                setRealStatus('Real page khula hai — timer shuru ho raha hai…', 'gold');
+                setRealStatus('Real page is open — starting the timer…', 'gold');
                 confirmRealPageOpened();
             }
 
@@ -757,7 +757,7 @@
                 }
 
                 setRealStatus(
-                    embedded ? 'Task fail — timer se pehle tab band ho gaya' : 'Task fail — task tab timer se pehle band hua',
+                    embedded ? 'Task failed — the tab was closed before the timer finished' : 'Task failed — the task tab was closed before the timer finished',
                     'rose'
                 );
                 document.title = '❌ Task failed — ' + brand;
@@ -807,16 +807,16 @@
                     renderWatch();
 
                     if (watched < required) {
-                        showUnlockedToast('⏳ Timer poora — video abhi ' + Math.max(0, required - watched) + ' seconds aur play karein.');
+                        showUnlockedToast('⏳ Timer finished — watch ' + Math.max(0, required - watched) + ' more seconds of the video.');
                     } else {
-                        showUnlockedToast('🔓 Timer poora — ab aap reward claim kar sakte hain.');
+                        showUnlockedToast('🔓 Timer finished — you can now claim the reward.');
                     }
                 } else if (opened) {
-                    setRealStatus('Timer complete — ab claim karein', 'mint');
-                    showUnlockedToast('🔓 Timer poora — ab aap tab band kar sakte hain ya back ja sakte hain.');
+                    setRealStatus('Timer complete — claim now', 'mint');
+                    showUnlockedToast('🔓 Timer finished — you can now close this tab or go back.');
                 } else {
-                    setRealStatus('Timer complete — claim se pehle real page kholein', 'gold');
-                    showUnlockedToast('🔓 Timer poora — claim se pehle real page kholein.');
+                    setRealStatus('Timer complete — open the real page before claiming', 'gold');
+                    showUnlockedToast('🔓 Timer finished — open the real page before claiming.');
                 }
 
                 updateClaim();
@@ -834,7 +834,7 @@
                 }
 
                 if (lockHint && originalHint) {
-                    lockHint.textContent = '🔒 Pehle timer poora karein, phir tab band ya back allowed hoga.';
+                    lockHint.textContent = '🔒 Finish the timer first; closing the tab or going back is allowed after that.';
                     window.clearTimeout(warnTimeout);
                     warnTimeout = window.setTimeout(function () {
                         lockHint.textContent = originalHint;
@@ -938,7 +938,7 @@
                         return;
                     }
 
-                    playHint.textContent = 'Facebook player load nahi hua. Ad-blocker band karke page reload karein.';
+                    playHint.textContent = 'The Facebook player did not load. Disable your ad blocker and reload the page.';
                 }, 12000);
             }
 
@@ -1069,9 +1069,9 @@
                     updateEmbedStatus();
                 } else if (opened) {
                     setOpenUi();
-                    setRealStatus('Timer complete — ab claim karein', 'mint');
+                    setRealStatus('Timer complete — claim now', 'mint');
                 } else {
-                    setRealStatus('Timer complete — claim se pehle real page kholein', 'gold');
+                    setRealStatus('Timer complete — open the real page before claiming', 'gold');
                 }
 
                 return;

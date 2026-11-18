@@ -77,7 +77,7 @@ class PayoutFlowTest extends TestCase
                 'payout_account_id' => $account->id,
                 'amount' => 49,
             ])
-            ->assertSessionHasErrors(['amount' => 'Minimum payout PKR 50 hai.']);
+            ->assertSessionHasErrors(['amount' => 'Minimum payout is PKR 50.']);
 
         $this->assertSame(1000.0, (float) $user->fresh()->wallet_balance);
         $this->assertDatabaseCount('payout_requests', 0);
@@ -114,7 +114,7 @@ class PayoutFlowTest extends TestCase
                 'payout_account_id' => $account->id,
                 'amount' => 251,
             ])
-            ->assertSessionHasErrors(['amount' => 'Maximum payout PKR 250 hai.']);
+            ->assertSessionHasErrors(['amount' => 'Maximum payout is PKR 250.']);
 
         $this->assertSame(1000.0, (float) $user->fresh()->wallet_balance);
         $this->assertDatabaseCount('payout_requests', 0);
@@ -186,16 +186,16 @@ class PayoutFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('wallet.index'))
             ->assertOk()
-            ->assertSee('Withdrawal period: 24 ghante')
-            ->assertSee('Agla withdrawal');
+            ->assertSee('Withdrawal period: 24 hours')
+            ->assertSee('The next withdrawal');
 
         $payout->forceFill(['created_at' => now()->subHours(25)])->saveQuietly();
 
         $this->actingAs($user)
             ->get(route('wallet.index'))
             ->assertOk()
-            ->assertSee('Withdrawal period: 24 ghante')
-            ->assertDontSee('Agla withdrawal');
+            ->assertSee('Withdrawal period: 24 hours')
+            ->assertDontSee('The next withdrawal');
     }
 
     public function test_wallet_page_shows_the_withdrawal_range_and_tax_fee_wording(): void

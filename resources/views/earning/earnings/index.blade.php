@@ -11,7 +11,7 @@
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">My earnings</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Earnings history</h1>
-            <p class="mt-2 text-sm text-slate-400">Har task ka reward, wallet activity aur withdrawal record — sab PKR me.</p>
+            <p class="mt-2 text-sm text-slate-400">Every task reward, wallet activity, and withdrawal record — all in PKR.</p>
         </div>
         <a href="{{ route('wallet.index') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950">Withdraw earnings</a>
     </div>
@@ -78,7 +78,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-5 py-12 text-center text-sm text-slate-400">Abhi koi task complete nahi hua. <a href="{{ route('tasks.index') }}" class="font-semibold text-mint-300">Tasks shuru karein →</a></td>
+                                    <td colspan="4" class="px-5 py-12 text-center text-sm text-slate-400">No tasks completed yet. <a href="{{ route('tasks.index') }}" class="font-semibold text-mint-300">Start tasks →</a></td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -95,7 +95,7 @@
             <div class="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
                 <div class="border-b border-white/10 px-5 py-4">
                     <h2 class="text-base font-bold text-white">Wallet ledger</h2>
-                    <p class="text-xs text-slate-400">Credits, withdrawals aur refunds</p>
+                    <p class="text-xs text-slate-400">Credits, withdrawals, and refunds</p>
                 </div>
 
                 <div class="divide-y divide-white/5">
@@ -115,7 +115,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="px-5 py-12 text-center text-sm text-slate-400">Koi wallet activity nahi.</div>
+                        <div class="px-5 py-12 text-center text-sm text-slate-400">No wallet activity.</div>
                     @endforelse
                 </div>
 

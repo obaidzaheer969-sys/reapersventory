@@ -139,7 +139,7 @@
 
         @if ($errors->any())
             <div class="mb-5 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                <p class="font-semibold">Kuch masla hua:</p>
+                <p class="font-semibold">Something went wrong:</p>
                 <ul class="mt-1 list-inside list-disc space-y-0.5">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>

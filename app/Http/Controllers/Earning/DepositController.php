@@ -54,13 +54,13 @@ class DepositController extends Controller
         if (! $deposit->isPending()) {
             return redirect()
                 ->route('deposits.index')
-                ->with('status', 'Yeh deposit already '.$deposit->status->label().' hai.');
+                ->with('status', 'This deposit is already '.$deposit->status->label().'.');
         }
 
         if (! $this->gateway->isConfigured()) {
             return redirect()
                 ->route('deposits.index')
-                ->withErrors(['amount' => 'Cashmaal deposits filhal available nahi hain.']);
+                ->withErrors(['amount' => 'Cashmaal deposits are not available right now.']);
         }
 
         return $this->redirectView($deposit);

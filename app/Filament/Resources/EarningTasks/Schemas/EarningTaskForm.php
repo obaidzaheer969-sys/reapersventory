@@ -41,14 +41,14 @@ class EarningTaskForm
                     ->default(2)
                     ->step(0.01)
                     ->prefix('PKR')
-                    ->helperText('Admin apni marzi se reward set kar sakta hai. Users ke campaigns ka reward fixed 2 PKR hota hai.'),
+                    ->helperText('The admin can set the reward manually. User campaigns have a fixed reward of 2 PKR.'),
                 TextInput::make('target_url')
                     ->label('Target URL')
                     ->url()
                     ->required()
                     ->maxLength(2048)
                     ->columnSpanFull()
-                    ->helperText('YouTube/Facebook video URLs isi page par official player me chalenge; monetized videos par ads YouTube apne rules se chalata hai. Baaki links naye tab me khulenge.'),
+                    ->helperText('YouTube/Facebook video URLs play in the official player on this page; YouTube runs ads on monetized videos according to its rules. Other links open in a new tab.'),
                 TextInput::make('duration_seconds')
                     ->label('Required time (seconds)')
                     ->numeric()
@@ -56,7 +56,7 @@ class EarningTaskForm
                     ->minValue(5)
                     ->maxValue(3600)
                     ->default(15)
-                    ->helperText('Follow/subscribe tasks ke liye 15 seconds; video aur ad watch ke liye admin duration.'),
+                    ->helperText('15 seconds for follow/subscribe tasks; admin-set duration for video and ad watch tasks.'),
                 TextInput::make('sort_order')
                     ->numeric()
                     ->default(0),
@@ -68,7 +68,7 @@ class EarningTaskForm
                 Toggle::make('is_active')
                     ->label('Active')
                     ->default(true)
-                    ->helperText('Inactive tasks users ko nahi dikhenge.'),
+                    ->helperText('Inactive tasks will not be shown to users.'),
             ]),
         ]);
     }

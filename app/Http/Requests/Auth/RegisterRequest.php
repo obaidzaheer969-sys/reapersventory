@@ -29,14 +29,14 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'first_name.required' => 'Pehla naam likhein.',
-            'last_name.required' => 'Akhri naam likhein.',
-            'email.required' => 'Gmail address likhein.',
-            'email.email' => 'Sahi Gmail address likhein.',
-            'email.unique' => 'Yeh Gmail pehle se registered hai.',
-            'password.required' => 'Password likhein.',
-            'password.confirmed' => 'Dono passwords match nahi kar rahe.',
-            'terms.accepted' => 'Register karne ke liye Terms and Conditions accept karein.',
+            'first_name.required' => 'Enter your first name.',
+            'last_name.required' => 'Enter your last name.',
+            'email.required' => 'Enter your Gmail address.',
+            'email.email' => 'Enter a valid Gmail address.',
+            'email.unique' => 'This Gmail is already registered.',
+            'password.required' => 'Enter a password.',
+            'password.confirmed' => 'The passwords do not match.',
+            'terms.accepted' => 'Accept the Terms and Conditions to register.',
         ];
     }
 

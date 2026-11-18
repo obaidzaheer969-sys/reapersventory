@@ -45,14 +45,13 @@ class DepositService
 
         if ($amount < $minimum || $amount > $maximum) {
             throw ValidationException::withMessages([
-                'amount' => 'Deposit '.number_format($minimum, 0).' se '
-                    .number_format($maximum, 0).' PKR ke darmiyan honi chahiye.',
+                'amount' => 'Deposit must be between '.number_format($minimum, 0).' and '.number_format($maximum, 0).' PKR.',
             ]);
         }
 
         if (! $this->gateway->isConfigured()) {
             throw ValidationException::withMessages([
-                'amount' => 'Cashmaal deposits filhal available nahi hain. Support se rabta karein.',
+                'amount' => 'Cashmaal deposits are not available right now. Contact support.',
             ]);
         }
 
@@ -123,7 +122,7 @@ class DepositService
         }
 
         if ($status === '3') {
-            $this->markFailed($deposit, 'Cashmaal payment reject ho gayi.', $payload);
+            $this->markFailed($deposit, 'The Cashmaal payment was rejected.', $payload);
         } elseif ($status === '0') {
             $this->markCancelled($deposit, $payload);
         }
@@ -219,7 +218,7 @@ class DepositService
         if ($paidAmount + 0.01 < (float) $deposit->amount) {
             $this->markFailed(
                 $deposit,
-                'Cashmaal ne kam amount bheja: '.$paidAmount.' (expected '.$deposit->amount.')',
+                'Cashmaal sent an insufficient amount: '.$paidAmount.' (expected '.$deposit->amount.')',
                 array_merge($context, $data),
             );
 
@@ -275,7 +274,7 @@ class DepositService
      */
     public function markCancelled(Deposit $deposit, array $payload = []): Deposit
     {
-        return $this->close($deposit, DepositStatus::Cancelled, 'Cashmaal payment cancel ho gayi.', $payload);
+        return $this->close($deposit, DepositStatus::Cancelled, 'The Cashmaal payment was cancelled.', $payload);
     }
 
     /**

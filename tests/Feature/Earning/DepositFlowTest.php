@@ -24,7 +24,7 @@ class DepositFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('deposits.index'))
             ->assertOk()
-            ->assertSee('Cashmaal deposits filhal available nahi hain.');
+            ->assertSee('Cashmaal deposits are not available right now.');
     }
 
     public function test_deposit_cannot_be_created_when_gateway_is_not_configured(): void
@@ -300,7 +300,7 @@ class DepositFlowTest extends TestCase
         $deposit->refresh();
 
         $this->assertSame(DepositStatus::Failed, $deposit->status);
-        $this->assertStringContainsString('kam amount', (string) $deposit->admin_notes);
+        $this->assertStringContainsString('insufficient amount', (string) $deposit->admin_notes);
         $this->assertSame(0.0, (float) $user->fresh()->wallet_balance);
         $this->assertDatabaseCount('wallet_transactions', 0);
     }

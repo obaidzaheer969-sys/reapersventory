@@ -5,8 +5,8 @@
 @section('content')
     <div>
         <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Welcome back</p>
-        <h1 class="mt-2 font-display text-2xl font-bold text-white">Apne account me login karein</h1>
-        <p class="mt-1 text-sm text-slate-400">Tasks complete karein aur apna wallet balance barhayen.</p>
+        <h1 class="mt-2 font-display text-2xl font-bold text-white">Log in to your account</h1>
+        <p class="mt-1 text-sm text-slate-400">Complete tasks and grow your wallet balance.</p>
     </div>
 
     <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-4">
@@ -44,7 +44,7 @@
     </form>
 
     <p class="mt-6 text-center text-sm text-slate-400">
-        Naya account?
+        New account?
         <a href="{{ route('register') }}" class="font-semibold text-mint-300 hover:text-mint-200">Register free</a>
     </p>
 @endsection

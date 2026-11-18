@@ -10,7 +10,7 @@
     <div>
         <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Updates</p>
         <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Announcements</h1>
-        <p class="mt-2 text-sm text-slate-400">Naye tasks, payouts aur platform updates ki tamam khabrein yahan milengi.</p>
+        <p class="mt-2 text-sm text-slate-400">All updates about new tasks, payouts, and the platform are here.</p>
     </div>
 
     <div class="mt-6 space-y-4">
@@ -36,8 +36,8 @@
         @empty
             <div class="rounded-2xl border border-white/10 bg-white/5 px-6 py-16 text-center">
                 <p class="text-4xl">📣</p>
-                <h2 class="mt-3 text-lg font-bold text-white">Abhi koi announcement nahi</h2>
-                <p class="mt-1 text-sm text-slate-400">Nayi updates yahan show hongi. Task page zaroor check karte rahein.</p>
+                <h2 class="mt-3 text-lg font-bold text-white">No announcements yet</h2>
+                <p class="mt-1 text-sm text-slate-400">New updates will appear here. Check the Tasks page regularly.</p>
             </div>
         @endforelse
     </div>

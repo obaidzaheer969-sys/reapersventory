@@ -26,8 +26,8 @@ class CampaignStatusNotification extends Notification
             ->subject(($approved ? 'Campaign approved' : 'Campaign update').' — '.config('earning.brand'))
             ->greeting('Hello '.$notifiable->name.',')
             ->line($approved
-                ? 'Aap ki campaign approve ho gayi hai aur ab live hai. Doosre users ise complete kar sakte hain.'
-                : 'Aap ki campaign approve nahi hui. Payment wallet me wapas add kar di gayi hai.')
+                ? 'Your campaign was approved and is now live. Other users can complete it.'
+                : 'Your campaign was not approved. The payment has been returned to your wallet.')
             ->line('Task: '.$this->campaign->task_type->label().' — '.$this->campaign->title)
             ->line('Quantity: '.number_format((int) $this->campaign->target_quantity))
             ->line('Amount: PKR '.number_format((float) $this->campaign->total_cost, 2));

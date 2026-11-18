@@ -56,7 +56,7 @@
                 </div>
             @elseif ($subscription->status !== \App\Enums\SubscriptionStatus::Expired)
                 <h2 class="text-lg font-semibold text-navy-900">Update package</h2>
-                <p class="mt-1 text-sm text-slate-600">Apna package upgrade ya change karein.</p>
+                <p class="mt-1 text-sm text-slate-600">Upgrade or change your package.</p>
                 <div class="mt-4">
                     <livewire:business.update-plan :subscription-id="$subscription->id" />
                 </div>

@@ -56,10 +56,10 @@
             <div class="max-w-lg">
                 <p class="text-xs font-bold uppercase tracking-[0.25em] text-mint-300">Watch · Follow · Earn</p>
                 <h1 class="mt-4 font-display text-4xl font-bold leading-tight text-white xl:text-5xl">
-                    Ghar baithe simple tasks complete karein aur PKR kamayen.
+                    Complete simple tasks from home and earn PKR.
                 </h1>
                 <p class="mt-4 text-base leading-relaxed text-slate-300">
-                    YouTube, Facebook, Instagram, WhatsApp aur ads ke tasks. Har task ke baad reward seedha aap ke wallet me — Easypaisa, JazzCash, UPaisa ya NayaPay par payout.
+                    Tasks for YouTube, Facebook, Instagram, WhatsApp, and ads. Every task pays straight into your wallet — withdraw via Easypaisa, JazzCash, UPaisa, or NayaPay.
                 </p>
 
                 <div class="mt-8 grid grid-cols-3 gap-3">

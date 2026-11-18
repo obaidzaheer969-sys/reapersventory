@@ -25,8 +25,8 @@ class PayoutStatusNotification extends Notification
             ->subject($paid ? 'Payout sent — '.config('earning.brand') : 'Payout rejected — '.config('earning.brand'))
             ->greeting('Hello '.$notifiable->name.',')
             ->line($paid
-                ? 'Aap ki payout request approve ho gayi hai aur payment bhej di gayi hai.'
-                : 'Aap ki payout request reject kar di gayi hai aur amount wallet me wapas add kar di gayi hai.')
+                ? 'Your payout request was approved and the payment has been sent.'
+                : 'Your payout request was rejected and the amount has been returned to your wallet.')
             ->line('Amount: PKR '.number_format((float) $this->payout->amount, 2))
             ->line('Wallet: '.$this->payout->provider->label().' — '.$this->payout->account_number);
 
