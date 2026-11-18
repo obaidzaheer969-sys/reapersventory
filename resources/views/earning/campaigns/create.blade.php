@@ -50,7 +50,11 @@
                             <option value="{{ $value }}" @selected($selectedType === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
-                    <p class="mt-1.5 text-[11px] text-slate-500">Each action (subscribe, follow, like, or video view) pays the earner 2 PKR and the admin 1 PKR — 3 PKR total per action. You set the quantity — an order for 2 subscribers or 1 view is allowed too.</p>
+                    @if ($campaignAdminFeeVisible)
+                        <p class="mt-1.5 text-[11px] text-slate-500">Each action (subscribe, follow, like, or video view) pays the earner 2 PKR and the admin 1 PKR — 3 PKR total per action. You set the quantity — an order for 2 subscribers or 1 view is allowed too.</p>
+                    @else
+                        <p class="mt-1.5 text-[11px] text-slate-500">Each action (subscribe, follow, like, or video view) pays the earner 2 PKR. You set the quantity — an order for 2 subscribers or 1 view is allowed too.</p>
+                    @endif
                 </div>
 
                 <div>
@@ -89,7 +93,11 @@
                                 </option>
                             @endforeach
                         </select>
-                        <p class="mt-1.5 text-[11px] text-slate-500">Duration is only the minimum watch time. A video view also pays 2 PKR to the earner plus a 1 PKR admin fee.</p>
+                        @if ($campaignAdminFeeVisible)
+                            <p class="mt-1.5 text-[11px] text-slate-500">Duration is only the minimum watch time. A video view also pays 2 PKR to the earner plus a 1 PKR admin fee.</p>
+                        @else
+                            <p class="mt-1.5 text-[11px] text-slate-500">Duration is only the minimum watch time. A video view pays the earner 2 PKR.</p>
+                        @endif
                     </div>
                 </div>
 
@@ -117,22 +125,32 @@
                     <span class="text-slate-300">Reward per action</span>
                     <span id="quote-reward" class="font-bold text-white">PKR 0.00</span>
                 </div>
-                <div class="mt-2 flex items-center justify-between text-sm">
-                    <span class="text-slate-300">Admin fee per action</span>
-                    <span id="quote-fee" class="font-bold text-white">PKR 0.00</span>
-                </div>
+                @if ($campaignAdminFeeVisible)
+                    <div class="mt-2 flex items-center justify-between text-sm">
+                        <span class="text-slate-300">Admin fee per action</span>
+                        <span id="quote-fee" class="font-bold text-white">PKR 0.00</span>
+                    </div>
+                @endif
                 <div class="mt-2 flex items-center justify-between text-sm">
                     <span class="text-slate-300">Total campaign cost</span>
                     <span id="quote-total" class="font-display text-xl font-bold text-mint-300">PKR 0.00</span>
                 </div>
-                <p class="mt-3 text-[11px] leading-relaxed text-slate-400">The full amount (3 PKR per action) is held from your wallet. Each completed action pays 2 PKR to the earner and 1 PKR to the admin. If you cancel the campaign, the full 3 PKR for unfinished actions is refunded.</p>
+                @if ($campaignAdminFeeVisible)
+                    <p class="mt-3 text-[11px] leading-relaxed text-slate-400">The full amount (3 PKR per action) is held from your wallet. Each completed action pays 2 PKR to the earner and 1 PKR to the admin. If you cancel the campaign, the full 3 PKR for unfinished actions is refunded.</p>
+                @else
+                    <p class="mt-3 text-[11px] leading-relaxed text-slate-400">The full campaign budget is held from your wallet. If you cancel the campaign, the unused budget for unfinished actions is refunded.</p>
+                @endif
             </div>
 
             <div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-xs leading-relaxed text-slate-400">
                 <h2 class="text-sm font-bold text-white">Campaign rules</h2>
                 <ul class="mt-2 list-inside list-disc space-y-1">
                     <li>The campaign goes live immediately after payment — no approval needed.</li>
-                    <li>Each action costs 2 PKR for the earner plus a 1 PKR admin fee (3 PKR total).</li>
+                    @if ($campaignAdminFeeVisible)
+                        <li>Each action costs 2 PKR for the earner plus a 1 PKR admin fee (3 PKR total).</li>
+                    @else
+                        <li>Each completed action pays the earner 2 PKR.</li>
+                    @endif
                     <li>The campaign hides itself once the required quantity is complete.</li>
                     <li>Each earner can complete your campaign only once.</li>
                     <li>Cancelling returns the unused budget to your wallet.</li>
@@ -186,7 +204,11 @@
                 var total = (reward + fee) * quantity;
 
                 rewardOut.textContent = money(reward);
-                feeOut.textContent = money(fee);
+
+                if (feeOut) {
+                    feeOut.textContent = money(fee);
+                }
+
                 totalOut.textContent = money(total);
 
                 if (total <= 0) {

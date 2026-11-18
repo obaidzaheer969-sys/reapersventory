@@ -7,6 +7,7 @@ use App\Enums\TaskAttemptStatus;
 use App\Enums\TaskType;
 use App\Enums\WalletTransactionType;
 use App\Models\EarningTask;
+use App\Models\SystemSetting;
 use App\Models\TaskAttempt;
 use App\Models\User;
 use App\Models\WalletTransaction;
@@ -48,6 +49,78 @@ class CampaignFlowTest extends TestCase
         $this->assertSame(2.0, $bulk['reward']);
         $this->assertSame(200.0, $bulk['fee']);
         $this->assertSame(600.0, $bulk['total']);
+    }
+
+    public function test_hidden_campaign_admin_fee_is_removed_from_user_campaign_pages(): void
+    {
+        SystemSetting::setValue('campaign_admin_fee_visible', false);
+
+        $owner = User::factory()->earner()->create(['wallet_balance' => 20]);
+
+        $this->actingAs($owner)
+            ->post(route('campaigns.store'), [
+                'task_type' => TaskType::YoutubeSubscribe->value,
+                'title' => 'Hidden fee campaign',
+                'target_url' => 'https://www.youtube.com/@earnpk',
+                'target_quantity' => 2,
+            ])
+            ->assertRedirect(route('campaigns.mine'))
+            ->assertSessionHasNoErrors();
+
+        $campaign = EarningTask::query()->campaigns()->sole();
+        $campaign->forceFill(['completed_quantity' => 1])->save();
+
+        $this->get(route('campaigns.create'))
+            ->assertOk()
+            ->assertDontSee('Admin fee per action')
+            ->assertDontSee('admin 1 PKR')
+            ->assertDontSee('1 PKR admin fee')
+            ->assertDontSee('1 PKR to the admin');
+
+        $this->get(route('campaigns.mine'))
+            ->assertOk()
+            ->assertDontSee('1 PKR admin fee per action');
+
+        $this->get(route('campaigns.show', $campaign))
+            ->assertOk()
+            ->assertDontSee('Admin fee')
+            ->assertSee('Used budget');
+
+        $this->assertSame(6.0, (float) $campaign->fresh()->total_cost);
+        $this->assertSame(1.0, $campaign->fresh()->platformFee());
+        $this->assertSame(14.0, (float) $owner->fresh()->wallet_balance);
+
+        SystemSetting::setValue('campaign_admin_fee_visible', true);
+    }
+
+    public function test_showing_campaign_admin_fee_restores_user_campaign_pages(): void
+    {
+        $owner = User::factory()->earner()->create();
+
+        $campaign = EarningTask::factory()->liveCampaign(2)->create([
+            'user_id' => $owner->id,
+            'total_cost' => 6,
+            'completed_quantity' => 1,
+        ]);
+
+        SystemSetting::setValue('campaign_admin_fee_visible', false);
+        SystemSetting::setValue('campaign_admin_fee_visible', true);
+
+        $this->actingAs($owner)
+            ->get(route('campaigns.create'))
+            ->assertOk()
+            ->assertSee('Admin fee per action')
+            ->assertSee('admin 1 PKR')
+            ->assertSee('1 PKR admin fee');
+
+        $this->get(route('campaigns.mine'))
+            ->assertOk()
+            ->assertSee('1 PKR admin fee per action');
+
+        $this->get(route('campaigns.show', $campaign))
+            ->assertOk()
+            ->assertSee('Admin fee')
+            ->assertSee('Spent on rewards');
     }
 
     public function test_a_campaign_accepts_a_custom_quantity_of_one_action(): void

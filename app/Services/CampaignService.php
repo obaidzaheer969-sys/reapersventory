@@ -7,6 +7,7 @@ use App\Enums\TaskType;
 use App\Enums\UserRole;
 use App\Enums\WalletTransactionType;
 use App\Models\EarningTask;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Notifications\CampaignStatusNotification;
 use App\Notifications\CampaignSubmittedAdminNotification;
@@ -20,6 +21,11 @@ class CampaignService
     public function __construct(
         private readonly WalletService $wallet,
     ) {}
+
+    public function isAdminFeeVisible(): bool
+    {
+        return (bool) SystemSetting::getValue('campaign_admin_fee_visible', true);
+    }
 
     /**
      * @return array{reward: float, total: float, fee: float, duration_seconds: int, quantity: int}

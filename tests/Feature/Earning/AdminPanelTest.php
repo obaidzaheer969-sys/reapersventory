@@ -4,6 +4,7 @@ namespace Tests\Feature\Earning;
 
 use App\Enums\TaskType;
 use App\Enums\WalletTransactionType;
+use App\Filament\Pages\CampaignFeeSettings;
 use App\Filament\Pages\SiteAdsSettings;
 use App\Filament\Pages\WithdrawalSettings;
 use App\Filament\Resources\Campaigns\Pages\ListCampaigns;
@@ -36,6 +37,7 @@ class AdminPanelTest extends TestCase
         $response->assertSee('Cashmaal settings');
         $response->assertSee('Site ads &amp; approval', false);
         $response->assertSee('Withdrawal settings');
+        $response->assertSee('Campaign fee settings');
         $response->assertDontSee('Businesses');
         $response->assertDontSee('Subscriptions');
         $response->assertDontSee('Payment methods');
@@ -131,6 +133,29 @@ class AdminPanelTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertTrue((bool) SystemSetting::getValue('withdrawals_enabled', true));
+    }
+
+    public function test_admin_can_hide_and_show_the_campaign_admin_fee(): void
+    {
+        $admin = User::factory()->superAdmin()->create();
+
+        $this->actingAs($admin)->get('/admin/campaign-fee-settings')->assertOk();
+
+        Livewire::actingAs($admin)
+            ->test(CampaignFeeSettings::class)
+            ->set('data.campaign_admin_fee_visible', false)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertFalse((bool) SystemSetting::getValue('campaign_admin_fee_visible', true));
+
+        Livewire::actingAs($admin)
+            ->test(CampaignFeeSettings::class)
+            ->set('data.campaign_admin_fee_visible', true)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertTrue((bool) SystemSetting::getValue('campaign_admin_fee_visible', true));
     }
 
     public function test_approval_badge_and_ads_are_shown_to_users_when_enabled(): void

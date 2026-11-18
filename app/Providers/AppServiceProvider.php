@@ -31,6 +31,7 @@ use App\Policies\SupplierPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\WarehousePolicy;
 use App\Services\AdService;
+use App\Services\CampaignService;
 use App\Services\InventoryService;
 use App\Services\PayoutService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -95,6 +96,7 @@ class AppServiceProvider extends ServiceProvider
                 'adAutoCode' => '',
                 'adSlots' => [],
                 'withdrawalsEnabled' => true,
+                'campaignAdminFeeVisible' => true,
             ];
 
             try {
@@ -115,6 +117,12 @@ class AppServiceProvider extends ServiceProvider
                 $adState['withdrawalsEnabled'] = app(PayoutService::class)->areEnabled();
             } catch (Throwable) {
                 // Withdrawals stay visible if settings are temporarily unavailable.
+            }
+
+            try {
+                $adState['campaignAdminFeeVisible'] = app(CampaignService::class)->isAdminFeeVisible();
+            } catch (Throwable) {
+                // The admin fee stays visible if settings are temporarily unavailable.
             }
 
             $view->with($adState);

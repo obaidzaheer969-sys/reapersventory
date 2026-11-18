@@ -160,14 +160,21 @@
                             <span class="text-slate-400">Total paid</span>
                             <span class="font-bold text-white">{{ \App\Support\Currency::format($campaign->total_cost) }}</span>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-400">Spent on rewards</span>
-                            <span class="font-semibold text-rose-300">{{ \App\Support\Currency::format($campaign->budgetSpent()) }}</span>
-                        </div>
-                        @if ($campaign->platformFee() > 0)
+                        @if ($campaignAdminFeeVisible)
                             <div class="flex items-center justify-between">
-                                <span class="text-slate-400">Admin fee</span>
-                                <span class="font-semibold text-slate-300">{{ \App\Support\Currency::format($campaign->platformFee()) }}</span>
+                                <span class="text-slate-400">Spent on rewards</span>
+                                <span class="font-semibold text-rose-300">{{ \App\Support\Currency::format($campaign->budgetSpent()) }}</span>
+                            </div>
+                            @if ($campaign->platformFee() > 0)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-400">Admin fee</span>
+                                    <span class="font-semibold text-slate-300">{{ \App\Support\Currency::format($campaign->platformFee()) }}</span>
+                                </div>
+                            @endif
+                        @else
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Used budget</span>
+                                <span class="font-semibold text-rose-300">{{ \App\Support\Currency::format($campaign->budgetSpent() + $campaign->platformFee()) }}</span>
                             </div>
                         @endif
                         <div class="flex items-center justify-between border-t border-white/10 pt-2">
