@@ -108,7 +108,9 @@
                         <dd class="font-bold text-white">{{ $user->completedTaskAttempts()->count() }}</dd>
                     </div>
                 </dl>
-                <a href="{{ route('wallet.index') }}" class="mt-4 block rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-center text-xs font-bold text-white hover:bg-white/10">Manage wallet →</a>
+                @if ($withdrawalsEnabled)
+                    <a href="{{ route('wallet.index') }}" class="mt-4 block rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-center text-xs font-bold text-white hover:bg-white/10">Manage wallet →</a>
+                @endif
             </div>
 
             <div class="rounded-2xl border border-white/10 bg-white/5 p-5">

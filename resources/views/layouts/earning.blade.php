@@ -51,6 +51,13 @@
             ['label' => 'Deposit', 'route' => 'deposits.index', 'icon' => '↓'],
             ['label' => 'Announcements', 'route' => 'announcements.index', 'icon' => '!' ],
         ];
+
+        if (! $withdrawalsEnabled) {
+            $navLinks = array_values(array_filter(
+                $navLinks,
+                fn (array $link): bool => $link['route'] !== 'wallet.index',
+            ));
+        }
     @endphp
 
     <header class="sticky top-0 z-40 border-b border-white/10 bg-ink-950/80 backdrop-blur-xl">
@@ -101,7 +108,9 @@
                         <a href="{{ route('earnings.index') }}" class="block px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5">My earnings</a>
                         <a href="{{ route('campaigns.mine') }}" class="block px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5">My campaigns</a>
                         <a href="{{ route('deposits.index') }}" class="block px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5">Deposit money</a>
-                        <a href="{{ route('wallet.index') }}" class="block px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5">Wallet & payouts</a>
+                        @if ($withdrawalsEnabled)
+                            <a href="{{ route('wallet.index') }}" class="block px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5">Wallet & payouts</a>
+                        @endif
                         <form method="POST" action="{{ route('logout') }}" class="border-t border-white/10">
                             @csrf
                             <button type="submit" class="block w-full px-4 py-2.5 text-left text-sm font-semibold text-rose-300 hover:bg-rose-500/10">Logout</button>

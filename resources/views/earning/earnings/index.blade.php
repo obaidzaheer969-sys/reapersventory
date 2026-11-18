@@ -13,7 +13,9 @@
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Earnings history</h1>
             <p class="mt-2 text-sm text-slate-400">Every task reward, wallet activity, and withdrawal record — all in PKR.</p>
         </div>
-        <a href="{{ route('wallet.index') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950">Withdraw earnings</a>
+        @if ($withdrawalsEnabled)
+            <a href="{{ route('wallet.index') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950">Withdraw earnings</a>
+        @endif
     </div>
 
     <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

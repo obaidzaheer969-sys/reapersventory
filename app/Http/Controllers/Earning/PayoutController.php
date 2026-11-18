@@ -19,8 +19,13 @@ class PayoutController extends Controller
         private readonly PayoutService $payouts,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
+        if (! $this->payouts->areEnabled()) {
+            return redirect()->route('deposits.index')
+                ->with('status', 'Withdrawals are currently unavailable.');
+        }
+
         $user = $request->user();
 
         return view('earning.wallet.index', [
@@ -42,6 +47,8 @@ class PayoutController extends Controller
 
     public function storeAccount(Request $request): RedirectResponse
     {
+        $this->ensureWithdrawalsEnabled();
+
         $user = $request->user();
 
         $data = $this->validateAccount($request);
@@ -74,6 +81,8 @@ class PayoutController extends Controller
 
     public function updateAccount(Request $request, PayoutAccount $account): RedirectResponse
     {
+        $this->ensureWithdrawalsEnabled();
+
         abort_unless($account->user_id === $request->user()->id, 403);
 
         $data = $this->validateAccount($request);
@@ -99,6 +108,8 @@ class PayoutController extends Controller
 
     public function destroyAccount(Request $request, PayoutAccount $account): RedirectResponse
     {
+        $this->ensureWithdrawalsEnabled();
+
         abort_unless($account->user_id === $request->user()->id, 403);
 
         DB::transaction(function () use ($request, $account): void {
@@ -115,6 +126,8 @@ class PayoutController extends Controller
 
     public function storePayout(Request $request): RedirectResponse
     {
+        $this->ensureWithdrawalsEnabled();
+
         $user = $request->user();
 
         $minimum = (float) config('earning.min_payout', 50);
@@ -142,6 +155,11 @@ class PayoutController extends Controller
         $payout = $this->payouts->requestPayout($user, $account, (float) $data['amount']);
 
         return back()->with('status', 'Payout request #'.$payout->id.' submitted. The admin will send the payment after review.');
+    }
+
+    private function ensureWithdrawalsEnabled(): void
+    {
+        abort_unless($this->payouts->areEnabled(), 403, 'Withdrawals are currently unavailable.');
     }
 
     /**

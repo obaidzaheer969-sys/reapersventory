@@ -32,6 +32,7 @@ use App\Policies\UserPolicy;
 use App\Policies\WarehousePolicy;
 use App\Services\AdService;
 use App\Services\InventoryService;
+use App\Services\PayoutService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -86,13 +87,14 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('access-super-admin', fn ($user) => $user->isSuperAdmin());
 
-        View::composer(['layouts.earning', 'layouts.app', 'layouts.guest'], function ($view): void {
+        View::composer(['earning.*', 'layouts.earning', 'layouts.app', 'layouts.guest'], function ($view): void {
             $adState = [
                 'siteApproved' => false,
                 'siteVerificationTag' => '',
                 'adsEnabled' => false,
                 'adAutoCode' => '',
                 'adSlots' => [],
+                'withdrawalsEnabled' => true,
             ];
 
             try {
@@ -107,6 +109,12 @@ class AppServiceProvider extends ServiceProvider
                 ];
             } catch (Throwable) {
                 // Ads are optional: a missing settings table must not break the site.
+            }
+
+            try {
+                $adState['withdrawalsEnabled'] = app(PayoutService::class)->areEnabled();
+            } catch (Throwable) {
+                // Withdrawals stay visible if settings are temporarily unavailable.
             }
 
             $view->with($adState);

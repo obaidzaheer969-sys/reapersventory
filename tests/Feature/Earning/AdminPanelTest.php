@@ -5,6 +5,7 @@ namespace Tests\Feature\Earning;
 use App\Enums\TaskType;
 use App\Enums\WalletTransactionType;
 use App\Filament\Pages\SiteAdsSettings;
+use App\Filament\Pages\WithdrawalSettings;
 use App\Filament\Resources\Campaigns\Pages\ListCampaigns;
 use App\Filament\Resources\Earners\Pages\ListEarners;
 use App\Filament\Resources\EarningTasks\Pages\CreateEarningTask;
@@ -34,6 +35,7 @@ class AdminPanelTest extends TestCase
         $response->assertSee('Deposits');
         $response->assertSee('Cashmaal settings');
         $response->assertSee('Site ads &amp; approval', false);
+        $response->assertSee('Withdrawal settings');
         $response->assertDontSee('Businesses');
         $response->assertDontSee('Subscriptions');
         $response->assertDontSee('Payment methods');
@@ -106,6 +108,29 @@ class AdminPanelTest extends TestCase
         $this->assertTrue((bool) SystemSetting::getValue('ads_enabled', false));
         $this->assertSame('<meta name="google-site-verification" content="verify-123">', SystemSetting::getValue('site_verification_tag'));
         $this->assertSame('<div data-test-ad>Admin ad</div>', SystemSetting::getValue('ad_slot_top'));
+    }
+
+    public function test_admin_can_hide_and_show_user_withdrawals(): void
+    {
+        $admin = User::factory()->superAdmin()->create();
+
+        $this->actingAs($admin)->get('/admin/withdrawal-settings')->assertOk();
+
+        Livewire::actingAs($admin)
+            ->test(WithdrawalSettings::class)
+            ->set('data.withdrawals_enabled', false)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertFalse((bool) SystemSetting::getValue('withdrawals_enabled', true));
+
+        Livewire::actingAs($admin)
+            ->test(WithdrawalSettings::class)
+            ->set('data.withdrawals_enabled', true)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertTrue((bool) SystemSetting::getValue('withdrawals_enabled', true));
     }
 
     public function test_approval_badge_and_ads_are_shown_to_users_when_enabled(): void

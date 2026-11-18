@@ -53,7 +53,9 @@
             @endif
 
             <div class="mt-6 flex flex-col gap-2 sm:flex-row">
-                <a href="{{ route('wallet.index') }}" class="flex-1 rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950">Open wallet</a>
+                @if ($withdrawalsEnabled)
+                    <a href="{{ route('wallet.index') }}" class="flex-1 rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950">Open wallet</a>
+                @endif
                 <a href="{{ route('deposits.index') }}" class="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Deposit again</a>
             </div>
         </div>

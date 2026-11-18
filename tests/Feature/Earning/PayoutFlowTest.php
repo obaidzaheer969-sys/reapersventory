@@ -6,6 +6,7 @@ use App\Enums\PayoutStatus;
 use App\Enums\WalletTransactionType;
 use App\Models\PayoutAccount;
 use App\Models\PayoutRequest;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Notifications\PayoutRequestedAdminNotification;
 use App\Notifications\PayoutStatusNotification;
@@ -213,6 +214,75 @@ class PayoutFlowTest extends TestCase
             ->assertSee('max="250"', false)
             ->assertSee('Tax - fee')
             ->assertDontSee('Admin fee');
+    }
+
+    public function test_hidden_withdrawals_are_removed_from_user_pages_and_direct_routes(): void
+    {
+        SystemSetting::setValue('withdrawals_enabled', false);
+
+        $user = User::factory()->earner()->create(['wallet_balance' => 1000]);
+        $account = PayoutAccount::factory()->create(['user_id' => $user->id]);
+        $walletLink = 'href="'.route('wallet.index').'"';
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee($walletLink, false);
+
+        $this->get(route('earnings.index'))
+            ->assertOk()
+            ->assertDontSee($walletLink, false);
+
+        $this->get(route('profile.edit'))
+            ->assertOk()
+            ->assertDontSee($walletLink, false);
+
+        $this->get(route('wallet.index'))
+            ->assertRedirect(route('deposits.index'));
+
+        $this->post(route('wallet.payouts.store'), [
+            'payout_account_id' => $account->id,
+            'amount' => 250,
+        ])->assertForbidden();
+
+        $this->post(route('wallet.accounts.store'), [
+            'provider' => 'easypaisa',
+            'account_name' => 'Another Account',
+            'account_number' => '03001234567',
+        ])->assertForbidden();
+
+        $this->put(route('wallet.accounts.update', $account), [
+            'provider' => 'easypaisa',
+            'account_name' => 'Renamed Account',
+            'account_number' => $account->account_number,
+        ])->assertForbidden();
+
+        $this->delete(route('wallet.accounts.destroy', $account))->assertForbidden();
+
+        $this->assertSame(1000.0, (float) $user->fresh()->wallet_balance);
+        $this->assertDatabaseCount('payout_accounts', 1);
+        $this->assertDatabaseCount('payout_requests', 0);
+    }
+
+    public function test_showing_withdrawals_restores_user_access(): void
+    {
+        SystemSetting::setValue('withdrawals_enabled', false);
+
+        $user = User::factory()->earner()->create();
+        $walletLink = 'href="'.route('wallet.index').'"';
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee($walletLink, false);
+
+        SystemSetting::setValue('withdrawals_enabled', true);
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee($walletLink, false);
+
+        $this->get(route('wallet.index'))->assertOk();
     }
 
     public function test_rejecting_a_payout_refunds_the_user_wallet(): void

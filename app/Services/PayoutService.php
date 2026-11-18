@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Enums\WalletTransactionType;
 use App\Models\PayoutAccount;
 use App\Models\PayoutRequest;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Models\WalletTransaction;
 use App\Notifications\PayoutRequestedAdminNotification;
@@ -19,6 +20,11 @@ class PayoutService
     public function __construct(
         private readonly WalletService $wallet,
     ) {}
+
+    public function areEnabled(): bool
+    {
+        return (bool) SystemSetting::getValue('withdrawals_enabled', true);
+    }
 
     /**
      * @return array{gross: float, fee: float, net: float}
@@ -38,6 +44,12 @@ class PayoutService
 
     public function requestPayout(User $user, PayoutAccount $account, float $amount): PayoutRequest
     {
+        if (! $this->areEnabled()) {
+            throw ValidationException::withMessages([
+                'amount' => 'Withdrawals are currently unavailable.',
+            ]);
+        }
+
         if ($account->user_id !== $user->id) {
             abort(403, 'This payout account does not belong to you.');
         }

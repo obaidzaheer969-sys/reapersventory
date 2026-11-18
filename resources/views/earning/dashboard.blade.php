@@ -21,7 +21,9 @@
             <a href="{{ route('tasks.index') }}" class="rounded-xl bg-gradient-to-r from-mint-400 to-mint-500 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-mint-500/20">Admin Tasks</a>
             <a href="{{ route('campaigns.index') }}" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Community</a>
             <a href="{{ route('deposits.index') }}" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Deposit</a>
-            <a href="{{ route('wallet.index') }}" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Withdraw</a>
+            @if ($withdrawalsEnabled)
+                <a href="{{ route('wallet.index') }}" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/10">Withdraw</a>
+            @endif
         </div>
     </div>
 
@@ -227,7 +229,9 @@
                         <p class="text-sm text-slate-400">No transactions.</p>
                     @endforelse
                 </div>
-                <a href="{{ route('wallet.index') }}" class="mt-4 block text-xs font-semibold text-mint-300 hover:text-mint-200">Open wallet →</a>
+                @if ($withdrawalsEnabled)
+                    <a href="{{ route('wallet.index') }}" class="mt-4 block text-xs font-semibold text-mint-300 hover:text-mint-200">Open wallet →</a>
+                @endif
             </div>
         </div>
     </div>
