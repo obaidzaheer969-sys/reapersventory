@@ -24,16 +24,16 @@
     <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div class="relative overflow-hidden rounded-2xl border border-mint-400/25 bg-gradient-to-br from-mint-500/20 via-ink-850 to-ink-900 p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-mint-200/80">Wallet balance</p>
-            <p class="mt-2 font-display text-3xl font-bold text-white">{{ \App\Support\Currency::format($walletBalance) }}</p>
+            <p class="mt-2 font-display text-3xl font-bold text-white">{{ \App\Support\Currency::coins($walletBalance) }}</p>
             <p class="mt-2 text-xs text-slate-400">New campaigns are paid from this balance</p>
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total campaign spend</p>
-            <p class="mt-2 font-display text-3xl font-bold text-white">{{ \App\Support\Currency::format($totalSpend) }}</p>
+            <p class="mt-2 font-display text-3xl font-bold text-white">{{ \App\Support\Currency::coins($totalSpend) }}</p>
             @if ($campaignAdminFeeVisible)
-                <p class="mt-2 text-xs text-slate-400">2 PKR earner + 1 PKR admin fee per action</p>
+                <p class="mt-2 text-xs text-slate-400">2 Coins earner + 1 Coin admin fee per action</p>
             @else
-                <p class="mt-2 text-xs text-slate-400">2 PKR paid to the earner per action</p>
+                <p class="mt-2 text-xs text-slate-400">2 Coins paid to the earner per action</p>
             @endif
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -98,10 +98,10 @@
                                         <div class="h-full rounded-full bg-mint-400" style="width: {{ $campaign->progressPercent() }}%"></div>
                                     </div>
                                 </td>
-                                <td class="whitespace-nowrap px-5 py-3.5 text-right text-xs font-semibold text-mint-300">{{ \App\Support\Currency::format($campaign->reward) }}</td>
+                                <td class="whitespace-nowrap px-5 py-3.5 text-right text-xs font-semibold text-mint-300">{{ \App\Support\Currency::coins($campaign->reward) }}</td>
                                 <td class="whitespace-nowrap px-5 py-3.5 text-right">
-                                    <p class="text-xs font-bold text-white">{{ \App\Support\Currency::format($campaign->total_cost) }}</p>
-                                    <p class="text-[10px] text-slate-500">Spent {{ \App\Support\Currency::format($campaign->budgetSpent()) }} · left {{ \App\Support\Currency::format($campaign->budgetRemaining()) }}</p>
+                                    <p class="text-xs font-bold text-white">{{ \App\Support\Currency::coins($campaign->total_cost) }}</p>
+                                    <p class="text-[10px] text-slate-500">Spent {{ \App\Support\Currency::coins($campaign->budgetSpent()) }} · left {{ \App\Support\Currency::coins($campaign->budgetRemaining()) }}</p>
                                 </td>
                                 <td class="px-5 py-3.5">
                                     <span class="rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"

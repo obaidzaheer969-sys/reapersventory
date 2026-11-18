@@ -78,7 +78,7 @@ class PayoutFlowTest extends TestCase
                 'payout_account_id' => $account->id,
                 'amount' => 49,
             ])
-            ->assertSessionHasErrors(['amount' => 'Minimum payout is PKR 50.']);
+            ->assertSessionHasErrors(['amount' => 'Minimum payout is Coins 50.']);
 
         $this->assertSame(1000.0, (float) $user->fresh()->wallet_balance);
         $this->assertDatabaseCount('payout_requests', 0);
@@ -115,7 +115,7 @@ class PayoutFlowTest extends TestCase
                 'payout_account_id' => $account->id,
                 'amount' => 251,
             ])
-            ->assertSessionHasErrors(['amount' => 'Maximum payout is PKR 250.']);
+            ->assertSessionHasErrors(['amount' => 'Maximum payout is Coins 250.']);
 
         $this->assertSame(1000.0, (float) $user->fresh()->wallet_balance);
         $this->assertDatabaseCount('payout_requests', 0);
@@ -208,9 +208,9 @@ class PayoutFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('wallet.index'))
             ->assertOk()
-            ->assertSee('Withdrawal PKR 50 – PKR 250')
-            ->assertSee('Minimum: PKR 50')
-            ->assertSee('Maximum: PKR 250')
+            ->assertSee('Withdrawal Coins 50 – Coins 250')
+            ->assertSee('Minimum: Coins 50')
+            ->assertSee('Maximum: Coins 250')
             ->assertSee('max="250"', false)
             ->assertSee('Tax - fee')
             ->assertDontSee('Admin fee');

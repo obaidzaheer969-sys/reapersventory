@@ -43,7 +43,7 @@
             </div>
             <div class="rounded-xl border border-white/10 bg-ink-900/50 p-4">
                 <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Reward per action</p>
-                <p class="mt-1 font-display text-2xl font-bold text-mint-300">{{ \App\Support\Currency::format($campaign->reward) }}</p>
+                <p class="mt-1 font-display text-2xl font-bold text-mint-300">{{ \App\Support\Currency::coins($campaign->reward) }}</p>
             </div>
             <div class="rounded-xl border border-white/10 bg-ink-900/50 p-4">
                 <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Duration</p>
@@ -132,7 +132,7 @@
                                             <p class="text-sm font-semibold text-white">{{ $attempt->user?->name ?? 'User #'.$attempt->user_id }}</p>
                                             <p class="text-[11px] text-slate-500">{{ $attempt->user?->email }}</p>
                                         </td>
-                                        <td class="whitespace-nowrap px-5 py-3.5 text-xs font-bold text-mint-300">{{ \App\Support\Currency::format($attempt->reward_amount) }}</td>
+                                        <td class="whitespace-nowrap px-5 py-3.5 text-xs font-bold text-mint-300">{{ \App\Support\Currency::coins($attempt->reward_amount) }}</td>
                                         <td class="whitespace-nowrap px-5 py-3.5 text-xs text-slate-400">{{ $attempt->completed_at?->timezone($tz)->format('d M Y, h:i A') }}</td>
                                     </tr>
                                 @empty
@@ -158,28 +158,28 @@
                     <div class="mt-3 space-y-2 text-sm">
                         <div class="flex items-center justify-between">
                             <span class="text-slate-400">Total paid</span>
-                            <span class="font-bold text-white">{{ \App\Support\Currency::format($campaign->total_cost) }}</span>
+                            <span class="font-bold text-white">{{ \App\Support\Currency::coins($campaign->total_cost) }}</span>
                         </div>
                         @if ($campaignAdminFeeVisible)
                             <div class="flex items-center justify-between">
                                 <span class="text-slate-400">Spent on rewards</span>
-                                <span class="font-semibold text-rose-300">{{ \App\Support\Currency::format($campaign->budgetSpent()) }}</span>
+                                <span class="font-semibold text-rose-300">{{ \App\Support\Currency::coins($campaign->budgetSpent()) }}</span>
                             </div>
                             @if ($campaign->platformFee() > 0)
                                 <div class="flex items-center justify-between">
                                     <span class="text-slate-400">Admin fee</span>
-                                    <span class="font-semibold text-slate-300">{{ \App\Support\Currency::format($campaign->platformFee()) }}</span>
+                                    <span class="font-semibold text-slate-300">{{ \App\Support\Currency::coins($campaign->platformFee()) }}</span>
                                 </div>
                             @endif
                         @else
                             <div class="flex items-center justify-between">
                                 <span class="text-slate-400">Used budget</span>
-                                <span class="font-semibold text-rose-300">{{ \App\Support\Currency::format($campaign->budgetSpent() + $campaign->platformFee()) }}</span>
+                                <span class="font-semibold text-rose-300">{{ \App\Support\Currency::coins($campaign->budgetSpent() + $campaign->platformFee()) }}</span>
                             </div>
                         @endif
                         <div class="flex items-center justify-between border-t border-white/10 pt-2">
                             <span class="text-slate-400">Remaining</span>
-                            <span class="font-semibold text-mint-300">{{ \App\Support\Currency::format($campaign->budgetRemaining()) }}</span>
+                            <span class="font-semibold text-mint-300">{{ \App\Support\Currency::coins($campaign->budgetRemaining()) }}</span>
                         </div>
                     </div>
 
@@ -211,7 +211,7 @@
                             <form method="POST" action="{{ route('tasks.complete', $campaign) }}" class="mt-3">
                                 @csrf
                                 <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 px-4 py-2.5 text-sm font-bold text-ink-950">
-                                    Claim {{ \App\Support\Currency::format($campaign->reward) }}
+                                    Claim {{ \App\Support\Currency::coins($campaign->reward) }}
                                 </button>
                             </form>
                         @else
@@ -226,7 +226,7 @@
                         @endif
                     @else
                         <p class="mt-2 text-xs text-slate-400">
-                            {{ $campaign->actionLabel() }} and earn {{ \App\Support\Currency::format($campaign->reward) }}.
+                            {{ $campaign->actionLabel() }} and earn {{ \App\Support\Currency::coins($campaign->reward) }}.
                             {{ $campaign->hasEmbeddedPlayer() ? 'The video plays in the official player on this locked page.' : 'The real page opens in a new tab.' }}
                         </p>
                         <form method="POST" action="{{ route('tasks.start', $campaign) }}" class="mt-3">

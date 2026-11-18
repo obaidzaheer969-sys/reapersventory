@@ -113,7 +113,7 @@ class CampaignController extends Controller
 
         $campaign = $this->campaigns->cancel($request->user(), $campaign);
 
-        return back()->with('status', 'Campaign cancelled. PKR '
+        return back()->with('status', 'Campaign cancelled. Coins '
             .number_format($campaign->budgetRemaining(), 2)
             .' of unused budget has been returned to your wallet.');
     }

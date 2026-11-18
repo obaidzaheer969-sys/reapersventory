@@ -40,7 +40,9 @@ class CampaignService
             ? $this->videoReward($this->normaliseDuration($durationSeconds))
             : (float) config('earning.campaign.action_reward', 2);
 
-        $feePerAction = (float) config('earning.campaign.action_admin_fee', 1);
+        $feePerAction = $this->isAdminFeeVisible()
+            ? (float) config('earning.campaign.action_admin_fee', 1)
+            : 0.0;
 
         return [
             'reward' => round($reward, 2),
@@ -75,8 +77,8 @@ class CampaignService
         if ((float) $user->wallet_balance < $total) {
             throw ValidationException::withMessages([
                 'amount' => 'Insufficient wallet balance. For this campaign, '
-                    .number_format($total, 2).' PKR is required, available '
-                    .number_format((float) $user->wallet_balance, 2).' PKR.',
+                    .number_format($total, 2).' Coins is required, available '
+                    .number_format((float) $user->wallet_balance, 2).' Coins.',
             ]);
         }
 

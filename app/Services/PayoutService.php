@@ -59,13 +59,13 @@ class PayoutService
 
         if ($amount < $minimum) {
             throw ValidationException::withMessages([
-                'amount' => 'Minimum payout is PKR '.number_format($minimum, 0).'.',
+                'amount' => 'Minimum payout is Coins '.number_format($minimum, 0).'.',
             ]);
         }
 
         if ($amount > $maximum) {
             throw ValidationException::withMessages([
-                'amount' => 'Maximum payout is PKR '.number_format($maximum, 0).'.',
+                'amount' => 'Maximum payout is Coins '.number_format($maximum, 0).'.',
             ]);
         }
 

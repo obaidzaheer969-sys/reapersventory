@@ -13,7 +13,7 @@
             <p class="text-xs font-bold uppercase tracking-[0.2em] text-mint-300">Community</p>
             <h1 class="mt-1.5 font-display text-3xl font-bold text-white sm:text-4xl">Other users ke tasks</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-400">
-                These campaigns were published by other users. Each action (subscribe, follow, like, or video view) pays exactly 2 PKR. A campaign hides itself automatically when its quantity is complete. You can complete each campaign only once.
+                These campaigns were published by other users. Each action (subscribe, follow, like, or video view) pays exactly 2 Coins. A campaign hides itself automatically when its quantity is complete. You can complete each campaign only once.
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -33,7 +33,7 @@
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Wallet balance</p>
-            <p class="mt-1.5 font-display text-2xl font-bold text-white">{{ \App\Support\Currency::format($walletBalance) }}</p>
+            <p class="mt-1.5 font-display text-2xl font-bold text-white">{{ \App\Support\Currency::coins($walletBalance) }}</p>
         </div>
     </div>
 
@@ -63,7 +63,7 @@
                             </h2>
                             <p class="mt-0.5 truncate text-[11px] text-slate-500">By {{ $campaign->owner?->name ?? 'User' }}</p>
                         </div>
-                        <span class="shrink-0 rounded-lg bg-mint-500/15 px-2.5 py-1 text-xs font-bold text-mint-300">{{ \App\Support\Currency::format($campaign->reward) }}</span>
+                        <span class="shrink-0 rounded-lg bg-mint-500/15 px-2.5 py-1 text-xs font-bold text-mint-300">{{ \App\Support\Currency::coins($campaign->reward) }}</span>
                     </div>
 
                     <div class="mt-3">

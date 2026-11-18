@@ -56,7 +56,7 @@ class CampaignFeeSettings extends Page
         return $schema->components([
             Toggle::make('campaign_admin_fee_visible')
                 ->label('Show admin fee per action to users')
-                ->helperText('When off, the admin fee line and fee breakdown are hidden from user campaign pages. The fee is still charged and remains visible in the admin panel.'),
+                ->helperText('When off, new campaigns charge only the 2 Coins reward per action and hide the fee from users. Existing campaigns keep their original pricing and the fee stays visible in the admin panel.'),
         ]);
     }
 

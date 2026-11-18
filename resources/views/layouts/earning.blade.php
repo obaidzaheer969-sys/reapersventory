@@ -95,7 +95,7 @@
                         @endif
                         <span class="leading-tight">
                             <span class="block max-w-[120px] truncate text-xs font-bold text-white">{{ $navUser?->name }}</span>
-                            <span class="block text-[10px] text-slate-400">PKR {{ number_format((float) ($navUser?->wallet_balance ?? 0), 2) }}</span>
+                            <span class="block text-[10px] text-slate-400">{{ \App\Support\Currency::coins($navUser?->wallet_balance ?? 0) }}</span>
                         </span>
                     </button>
 
@@ -174,7 +174,7 @@
 
     <footer class="relative mx-auto w-full max-w-7xl px-4 pb-8 pt-4 text-xs text-slate-500 sm:px-6 lg:px-8">
         <div class="flex flex-col items-center justify-between gap-2 border-t border-white/10 pt-4 sm:flex-row">
-            <p>&copy; {{ date('Y') }} {{ config('earning.brand') }}. All earnings are shown in PKR.</p>
+            <p>&copy; {{ date('Y') }} {{ config('earning.brand') }}. All earnings are shown in Coins.</p>
             <p>{{ config('earning.tagline') }} · Support: {{ config('earning.support_email') }}</p>
         </div>
     </footer>

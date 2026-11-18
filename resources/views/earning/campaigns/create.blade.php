@@ -33,7 +33,7 @@
         </div>
         <div class="rounded-2xl border border-mint-400/25 bg-mint-500/10 px-4 py-3 text-right">
             <p class="text-[10px] font-bold uppercase tracking-wider text-mint-200/80">Wallet balance</p>
-            <p class="font-display text-lg font-bold text-white">{{ \App\Support\Currency::format($walletBalance) }}</p>
+            <p class="font-display text-lg font-bold text-white">{{ \App\Support\Currency::coins($walletBalance) }}</p>
         </div>
     </div>
 
@@ -51,9 +51,9 @@
                         @endforeach
                     </select>
                     @if ($campaignAdminFeeVisible)
-                        <p class="mt-1.5 text-[11px] text-slate-500">Each action (subscribe, follow, like, or video view) pays the earner 2 PKR and the admin 1 PKR — 3 PKR total per action. You set the quantity — an order for 2 subscribers or 1 view is allowed too.</p>
+                        <p class="mt-1.5 text-[11px] text-slate-500">Each action (subscribe, follow, like, or video view) pays the earner 2 Coins and the admin 1 Coin — 3 Coins total per action. You set the quantity — an order for 2 subscribers or 1 view is allowed too.</p>
                     @else
-                        <p class="mt-1.5 text-[11px] text-slate-500">Each action (subscribe, follow, like, or video view) pays the earner 2 PKR. You set the quantity — an order for 2 subscribers or 1 view is allowed too.</p>
+                        <p class="mt-1.5 text-[11px] text-slate-500">Each action (subscribe, follow, like, or video view) pays the earner 2 Coins. You set the quantity — an order for 2 subscribers or 1 view is allowed too.</p>
                     @endif
                 </div>
 
@@ -94,9 +94,9 @@
                             @endforeach
                         </select>
                         @if ($campaignAdminFeeVisible)
-                            <p class="mt-1.5 text-[11px] text-slate-500">Duration is only the minimum watch time. A video view also pays 2 PKR to the earner plus a 1 PKR admin fee.</p>
+                            <p class="mt-1.5 text-[11px] text-slate-500">Duration is only the minimum watch time. A video view also pays 2 Coins to the earner plus a 1 Coin admin fee.</p>
                         @else
-                            <p class="mt-1.5 text-[11px] text-slate-500">Duration is only the minimum watch time. A video view pays the earner 2 PKR.</p>
+                            <p class="mt-1.5 text-[11px] text-slate-500">Duration is only the minimum watch time. A video view pays the earner 2 Coins.</p>
                         @endif
                     </div>
                 </div>
@@ -123,20 +123,20 @@
                 <p class="text-xs font-semibold uppercase tracking-wider text-mint-200/80">Live estimate</p>
                 <div class="mt-3 flex items-center justify-between text-sm">
                     <span class="text-slate-300">Reward per action</span>
-                    <span id="quote-reward" class="font-bold text-white">PKR 0.00</span>
+                    <span id="quote-reward" class="font-bold text-white">Coins 0.00</span>
                 </div>
                 @if ($campaignAdminFeeVisible)
                     <div class="mt-2 flex items-center justify-between text-sm">
                         <span class="text-slate-300">Admin fee per action</span>
-                        <span id="quote-fee" class="font-bold text-white">PKR 0.00</span>
+                        <span id="quote-fee" class="font-bold text-white">Coins 0.00</span>
                     </div>
                 @endif
                 <div class="mt-2 flex items-center justify-between text-sm">
                     <span class="text-slate-300">Total campaign cost</span>
-                    <span id="quote-total" class="font-display text-xl font-bold text-mint-300">PKR 0.00</span>
+                    <span id="quote-total" class="font-display text-xl font-bold text-mint-300">Coins 0.00</span>
                 </div>
                 @if ($campaignAdminFeeVisible)
-                    <p class="mt-3 text-[11px] leading-relaxed text-slate-400">The full amount (3 PKR per action) is held from your wallet. Each completed action pays 2 PKR to the earner and 1 PKR to the admin. If you cancel the campaign, the full 3 PKR for unfinished actions is refunded.</p>
+                    <p class="mt-3 text-[11px] leading-relaxed text-slate-400">The full amount (3 Coins per action) is held from your wallet. Each completed action pays 2 Coins to the earner and 1 Coin to the admin. If you cancel the campaign, the full 3 Coins for unfinished actions is refunded.</p>
                 @else
                     <p class="mt-3 text-[11px] leading-relaxed text-slate-400">The full campaign budget is held from your wallet. If you cancel the campaign, the unused budget for unfinished actions is refunded.</p>
                 @endif
@@ -147,9 +147,9 @@
                 <ul class="mt-2 list-inside list-disc space-y-1">
                     <li>The campaign goes live immediately after payment — no approval needed.</li>
                     @if ($campaignAdminFeeVisible)
-                        <li>Each action costs 2 PKR for the earner plus a 1 PKR admin fee (3 PKR total).</li>
+                        <li>Each action costs 2 Coins for the earner plus a 1 Coin admin fee (3 Coins total).</li>
                     @else
-                        <li>Each completed action pays the earner 2 PKR.</li>
+                        <li>Each completed action pays the earner 2 Coins.</li>
                     @endif
                     <li>The campaign hides itself once the required quantity is complete.</li>
                     <li>Each earner can complete your campaign only once.</li>
@@ -181,11 +181,11 @@
 
             var watchMap = @js($watchMap);
             var reward = {{ (float) $campaignConfig['action_reward'] }};
-            var fee = {{ (float) $campaignConfig['action_admin_fee'] }};
+            var fee = {{ $campaignAdminFeeVisible ? (float) $campaignConfig['action_admin_fee'] : 0 }};
             var wallet = {{ (float) $walletBalance }};
 
             function money(value) {
-                return 'PKR ' + value.toFixed(2);
+                return 'Coins ' + value.toFixed(2);
             }
 
             function update() {

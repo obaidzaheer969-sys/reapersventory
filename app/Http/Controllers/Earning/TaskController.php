@@ -189,7 +189,7 @@ class TaskController extends Controller
 
         return redirect()
             ->route('tasks.index')
-            ->with('status', 'Task complete! PKR '.number_format((float) $task->reward, 2).' has been added to your wallet.');
+            ->with('status', 'Task complete! Coins '.number_format((float) $task->reward, 2).' has been added to your wallet.');
     }
 
     private function currentAttempt(User $user, EarningTask $task): ?TaskAttempt

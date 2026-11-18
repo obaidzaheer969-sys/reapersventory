@@ -137,8 +137,8 @@ class PayoutController extends Controller
             'payout_account_id' => ['required', 'integer'],
             'amount' => ['required', 'numeric', 'min:'.$minimum, 'max:'.$maximum],
         ], [
-            'amount.min' => 'Minimum payout is PKR '.number_format($minimum, 0).'.',
-            'amount.max' => 'Maximum payout is PKR '.number_format($maximum, 0).'.',
+            'amount.min' => 'Minimum payout is Coins '.number_format($minimum, 0).'.',
+            'amount.max' => 'Maximum payout is Coins '.number_format($maximum, 0).'.',
         ], [
             'payout_account_id' => 'wallet account',
             'amount' => 'amount',
