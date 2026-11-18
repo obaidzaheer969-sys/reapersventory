@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @include('layouts.partials.seo')
+    @include('ads.head')
     <title>@yield('title', config('earning.meta_title'))</title>
     <link rel="icon" href="{{ asset('images/reapersventory-logo.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -34,6 +35,11 @@
 <body class="min-h-screen bg-ink-950 font-sans text-slate-100 antialiased">
     <div class="pointer-events-none fixed inset-0 -z-10 glow-a"></div>
     <div class="pointer-events-none fixed inset-0 -z-10 glow-b"></div>
+
+    <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        @include('ads.slot', ['name' => 'top', 'variant' => 'dark'])
+        @include('ads.slot', ['name' => 'content', 'variant' => 'dark'])
+    </div>
 
     <header class="absolute right-4 top-4 z-20 flex items-center gap-2 sm:right-8 sm:top-6" aria-label="Account navigation">
         <a href="{{ route('login') }}" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10 hover:text-white">
@@ -119,6 +125,11 @@
                 </p>
             </div>
         </main>
+    </div>
+
+    <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        @include('ads.slot', ['name' => 'bottom', 'variant' => 'dark'])
+        @include('ads.slot', ['name' => 'footer', 'variant' => 'dark'])
     </div>
 </body>
 </html>

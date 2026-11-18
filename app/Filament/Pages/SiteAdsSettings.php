@@ -89,7 +89,7 @@ class SiteAdsSettings extends Page
                         ->required(fn (): bool => (bool) ($this->data['ads_enabled'] ?? false)),
                 ]),
             Section::make('Ads')
-                ->description('Approval and a saved verification tag are required. Each slot can be enabled separately.')
+                ->description('Approval and a saved verification tag are required. Use each ad zone only once; duplicate scripts are skipped.')
                 ->schema([
                     Toggle::make('ads_enabled')
                         ->label('Run site ads')
@@ -107,14 +107,14 @@ class SiteAdsSettings extends Page
                     Textarea::make('ad_auto_code')
                         ->label('Head / auto ads code')
                         ->rows(6)
-                        ->helperText('AdSense auto ads script or custom head script. It runs only when approved and a verification tag is present.')
+                        ->helperText('AdSense auto ads script or custom head script. It runs only when approved and a verification tag is present. Use each zone only once.')
                         ->columnSpanFull()
                         ->visible(fn (): bool => (bool) ($this->data['ads_enabled'] ?? false)),
                     ...collect(self::SLOT_FIELDS)
                         ->map(fn (string $label, string $key) => Textarea::make($key)
                             ->label($label)
                             ->rows(4)
-                            ->helperText('Leave empty to keep this slot disabled. Paste the ad network banner/script here.')
+                            ->helperText('Leave empty to keep this slot disabled. Paste a unique ad network banner/script here. Do not reuse a zone from another slot.')
                             ->columnSpanFull()
                             ->visible(fn (): bool => (bool) ($this->data['ads_enabled'] ?? false)))
                         ->all(),

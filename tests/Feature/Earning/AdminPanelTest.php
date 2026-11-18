@@ -163,6 +163,47 @@ class AdminPanelTest extends TestCase
             ->assertDontSee('Admin ad', false);
     }
 
+    public function test_duplicate_ad_scripts_are_rendered_only_once(): void
+    {
+        $user = User::factory()->earner()->create();
+        $autoCode = '<script src="https://bauval.org/14/aaaaaaaaaaaaaaaa"></script>';
+        $topCode = '<script src="https://bauval.org/21/bbbbbbbbbbbbbbbb"></script><div id="container-bbbbbbbbbbbbbbbb"></div>';
+
+        SystemSetting::setValue('site_approved', true);
+        SystemSetting::setValue('site_verification_tag', '<meta name="google-site-verification" content="verify-123">');
+        SystemSetting::setValue('ads_enabled', true);
+        SystemSetting::setValue('ad_auto_code', $autoCode);
+        SystemSetting::setValue('ad_slot_top', $topCode);
+        SystemSetting::setValue('ad_slot_content', $autoCode);
+        SystemSetting::setValue('ad_slot_bottom', $topCode);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+
+        $this->assertSame(1, substr_count($html, '/14/aaaaaaaaaaaaaaaa'));
+        $this->assertSame(1, substr_count($html, '/21/bbbbbbbbbbbbbbbb'));
+        $this->assertSame(1, substr_count($html, 'data-ad-slot="top"'));
+        $this->assertSame(0, substr_count($html, 'data-ad-slot="content"'));
+        $this->assertSame(0, substr_count($html, 'data-ad-slot="bottom"'));
+    }
+
+    public function test_guest_login_page_shows_ads_when_enabled(): void
+    {
+        SystemSetting::setValue('site_approved', true);
+        SystemSetting::setValue('site_verification_tag', '<meta name="google-site-verification" content="verify-123">');
+        SystemSetting::setValue('ads_enabled', true);
+        SystemSetting::setValue('ad_slot_top', '<div data-test-ad>Admin ad</div>');
+
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('google-site-verification', false)
+            ->assertSee('data-test-ad', false)
+            ->assertSee('Admin ad', false);
+    }
+
     public function test_admin_can_add_balance_to_a_users_wallet(): void
     {
         $admin = User::factory()->superAdmin()->create();

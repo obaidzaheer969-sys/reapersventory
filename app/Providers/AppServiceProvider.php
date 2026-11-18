@@ -86,7 +86,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('access-super-admin', fn ($user) => $user->isSuperAdmin());
 
-        View::composer(['layouts.earning', 'layouts.app'], function ($view): void {
+        View::composer(['layouts.earning', 'layouts.app', 'layouts.guest'], function ($view): void {
             $adState = [
                 'siteApproved' => false,
                 'siteVerificationTag' => '',
