@@ -5,7 +5,7 @@
 @section('content')
 <section class="bg-gradient-to-b from-navy-950 to-navy-900 px-4 py-16 text-white">
     <div class="mx-auto max-w-6xl text-center">
-        <p class="font-display text-3xl font-bold"><span class="text-white">Reapers</span><span class="text-brand-400">Ventory</span></p>
+        <div class="flex justify-center"><x-brand-logo size="lg" align="center" /></div>
         <h1 class="mt-3 text-3xl font-semibold">Simple monthly plans</h1>
         <p class="mx-auto mt-3 max-w-2xl text-slate-300">Choose a plan, start an optional trial, then pay via bank transfer, Easypaisa, or JazzCash. Access activates after Super Admin approval.</p>
     </div>

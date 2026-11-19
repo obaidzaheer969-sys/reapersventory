@@ -39,10 +39,7 @@
     <header class="sticky top-0 z-40 border-b border-white/10 bg-ink-950/80 backdrop-blur-xl">
         <div class="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
             <a href="{{ route('home') }}" class="flex items-center gap-2.5">
-                <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-mint-400 to-mint-600 text-lg font-black text-ink-950 shadow-lg shadow-mint-500/20">₨</span>
-                <span class="leading-tight">
-                    <span class="block font-display text-lg font-bold tracking-tight text-white">{{ config('earning.brand') }}</span>
-                </span>
+                <x-brand-logo size="md" />
             </a>
 
             <nav class="ml-8 hidden items-center gap-6 text-sm font-semibold text-slate-300 md:flex">

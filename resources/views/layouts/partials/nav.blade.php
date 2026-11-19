@@ -1,13 +1,7 @@
 <header class="border-b border-navy-900/10 bg-white/90 backdrop-blur">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <a href="{{ route('home') }}" class="flex flex-col items-start">
-            <span class="rv-logo h-12">
-                <img src="{{ asset('images/reapersventory-logo.png') }}" alt="ReapersVentory" class="h-12 w-auto">
-            </span>
-            <span class="mt-1 leading-tight">
-                <span class="block text-[10px] font-semibold text-navy-900 sm:text-xs">Inventory, Billing, Business Growth.</span>
-                <span class="block text-[9px] text-slate-500 sm:text-[10px]">A Reapers Tech Product</span>
-            </span>
+            <x-brand-logo size="lg" :dark="false" />
         </a>
 
         <nav class="flex items-center gap-2 text-sm font-semibold sm:gap-3">

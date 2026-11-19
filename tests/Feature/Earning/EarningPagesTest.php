@@ -21,7 +21,12 @@ class EarningPagesTest extends TestCase
         PayoutAccount::factory()->create(['user_id' => $user->id]);
         Announcement::factory()->create(['title' => 'Welcome to EarnPK']);
 
-        $this->actingAs($user)->get(route('dashboard'))->assertOk()->assertSee('Welcome to EarnPK');
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Reapers Growth')
+            ->assertSee('reapersventory-logo.png')
+            ->assertSee('Welcome to EarnPK');
         $this->actingAs($user)->get(route('tasks.index'))->assertOk()->assertSee('Subscribe to EarnPK channel');
         $this->actingAs($user)->get(route('earnings.index'))->assertOk()->assertSee('Earnings history');
         $this->actingAs($user)->get(route('wallet.index'))->assertOk()->assertSee('Wallet &amp; payouts', false);

@@ -43,6 +43,14 @@ class AdminPanelTest extends TestCase
         $response->assertDontSee('Payment methods');
     }
 
+    public function test_admin_login_shows_the_reapers_growth_brand_and_logo(): void
+    {
+        $this->get('/admin/login')
+            ->assertOk()
+            ->assertSee('Reapers Growth')
+            ->assertSee('reapersventory-logo.png');
+    }
+
     public function test_admin_task_table_only_lists_system_tasks(): void
     {
         $admin = User::factory()->superAdmin()->create();

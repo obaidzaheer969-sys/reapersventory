@@ -53,10 +53,7 @@
     <div class="grid min-h-screen lg:grid-cols-2">
         <aside class="relative hidden flex-col justify-between overflow-hidden border-r border-white/10 p-10 lg:flex xl:p-14">
             <a href="{{ route('home') }}" class="flex items-center gap-3">
-                <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-mint-400 to-mint-600 text-xl font-black text-ink-950 shadow-lg shadow-mint-500/25">₨</span>
-                <span class="leading-tight">
-                    <span class="block font-display text-2xl font-bold text-white">{{ config('earning.brand') }}</span>
-                </span>
+                <x-brand-logo size="lg" />
             </a>
 
             <div class="max-w-lg">
@@ -98,8 +95,7 @@
         <main class="flex items-center justify-center px-4 py-10 sm:px-8">
             <div class="w-full max-w-md">
                 <a href="{{ route('home') }}" class="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
-                    <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-mint-400 to-mint-600 text-lg font-black text-ink-950">₨</span>
-                    <span class="font-display text-xl font-bold text-white">{{ config('earning.brand') }}</span>
+                    <x-brand-logo size="md" align="center" />
                 </a>
 
                 <div class="card rounded-3xl border border-white/10 p-6 shadow-2xl shadow-black/40 sm:p-8">
