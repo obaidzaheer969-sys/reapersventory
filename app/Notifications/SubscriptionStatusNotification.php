@@ -57,19 +57,19 @@ class SubscriptionStatusNotification extends Notification
     {
         return match ($this->event) {
             'expiring_soon' => [
-                'Subscription expiring soon — ReapersVentory',
+                'Subscription expiring soon — Reapers Growth',
                 'Your subscription ends on '.$this->subscription->ends_at?->toFormattedDateString().'. Renew to avoid interruption.',
             ],
             'grace' => [
-                'Subscription entered grace period — ReapersVentory',
+                'Subscription entered grace period — Reapers Growth',
                 'Paid period ended. Grace lasts until '.$this->subscription->grace_ends_at?->toFormattedDateString().'.',
             ],
             'expired' => [
-                'Subscription expired — ReapersVentory',
+                'Subscription expired — Reapers Growth',
                 'Your subscription has expired. Submit a payment to restore access.',
             ],
             default => [
-                'Subscription update — ReapersVentory',
+                'Subscription update — Reapers Growth',
                 'Your subscription status is now: '.$this->subscription->status->label().'.',
             ],
         };

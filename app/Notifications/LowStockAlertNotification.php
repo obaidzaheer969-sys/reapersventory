@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Product;
 use App\Notifications\Concerns\UsesAppChannels;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -14,7 +15,7 @@ class LowStockAlertNotification extends Notification
     use UsesAppChannels;
 
     /**
-     * @param  Collection<int, \App\Models\Product>  $products
+     * @param  Collection<int, Product>  $products
      */
     public function __construct(
         public Collection $products,
@@ -23,7 +24,7 @@ class LowStockAlertNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $mail = (new MailMessage)
-            ->subject('Low-stock alert — ReapersVentory')
+            ->subject('Low-stock alert — Reapers Growth')
             ->greeting('Hello '.$notifiable->name.',')
             ->line('The following products are at or below reorder level:');
 

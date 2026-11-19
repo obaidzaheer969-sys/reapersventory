@@ -1,8 +1,8 @@
-# ReapersVentory
+# Reapers Growth
 
 Multi-tenant Laravel SaaS for product management, inventory, sales billing, and monthly subscriptions.
 
-**Brand:** ReapersVentory (navy `#0a1628` + orange `#f15a24`)  
+**Brand:** Reapers Growth (navy `#0a1628` + orange `#f15a24`)
 **Stack:** Laravel 13 · PHP 8.3+ · MySQL · Blade · Livewire · Tailwind · Filament (Milestone 2)
 
 ## Current status
@@ -30,7 +30,7 @@ Copy `.env.example` to `.env` (already done on scaffold) and set:
 
 | Variable | Purpose |
 |----------|---------|
-| `APP_NAME` | `ReapersVentory` |
+| `APP_NAME` | `Reapers Growth` |
 | `APP_URL` | App URL |
 | `DB_CONNECTION` | `sqlite` or `mysql` |
 | `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | MySQL settings |

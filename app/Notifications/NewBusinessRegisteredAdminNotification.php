@@ -24,9 +24,9 @@ class NewBusinessRegisteredAdminNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('New business registered — ReapersVentory')
+            ->subject('New business registered — Reapers Growth')
             ->greeting('Hello '.$notifiable->name.',')
-            ->line('A new business registered on ReapersVentory.')
+            ->line('A new business registered on Reapers Growth.')
             ->line('Business: '.$this->business->name)
             ->line('Owner: '.$this->owner->name.' ('.$this->owner->email.')')
             ->action('Open admin', url('/admin'));

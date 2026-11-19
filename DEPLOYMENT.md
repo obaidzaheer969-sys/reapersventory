@@ -1,4 +1,4 @@
-# ReapersVentory deployment
+# Reapers Growth deployment
 
 Production checklist for Milestone 5 (notifications, hardening, scheduler/queue).
 

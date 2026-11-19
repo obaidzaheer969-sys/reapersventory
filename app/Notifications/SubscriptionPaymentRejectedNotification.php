@@ -20,7 +20,7 @@ class SubscriptionPaymentRejectedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $mail = (new MailMessage)
-            ->subject('Subscription payment rejected — ReapersVentory')
+            ->subject('Subscription payment rejected — Reapers Growth')
             ->greeting('Hello '.$notifiable->name.',')
             ->line('Your subscription payment proof was rejected.')
             ->line('Amount: '.$this->payment->currency.' '.number_format((float) $this->payment->amount, 2));

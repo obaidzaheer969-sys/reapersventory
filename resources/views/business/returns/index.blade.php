@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Returns — ReapersVentory')
+@section('title', 'Returns — Reapers Growth')
 
 @section('content')
 <x-business-section title="Returns" subtitle="Completed returns that restored inventory.">

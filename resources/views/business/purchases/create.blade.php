@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'New purchase — ReapersVentory')
+@section('title', 'New purchase — Reapers Growth')
 
 @section('content')
 <x-business-section title="New purchase" subtitle="Totals are stored as historical values and will not change after receipt.">
