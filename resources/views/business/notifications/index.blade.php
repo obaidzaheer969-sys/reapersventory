@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Notifications — Reapers Growth')
+@section('title', 'Notifications — ReapersGrowth')
 
 @section('content')
 <div class="mx-auto max-w-3xl px-4 py-10">

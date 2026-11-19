@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $invoice->invoice_number.' — Reapers Growth')
+@section('title', $invoice->invoice_number.' — ReapersGrowth')
 
 @section('content')
 <x-business-section :title="$invoice->invoice_number" subtitle="Invoice details and PDF downloads.">

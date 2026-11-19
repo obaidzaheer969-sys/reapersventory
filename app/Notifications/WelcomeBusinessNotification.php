@@ -19,7 +19,7 @@ class WelcomeBusinessNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Welcome to Reapers Growth')
+            ->subject('Welcome to ReapersGrowth')
             ->greeting('Hello '.$notifiable->name.',')
             ->line('Your business "'.$this->businessName.'" is ready.')
             ->action('Open dashboard', url('/business/dashboard'));
@@ -28,7 +28,7 @@ class WelcomeBusinessNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => 'Welcome to Reapers Growth',
+            'title' => 'Welcome to ReapersGrowth',
             'body' => 'Your business "'.$this->businessName.'" is set up. Choose a plan to unlock inventory and sales.',
             'url' => url('/business/subscription'),
             'level' => 'info',

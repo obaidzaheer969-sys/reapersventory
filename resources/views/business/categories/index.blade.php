@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Categories — Reapers Growth')
+@section('title', 'Categories — ReapersGrowth')
 
 @section('content')
 <x-business-section title="Categories" subtitle="Organize products into categories.">

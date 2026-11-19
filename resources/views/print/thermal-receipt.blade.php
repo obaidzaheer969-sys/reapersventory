@@ -220,7 +220,7 @@
 
             <div class="footer-note">
                 Thank you!<br>
-                <span class="muted">Powered by Reapers Growth</span>
+                <span class="muted">Powered by ReapersGrowth</span>
             </div>
         </div>
     </div>

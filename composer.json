@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "reapersventory/saas",
     "type": "project",
-    "description": "Reapers Growth \u2014 multi-tenant product management, inventory, and billing SaaS.",
+    "description": "ReapersGrowth \u2014 multi-tenant product management, inventory, and billing SaaS.",
     "keywords": [
         "laravel",
         "saas",

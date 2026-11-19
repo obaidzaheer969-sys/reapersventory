@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Billing — Reapers Growth')
+@section('title', 'Billing — ReapersGrowth')
 
 @section('content')
 <x-business-section title="Billing counter" subtitle="Scan items, complete sale, then print on a small thermal roll printer.">

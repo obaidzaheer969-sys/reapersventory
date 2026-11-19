@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Return '.$sale->sale_number.' — Reapers Growth')
+@section('title', 'Return '.$sale->sale_number.' — ReapersGrowth')
 
 @section('content')
 <x-business-section title="Return items" :subtitle="'Sale '.$sale->sale_number">

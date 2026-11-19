@@ -20,7 +20,7 @@ class InAppNotificationTest extends TestCase
         $this->actingAs($owner)
             ->get(route('business.notifications.index'))
             ->assertOk()
-            ->assertSee('Welcome to Reapers Growth')
+            ->assertSee('Welcome to ReapersGrowth')
             ->assertSee('Demo Biz');
     }
 

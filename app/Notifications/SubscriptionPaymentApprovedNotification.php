@@ -20,7 +20,7 @@ class SubscriptionPaymentApprovedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Subscription payment approved — Reapers Growth')
+            ->subject('Subscription payment approved — ReapersGrowth')
             ->greeting('Hello '.$notifiable->name.',')
             ->line('Your subscription payment has been approved.')
             ->line('Amount: '.$this->payment->currency.' '.number_format((float) $this->payment->amount, 2))

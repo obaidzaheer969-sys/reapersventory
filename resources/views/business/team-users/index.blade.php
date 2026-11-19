@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Team users — Reapers Growth')
+@section('title', 'Team users — ReapersGrowth')
 
 @section('content')
 <x-business-section title="Team users" subtitle="People who can sign in and manage this business.">

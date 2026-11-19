@@ -14,7 +14,7 @@ class SuperAdminSeeder extends Seeder
         User::query()->updateOrCreate(
             ['email' => env('SUPER_ADMIN_EMAIL', 'admin@reapersventory.test')],
             [
-                'name' => env('SUPER_ADMIN_NAME', 'Reapers Growth Admin'),
+                'name' => env('SUPER_ADMIN_NAME', 'ReapersGrowth Admin'),
                 'password' => Hash::make(env('SUPER_ADMIN_PASSWORD', 'ChangeMeNow!123')),
                 'role' => UserRole::SuperAdmin,
                 'business_id' => null,

@@ -24,7 +24,7 @@ class LowStockAlertNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $mail = (new MailMessage)
-            ->subject('Low-stock alert — Reapers Growth')
+            ->subject('Low-stock alert — ReapersGrowth')
             ->greeting('Hello '.$notifiable->name.',')
             ->line('The following products are at or below reorder level:');
 

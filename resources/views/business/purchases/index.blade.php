@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Purchases — Reapers Growth')
+@section('title', 'Purchases — ReapersGrowth')
 
 @section('content')
 <x-business-section title="Purchases" subtitle="Create purchase orders and receive stock into warehouses.">

@@ -26,7 +26,7 @@ class PackageChangeRequestedAdminNotification extends Notification
         $businessName = $this->subscription->business?->name ?? 'Business';
 
         return (new MailMessage)
-            ->subject('Package change requested — Reapers Growth')
+            ->subject('Package change requested — ReapersGrowth')
             ->greeting('Hello '.$notifiable->name.',')
             ->line($businessName.' requested a package change.')
             ->line('Current: '.($this->subscription->plan?->name ?? '—'))

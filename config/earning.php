@@ -8,13 +8,13 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'brand' => env('EARNING_BRAND', 'Reapers Growth'),
+    'brand' => env('EARNING_BRAND', 'ReapersGrowth'),
 
     'tagline' => env('EARNING_TAGLINE', 'Watch. Follow. Earn.'),
 
-    'meta_title' => env('EARNING_META_TITLE', 'Reapers Growth — Watch Videos & Complete Tasks for PKR'),
+    'meta_title' => env('EARNING_META_TITLE', 'ReapersGrowth — Watch Videos & Complete Tasks for PKR'),
 
-    'meta_description' => env('EARNING_META_DESCRIPTION', 'Earn with Reapers Growth. Watch YouTube videos, follow social accounts, complete simple tasks and withdraw via Easypaisa, JazzCash, UPaisa or NayaPay.'),
+    'meta_description' => env('EARNING_META_DESCRIPTION', 'Earn with ReapersGrowth. Watch YouTube videos, follow social accounts, complete simple tasks and withdraw via Easypaisa, JazzCash, UPaisa or NayaPay.'),
 
     'currency' => env('EARNING_CURRENCY', 'PKR'),
 

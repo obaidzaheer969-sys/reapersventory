@@ -49,7 +49,7 @@ class AdminPanelTest extends TestCase
             ->assertOk()
             ->assertSeeInOrder([
                 'reapersventory-logo.png',
-                '>Reapers Growth</',
+                '>ReapersGrowth</',
             ], false);
     }
 
