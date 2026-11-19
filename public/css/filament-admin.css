@@ -1,4 +1,4 @@
-/* Logo only — do not restyle Filament login page chrome */
+/* Brand lockup only — do not restyle Filament login page chrome */
 
 @keyframes rv-logo-in {
     from {
@@ -29,4 +29,26 @@
     animation:
         rv-logo-in 0.65s ease-out both,
         rv-logo-float 3s ease-in-out 0.65s infinite;
+}
+
+.fi-brand-lockup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    text-align: center;
+}
+
+.fi-brand-lockup img {
+    display: block;
+    height: 4rem;
+    width: auto;
+}
+
+.fi-brand-name {
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
 }

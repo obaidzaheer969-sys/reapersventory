@@ -24,8 +24,10 @@ class EarningPagesTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Reapers Growth')
-            ->assertSee('reapersventory-logo.png')
+            ->assertSeeInOrder([
+                'reapersventory-logo.png',
+                '>Reapers Growth</',
+            ], false)
             ->assertSee('Welcome to EarnPK');
         $this->actingAs($user)->get(route('tasks.index'))->assertOk()->assertSee('Subscribe to EarnPK channel');
         $this->actingAs($user)->get(route('earnings.index'))->assertOk()->assertSee('Earnings history');

@@ -27,15 +27,23 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
+        $brand = config('earning.brand');
+        $brandLogo = new HtmlString(
+            '<div class="fi-brand-lockup">'
+                .'<img src="'.e(asset('images/reapersventory-logo.png')).'" alt="'.e($brand.' logo').'">'
+                .'<span class="fi-brand-name">'.e($brand).'</span>'
+            .'</div>'
+        );
+
         $panel = $panel
             ->default()
             ->id('admin')
             ->path('admin')
             ->login()
             ->darkMode(false)
-            ->brandName('Reapers Growth')
-            ->brandLogo(asset('images/reapersventory-logo.png'))
-            ->brandLogoHeight('4rem')
+            ->brandName($brand)
+            ->brandLogo($brandLogo)
+            ->brandLogoHeight('auto')
             ->favicon(asset('images/reapersventory-logo.png'))
             ->colors([
                 'primary' => Color::hex('#f15a24'),
@@ -47,7 +55,7 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): HtmlString => new HtmlString(
-                    '<link rel="stylesheet" href="'.e(asset('css/filament-admin.css')).'?v=4">'
+                    '<link rel="stylesheet" href="'.e(asset('css/filament-admin.css')).'?v=5">'
                 ),
             )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

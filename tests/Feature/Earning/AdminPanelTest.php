@@ -47,8 +47,10 @@ class AdminPanelTest extends TestCase
     {
         $this->get('/admin/login')
             ->assertOk()
-            ->assertSee('Reapers Growth')
-            ->assertSee('reapersventory-logo.png');
+            ->assertSeeInOrder([
+                'reapersventory-logo.png',
+                '>Reapers Growth</',
+            ], false);
     }
 
     public function test_admin_task_table_only_lists_system_tasks(): void
