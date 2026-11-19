@@ -31,7 +31,6 @@ class AdminPanelProvider extends PanelProvider
         $brandLogo = new HtmlString(
             '<div class="fi-brand-lockup">'
                 .'<img src="'.e(asset('images/reapersventory-logo.png')).'" alt="'.e($brand.' logo').'">'
-                .'<span class="fi-brand-name">'.e($brand).'</span>'
             .'</div>'
         );
 

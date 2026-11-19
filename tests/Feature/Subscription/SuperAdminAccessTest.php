@@ -27,16 +27,4 @@ class SuperAdminAccessTest extends TestCase
             ->get('/admin')
             ->assertOk();
     }
-
-    public function test_pricing_page_loads_seeded_style_plans(): void
-    {
-        \App\Models\Plan::factory()->create([
-            'name' => 'Starter',
-            'is_active' => true,
-        ]);
-
-        $this->get(route('pricing'))
-            ->assertOk()
-            ->assertSee('Starter');
-    }
 }

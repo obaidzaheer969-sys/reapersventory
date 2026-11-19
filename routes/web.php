@@ -39,14 +39,12 @@ use App\Http\Controllers\Earning\PayoutController as EarningPayoutController;
 use App\Http\Controllers\Earning\ProfileController as EarningProfileController;
 use App\Http\Controllers\Earning\TaskController as EarningTaskController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\PricingController;
 use App\Models\PaymentProof;
 use Illuminate\Support\Facades\Route;
 
 Route::bind('paymentProof', fn (string $value) => PaymentProof::withoutGlobalScopes()->findOrFail($value));
 
 Route::get('/', HomeController::class)->name('home');
-Route::get('/pricing', PricingController::class)->name('pricing');
 
 Route::post('/deposits/cashmaal/ipn', CashmaalIpnController::class)->name('deposits.cashmaal.ipn');
 Route::match(['get', 'post'], '/deposits/cashmaal/success', [CashmaalCallbackController::class, 'success'])

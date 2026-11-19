@@ -43,14 +43,12 @@ class AdminPanelTest extends TestCase
         $response->assertDontSee('Payment methods');
     }
 
-    public function test_admin_login_shows_the_reapers_growth_brand_and_logo(): void
+    public function test_admin_login_shows_the_logo_without_brand_text(): void
     {
         $this->get('/admin/login')
             ->assertOk()
-            ->assertSeeInOrder([
-                'reapersventory-logo.png',
-                '>ReapersGrowth</',
-            ], false);
+            ->assertSee('reapersventory-logo.png')
+            ->assertDontSee('>ReapersGrowth</', false);
     }
 
     public function test_admin_task_table_only_lists_system_tasks(): void
@@ -185,11 +183,6 @@ class AdminPanelTest extends TestCase
             ->assertSee('Admin ad', false)
             ->assertSee('data-test-footer-ad', false)
             ->assertSee('Footer ad', false);
-
-        $this->get(route('pricing'))
-            ->assertOk()
-            ->assertSee('data-test-ad', false)
-            ->assertSee('Admin ad', false);
     }
 
     public function test_ads_do_not_run_without_a_site_verification_tag(): void

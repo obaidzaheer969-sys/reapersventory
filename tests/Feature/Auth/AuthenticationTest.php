@@ -15,10 +15,8 @@ class AuthenticationTest extends TestCase
     {
         $this->get(route('login'))
             ->assertOk()
-            ->assertSeeInOrder([
-                'reapersventory-logo.png',
-                '>ReapersGrowth</',
-            ], false)
+            ->assertSee('reapersventory-logo.png')
+            ->assertDontSee('>ReapersGrowth</', false)
             ->assertSee('href="'.route('login').'"', false)
             ->assertSee('href="'.route('register').'"', false);
     }
