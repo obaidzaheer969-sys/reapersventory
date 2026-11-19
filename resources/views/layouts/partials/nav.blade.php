@@ -1,7 +1,7 @@
 <header class="border-b border-navy-900/10 bg-white/90 backdrop-blur">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <a href="{{ route('home') }}" class="flex flex-col items-start">
-            <x-brand-logo size="lg" :dark="false" :show-text="! request()->routeIs('pricing')" />
+            <x-brand-logo size="lg" :dark="false" />
         </a>
 
         <nav class="flex items-center gap-2 text-sm font-semibold sm:gap-3">
