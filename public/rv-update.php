@@ -164,23 +164,78 @@ function rv_find_npm(): ?string
     return null;
 }
 
-function rv_find_composer(): ?string
+function rv_verify_composer_phar(string $path): bool
 {
-    $projectComposer = getcwd().DIRECTORY_SEPARATOR.'composer.phar';
+    if (! is_file($path) || filesize($path) < 100000) {
+        return false;
+    }
 
-    if (! is_file($projectComposer)) {
+    $handle = @fopen($path, 'rb');
+
+    if ($handle === false) {
+        return false;
+    }
+
+    $header = (string) fread($handle, 256);
+    fclose($handle);
+
+    return str_contains($header, '<?php');
+}
+
+function rv_download_composer(string $destination, array &$log): void
+{
+    $url = 'https://getcomposer.org/download/latest-stable/composer.phar';
+
+    if (filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN)) {
         $context = stream_context_create([
             'http' => [
                 'timeout' => 60,
                 'user_agent' => 'reapersventory-updater',
             ],
         ]);
-        $downloaded = @file_get_contents('https://getcomposer.org/download/latest-stable/composer.phar', false, $context);
+        $downloaded = @file_get_contents($url, false, $context);
 
-        if ($downloaded !== false) {
-            @file_put_contents($projectComposer, $downloaded);
-            @chmod($projectComposer, 0755);
+        if ($downloaded !== false && @file_put_contents($destination, $downloaded) !== false) {
+            @chmod($destination, 0755);
+            $log[] = '[rv-update] downloaded composer.phar with PHP streams';
         }
+    } else {
+        $log[] = '[rv-update] allow_url_fopen is disabled; trying curl and wget';
+    }
+
+    if (rv_verify_composer_phar($destination)) {
+        return;
+    }
+
+    $commands = [
+        'curl' => 'curl -fsSL --connect-timeout 20 --max-time 180 -o '.escapeshellarg($destination).' '.escapeshellarg($url),
+        'wget' => 'wget -q --timeout=30 --tries=2 -O '.escapeshellarg($destination).' '.escapeshellarg($url),
+    ];
+
+    foreach ($commands as $name => $command) {
+        $output = [];
+        $code = 0;
+        exec($command.' 2>&1', $output, $code);
+
+        if (rv_verify_composer_phar($destination)) {
+            @chmod($destination, 0755);
+            $log[] = '[rv-update] downloaded composer.phar with '.$name;
+
+            return;
+        }
+
+        $log[] = '[rv-update] '.$name.' download failed (exit '.$code.'): '.implode(' ', $output);
+    }
+
+    $log[] = '[rv-update] could not download composer.phar from '.$url;
+}
+
+function rv_find_composer(array &$log): ?string
+{
+    $projectComposer = getcwd().DIRECTORY_SEPARATOR.'composer.phar';
+
+    if (! rv_verify_composer_phar($projectComposer)) {
+        rv_download_composer($projectComposer, $log);
     }
 
     $candidates = [
@@ -205,6 +260,8 @@ function rv_find_composer(): ?string
             return $bin;
         }
     }
+
+    $log[] = '[rv-update] no working Composer binary found; checked: '.implode(', ', $candidates);
 
     return null;
 }
@@ -374,7 +431,7 @@ rv_clear_bootstrap_cache($base, $log);
 
 // Install PHP dependencies before booting Artisan: a new package in composer.json
 // (for example Sanctum) must exist in vendor/ before config files are loaded.
-$composer = rv_find_composer();
+$composer = rv_find_composer($log);
 if ($composer === null) {
     $log[] = '[rv-update] composer not found — cannot install new PHP dependencies';
     http_response_code(500);
