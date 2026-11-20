@@ -22,6 +22,11 @@ use App\Http\Controllers\Api\V1\WithdrawalController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+    Route::get('/', fn () => response()->json([
+        'name' => 'ReapersInventory API',
+        'version' => 'v1',
+    ]))->name('api.v1.index');
+
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
