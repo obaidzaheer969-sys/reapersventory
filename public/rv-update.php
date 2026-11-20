@@ -164,6 +164,30 @@ function rv_find_npm(): ?string
     return null;
 }
 
+function rv_find_composer(): ?string
+{
+    $candidates = [
+        '/usr/local/bin/composer',
+        '/usr/bin/composer',
+        '/usr/bin/composer85',
+        getcwd().DIRECTORY_SEPARATOR.'composer.phar',
+        'composer',
+        'composer.phar',
+    ];
+
+    foreach ($candidates as $bin) {
+        $out = [];
+        $code = 0;
+        exec(escapeshellarg($bin).' --version 2>&1', $out, $code);
+
+        if ($code === 0 && isset($out[0]) && str_contains(strtolower($out[0]), 'composer version')) {
+            return $bin;
+        }
+    }
+
+    return null;
+}
+
 function rv_secrets_match(string $expected, string $provided): bool
 {
     if ($expected === '' || $provided === '') {
@@ -326,6 +350,23 @@ $run('git clean -fd -e .env -e .env.* -e storage -e vendor -e node_modules -e pu
 
 // Clear again after pull (new commit may still leave old cache files)
 rv_clear_bootstrap_cache($base, $log);
+
+// Install PHP dependencies before booting Artisan: a new package in composer.json
+// (for example Sanctum) must exist in vendor/ before config files are loaded.
+$composer = rv_find_composer();
+if ($composer === null) {
+    $log[] = '[rv-update] composer not found — cannot install new PHP dependencies';
+    http_response_code(500);
+    echo implode("\n", $log)."\n";
+    exit;
+}
+
+if ($run(escapeshellarg($composer).' install --no-interaction --no-dev --optimize-autoloader --prefer-dist') !== 0) {
+    $log[] = '[rv-update] composer install failed; update aborted';
+    http_response_code(500);
+    echo implode("\n", $log)."\n";
+    exit;
+}
 
 // Migrate BEFORE the asset build: the database fix must not depend on npm.
 $phpQ = escapeshellarg($php);
