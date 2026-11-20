@@ -170,7 +170,11 @@ function rv_find_composer(): ?string
         '/usr/local/bin/composer',
         '/usr/bin/composer',
         '/usr/bin/composer85',
+        '/opt/cpanel/composer/bin/composer',
+        '/usr/local/cpanel/3rdparty/composer/composer.phar',
         getcwd().DIRECTORY_SEPARATOR.'composer.phar',
+        (string) getenv('HOME').DIRECTORY_SEPARATOR.'.composer'.DIRECTORY_SEPARATOR.'composer.phar',
+        (string) getenv('HOME').DIRECTORY_SEPARATOR.'.config'.DIRECTORY_SEPARATOR.'composer'.DIRECTORY_SEPARATOR.'composer.phar',
         'composer',
         'composer.phar',
     ];
