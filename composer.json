@@ -16,6 +16,7 @@
         "barryvdh/laravel-dompdf": "^3.1",
         "filament/filament": "5.4",
         "laravel/framework": "^13.17",
+        "laravel/sanctum": "^4.5",
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.4"
     },
