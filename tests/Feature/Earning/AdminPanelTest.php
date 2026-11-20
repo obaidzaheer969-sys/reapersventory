@@ -7,6 +7,7 @@ use App\Enums\WalletTransactionType;
 use App\Filament\Pages\CampaignFeeSettings;
 use App\Filament\Pages\SiteAdsSettings;
 use App\Filament\Pages\WithdrawalSettings;
+use App\Filament\Resources\ApiTokens\Pages\ManageApiTokens;
 use App\Filament\Resources\Campaigns\Pages\ListCampaigns;
 use App\Filament\Resources\Earners\Pages\ListEarners;
 use App\Filament\Resources\EarningTasks\Pages\CreateEarningTask;
@@ -326,6 +327,35 @@ class AdminPanelTest extends TestCase
             'type' => WalletTransactionType::AdminCredit->value,
             'amount' => 500,
             'description' => 'Manual top-up',
+        ]);
+    }
+
+    public function test_admin_can_generate_an_api_token_from_the_tokens_page(): void
+    {
+        $admin = User::factory()->superAdmin()->create();
+        $earner = User::factory()->earner()->create();
+
+        $this->actingAs($admin)->get('/admin/api-tokens')
+            ->assertOk()
+            ->assertSee('Generate API token');
+
+        Livewire::actingAs($admin)
+            ->test(ManageApiTokens::class)
+            ->callAction(
+                TestAction::make('generateToken'),
+                data: [
+                    'user_id' => $earner->id,
+                    'name' => 'Mobile app',
+                ],
+            )
+            ->assertSet('generatedTokenName', 'Mobile app')
+            ->assertSet('mountedActions.0.name', 'showGeneratedToken');
+
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'tokenable_type' => User::class,
+            'tokenable_id' => $earner->id,
+            'name' => 'Mobile app',
         ]);
     }
 
