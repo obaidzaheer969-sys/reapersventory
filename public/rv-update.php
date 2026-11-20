@@ -230,13 +230,15 @@ function rv_download_composer(string $destination, array &$log): void
     $log[] = '[rv-update] could not download composer.phar from '.$url;
 }
 
-function rv_find_composer(array &$log): ?string
+function rv_find_composer(string $php, array &$log): ?string
 {
     $projectComposer = getcwd().DIRECTORY_SEPARATOR.'composer.phar';
 
     if (! rv_verify_composer_phar($projectComposer)) {
         rv_download_composer($projectComposer, $log);
     }
+
+    $log[] = '[rv-update] composer.phar present: '.(is_file($projectComposer) ? (string) filesize($projectComposer).' bytes' : 'no');
 
     $candidates = [
         '/usr/local/bin/composer',
@@ -251,13 +253,33 @@ function rv_find_composer(array &$log): ?string
         'composer.phar',
     ];
 
-    foreach ($candidates as $bin) {
-        $out = [];
-        $code = 0;
-        exec(escapeshellarg($bin).' --version 2>&1', $out, $code);
+    $phpQ = escapeshellarg($php);
 
-        if ($code === 0 && isset($out[0]) && str_contains(strtolower($out[0]), 'composer version')) {
-            return $bin;
+    foreach ($candidates as $bin) {
+        $isPhar = str_ends_with(strtolower($bin), '.phar');
+        $versionCommands = [
+            escapeshellarg($bin).' --version 2>&1',
+        ];
+
+        if ($isPhar && $php !== '') {
+            array_unshift($versionCommands, $phpQ.' '.escapeshellarg($bin).' --version 2>&1');
+        }
+
+        foreach ($versionCommands as $versionCommand) {
+            $out = [];
+            $code = 0;
+            exec($versionCommand, $out, $code);
+            $firstLine = trim($out[0] ?? '');
+
+            if ($code === 0 && $firstLine !== '' && str_contains(strtolower($firstLine), 'composer version')) {
+                $log[] = '[rv-update] using Composer via: '.$versionCommand;
+
+                return $isPhar && str_starts_with($versionCommand, $phpQ.' ')
+                    ? $phpQ.' '.escapeshellarg($bin)
+                    : escapeshellarg($bin);
+            }
+
+            $log[] = '[rv-update] Composer candidate failed: '.$versionCommand.' (exit '.$code.') '.$firstLine;
         }
     }
 
@@ -366,7 +388,7 @@ if (! function_exists('exec')) {
 
 $log = [];
 $log[] = '[rv-update] started '.gmdate('c');
-$log[] = '[rv-update] updater revision 2026-11-20b';
+$log[] = '[rv-update] updater revision 2026-11-20c';
 $log[] = '[rv-update] base '.$base;
 
 // Clear stale caches FIRST so site does not 500 on missing DeployController etc.
@@ -432,7 +454,7 @@ rv_clear_bootstrap_cache($base, $log);
 
 // Install PHP dependencies before booting Artisan: a new package in composer.json
 // (for example Sanctum) must exist in vendor/ before config files are loaded.
-$composer = rv_find_composer($log);
+$composer = rv_find_composer($php, $log);
 if ($composer === null) {
     $log[] = '[rv-update] composer not found — cannot install new PHP dependencies';
     http_response_code(500);
@@ -440,7 +462,7 @@ if ($composer === null) {
     exit;
 }
 
-if ($run(escapeshellarg($composer).' install --no-interaction --no-dev --optimize-autoloader --prefer-dist') !== 0) {
+if ($run($composer.' install --no-interaction --no-dev --optimize-autoloader --prefer-dist') !== 0) {
     $log[] = '[rv-update] composer install failed; update aborted';
     http_response_code(500);
     echo implode("\n", $log)."\n";
