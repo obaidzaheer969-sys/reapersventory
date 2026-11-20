@@ -166,13 +166,30 @@ function rv_find_npm(): ?string
 
 function rv_find_composer(): ?string
 {
+    $projectComposer = getcwd().DIRECTORY_SEPARATOR.'composer.phar';
+
+    if (! is_file($projectComposer)) {
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 60,
+                'user_agent' => 'reapersventory-updater',
+            ],
+        ]);
+        $downloaded = @file_get_contents('https://getcomposer.org/download/latest-stable/composer.phar', false, $context);
+
+        if ($downloaded !== false) {
+            @file_put_contents($projectComposer, $downloaded);
+            @chmod($projectComposer, 0755);
+        }
+    }
+
     $candidates = [
         '/usr/local/bin/composer',
         '/usr/bin/composer',
         '/usr/bin/composer85',
         '/opt/cpanel/composer/bin/composer',
         '/usr/local/cpanel/3rdparty/composer/composer.phar',
-        getcwd().DIRECTORY_SEPARATOR.'composer.phar',
+        $projectComposer,
         (string) getenv('HOME').DIRECTORY_SEPARATOR.'.composer'.DIRECTORY_SEPARATOR.'composer.phar',
         (string) getenv('HOME').DIRECTORY_SEPARATOR.'.config'.DIRECTORY_SEPARATOR.'composer'.DIRECTORY_SEPARATOR.'composer.phar',
         'composer',
@@ -350,7 +367,7 @@ if ($run('git reset --hard origin/main') !== 0) {
     exit;
 }
 
-$run('git clean -fd -e .env -e .env.* -e storage -e vendor -e node_modules -e public/uploads -e public/rv-update.php');
+$run('git clean -fd -e .env -e .env.* -e storage -e vendor -e node_modules -e composer.phar -e public/uploads -e public/rv-update.php');
 
 // Clear again after pull (new commit may still leave old cache files)
 rv_clear_bootstrap_cache($base, $log);
