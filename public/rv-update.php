@@ -366,6 +366,7 @@ if (! function_exists('exec')) {
 
 $log = [];
 $log[] = '[rv-update] started '.gmdate('c');
+$log[] = '[rv-update] updater revision 2026-11-20b';
 $log[] = '[rv-update] base '.$base;
 
 // Clear stale caches FIRST so site does not 500 on missing DeployController etc.
