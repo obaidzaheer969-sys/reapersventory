@@ -170,7 +170,7 @@ class CampaignController extends Controller
 
     private function attemptResponse(EarningTask $campaign, TaskAttempt $attempt): CampaignResource
     {
-        $this->decorateCampaign($campaign, $this->campaigns->isAdminFeeVisible());
+        $this->decorateCampaign($campaign, $this->campaigns->isAdminFeeVisible(), $attempt);
 
         $campaign->setAttribute('api_attempt', [
             'id' => $attempt->id,
@@ -195,11 +195,15 @@ class CampaignController extends Controller
             ->first();
     }
 
-    private function decorateCampaign(EarningTask $campaign, bool $feeVisible): void
+    private function decorateCampaign(EarningTask $campaign, bool $feeVisible, ?TaskAttempt $attempt = null): void
     {
         $campaign->setAttribute(
             'api_admin_fee',
             $feeVisible ? $campaign->feePerAction() : 0.0,
+        );
+        $campaign->setAttribute(
+            'api_remaining_seconds',
+            $attempt?->remainingSeconds() ?? $campaign->duration_seconds,
         );
     }
 }

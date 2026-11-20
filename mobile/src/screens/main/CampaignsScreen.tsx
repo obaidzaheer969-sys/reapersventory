@@ -193,7 +193,7 @@ export function CampaignsScreen() {
             </>
           ) : null}
 
-          {canStart || active ? (
+          {canStart || (active && !item.embedded) ? (
             <View style={styles.actions}>
               {canStart ? (
                 <View style={styles.actionButton}>
@@ -205,7 +205,7 @@ export function CampaignsScreen() {
                   />
                 </View>
               ) : null}
-              {active ? (
+              {active && !item.embedded ? (
                 <View style={styles.actionButton}>
                   <PrimaryButton
                     title="Complete"
@@ -217,6 +217,11 @@ export function CampaignsScreen() {
                 </View>
               ) : null}
             </View>
+          ) : null}
+          {active && item.embedded ? (
+            <Text style={styles.note}>
+              Open the video player to finish the timer and claim.
+            </Text>
           ) : null}
         </Card>
       );

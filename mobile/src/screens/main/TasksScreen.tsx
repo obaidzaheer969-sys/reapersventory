@@ -173,7 +173,7 @@ export function TasksScreen() {
               ) : null}
             </>
           ) : null}
-          {item.can_start || active ? (
+          {item.can_start || (active && !item.embedded) ? (
             <View style={styles.actions}>
               {item.can_start ? (
                 <View style={styles.actionButton}>
@@ -185,7 +185,7 @@ export function TasksScreen() {
                   />
                 </View>
               ) : null}
-              {active ? (
+              {active && !item.embedded ? (
                 <View style={styles.actionButton}>
                   <PrimaryButton
                     title="Complete"
@@ -197,6 +197,11 @@ export function TasksScreen() {
                 </View>
               ) : null}
             </View>
+          ) : null}
+          {active && item.embedded ? (
+            <Text style={styles.note}>
+              Open the video player to finish the timer and claim.
+            </Text>
           ) : null}
         </Card>
       );

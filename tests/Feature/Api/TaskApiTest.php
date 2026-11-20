@@ -156,6 +156,92 @@ class TaskApiTest extends TestCase
         $this->assertDatabaseCount('wallet_transactions', 1);
     }
 
+    public function test_embedded_task_asks_for_playback_before_showing_a_paused_timer_error(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(20, 2)->create();
+
+        $this->freezeTime();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/tasks/{$task->id}/start", ['opened' => true])
+            ->assertOk()
+            ->assertJsonPath('timer_paused', true)
+            ->assertJsonPath('remaining_seconds', 20);
+
+        $this->postJson("/api/v1/tasks/{$task->id}/complete")
+            ->assertUnprocessable()
+            ->assertJsonPath(
+                'errors.task.0',
+                'Play the video first — watch time will not count without playback.',
+            );
+    }
+
+    public function test_embedded_task_countdown_follows_five_second_mobile_heartbeats(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(20, 2)->create();
+
+        $this->freezeTime();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/tasks/{$task->id}/start")
+            ->assertOk()
+            ->assertJsonPath('timer_paused', true)
+            ->assertJsonPath('remaining_seconds', 20);
+
+        $this->postJson("/api/v1/tasks/{$task->id}/progress", ['playing' => true])
+            ->assertOk()
+            ->assertJsonPath('timer_paused', false)
+            ->assertJsonPath('timer_remaining_seconds', 20)
+            ->assertJsonPath('watched_seconds', 0);
+
+        foreach ([15, 10, 5, 0] as $expectedRemaining) {
+            $this->travel(5)->seconds();
+
+            $this->postJson("/api/v1/tasks/{$task->id}/progress", ['playing' => true])
+                ->assertOk()
+                ->assertJsonPath('timer_remaining_seconds', $expectedRemaining)
+                ->assertJsonPath('watched_seconds', 20 - $expectedRemaining)
+                ->assertJsonPath('can_claim', $expectedRemaining === 0);
+        }
+
+        $this->postJson("/api/v1/tasks/{$task->id}/complete", ['playing' => true])
+            ->assertOk()
+            ->assertJsonPath('attempt.status', TaskAttemptStatus::Completed->value)
+            ->assertJsonPath('attempt.watched_seconds', 20);
+
+        $this->assertSame(2.0, (float) $user->fresh()->wallet_balance);
+        $this->assertDatabaseCount('wallet_transactions', 1);
+    }
+
+    public function test_embedded_task_paused_timer_error_explains_how_to_resume(): void
+    {
+        $user = User::factory()->earner()->create();
+        $task = EarningTask::factory()->youtubeWatch(20, 2)->create();
+
+        $this->freezeTime();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/v1/tasks/{$task->id}/start")
+            ->assertOk();
+
+        $this->postJson("/api/v1/tasks/{$task->id}/progress", ['playing' => true])
+            ->assertOk();
+
+        $this->postJson("/api/v1/tasks/{$task->id}/progress", ['playing' => false])
+            ->assertOk()
+            ->assertJsonPath('timer_paused', true)
+            ->assertJsonPath('timer_remaining_seconds', 20);
+
+        $this->postJson("/api/v1/tasks/{$task->id}/complete")
+            ->assertUnprocessable()
+            ->assertJsonPath(
+                'errors.task.0',
+                'The timer is paused because playback is paused. Press play to resume it.',
+            );
+    }
+
     public function test_proof_endpoints_return_404_when_the_attempt_belongs_to_another_user(): void
     {
         $user = User::factory()->earner()->create();

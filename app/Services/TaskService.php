@@ -353,9 +353,19 @@ class TaskService
 
             $task = $attempt->task;
 
-            if (! $attempt->isReadyToClaim()) {
+            if ($task->hasEmbeddedPlayer() && $attempt->isTimerPaused() && ! $attempt->hasStartedEmbeddedPlayback()) {
                 throw ValidationException::withMessages([
-                    'task' => 'The timer has not finished yet. '.$attempt->remainingSeconds().' seconds remaining.',
+                    'task' => 'Play the video first — watch time will not count without playback.',
+                ]);
+            }
+
+            if (! $attempt->isReadyToClaim()) {
+                $message = $attempt->isTimerPaused() && $task->hasEmbeddedPlayer()
+                    ? 'The timer is paused because playback is paused. Press play to resume it.'
+                    : 'The timer has not finished yet. '.$attempt->remainingSeconds().' seconds remaining.';
+
+                throw ValidationException::withMessages([
+                    'task' => $message,
                 ]);
             }
 

@@ -194,6 +194,30 @@ class CampaignApiTest extends TestCase
         $this->assertDatabaseCount('wallet_transactions', 1);
     }
 
+    public function test_campaign_resources_expose_timer_fields_for_the_mobile_player(): void
+    {
+        $earner = User::factory()->earner()->create();
+        $owner = User::factory()->earner()->create();
+        $campaign = EarningTask::factory()->liveCampaign()->youtubeWatch(20, 2)->create([
+            'user_id' => $owner->id,
+            'target_quantity' => 100,
+            'completed_quantity' => 0,
+            'total_cost' => 300,
+        ]);
+
+        $this->actingAs($earner, 'sanctum')
+            ->getJson('/api/v1/campaigns')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $campaign->id)
+            ->assertJsonPath('data.0.duration_seconds', 20)
+            ->assertJsonPath('data.0.remaining_seconds', 20);
+
+        $this->postJson("/api/v1/campaigns/{$campaign->id}/start")
+            ->assertOk()
+            ->assertJsonPath('timer_paused', true)
+            ->assertJsonPath('remaining_seconds', 20);
+    }
+
     public function test_campaign_proof_endpoints_return_404_for_another_users_attempt(): void
     {
         $earner = User::factory()->earner()->create();

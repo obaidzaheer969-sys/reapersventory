@@ -1,7 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Linking, StyleSheet, Text, View } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { getErrorMessage } from '../api/client';
 import { endpoints } from '../api/endpoints';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -11,10 +11,17 @@ import type { RootStackParamList } from '../navigation/types';
 import { colors, radius } from '../theme';
 import type { TaskProgress } from '../types';
 import { formatDuration, formatMoney } from '../utils/format';
+import {
+  parsePlayerMessage,
+  PLAYER_BRIDGE_SCRIPT,
+  stripEmbedOrigin,
+} from '../utils/player';
+import { countdownFromDeadline, deadlineFromRemaining } from '../utils/timer';
 
 type TaskRunProps = NativeStackScreenProps<RootStackParamList, 'TaskRun'>;
 
 const PROGRESS_INTERVAL_MS = 5000;
+const TICK_INTERVAL_MS = 1000;
 
 function hasStarted(status: string): boolean {
   const value = status.toLowerCase();
@@ -48,12 +55,29 @@ export function TaskRunScreen({ route, navigation }: TaskRunProps) {
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [progress, setProgress] = useState<TaskProgress | null>(null);
+  const [displayRemaining, setDisplayRemaining] = useState(0);
+  const [timerDeadline, setTimerDeadline] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [itemEmbedUrl, setItemEmbedUrl] = useState<string | null>(null);
   const [itemUrl, setItemUrl] = useState<string | null>(null);
   const isMountedRef = useRef(true);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const playingRef = useRef(false);
+
+  const applyProgress = useCallback((result: TaskProgress) => {
+    if (!isMountedRef.current) {
+      return;
+    }
+
+    setProgress(result);
+    setDisplayRemaining(result.timer_remaining_seconds);
+    setTimerDeadline(
+      result.timer_paused
+        ? null
+        : deadlineFromRemaining(result.timer_remaining_seconds),
+    );
+    setActionError(null);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -87,18 +111,23 @@ export function TaskRunScreen({ route, navigation }: TaskRunProps) {
       const timerRemainingSeconds =
         'remaining_seconds' in item ? item.remaining_seconds : 0;
       const directUrl = 'url' in item ? item.url : null;
+      const initialProgress = buildInitialProgress(
+        item.watched_seconds,
+        requiredSeconds,
+        timerRemainingSeconds,
+        item.timer_paused,
+        item.can_claim,
+      );
 
       if (isMountedRef.current) {
         setItemEmbedUrl(item.embed_url);
         setItemUrl(directUrl || item.embed_url);
-        setProgress(
-          buildInitialProgress(
-            item.watched_seconds,
-            requiredSeconds,
-            timerRemainingSeconds,
-            item.timer_paused,
-            item.can_claim,
-          ),
+        setProgress(initialProgress);
+        setDisplayRemaining(initialProgress.timer_remaining_seconds);
+        setTimerDeadline(
+          initialProgress.timer_paused
+            ? null
+            : deadlineFromRemaining(initialProgress.timer_remaining_seconds),
         );
       }
     } catch (err) {
@@ -118,67 +147,97 @@ export function TaskRunScreen({ route, navigation }: TaskRunProps) {
 
     return () => {
       isMountedRef.current = false;
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      playingRef.current = false;
     };
   }, [load]);
 
   const reportProgress = useCallback(
-    async (nextPlaying: boolean) => {
+    async (nextPlaying: boolean): Promise<TaskProgress | null> => {
       try {
         const result =
           mode === 'task'
             ? await endpoints.sendTaskProgress(id, nextPlaying)
             : await endpoints.sendCampaignProgress(id, nextPlaying);
 
-        if (isMountedRef.current) {
-          setProgress(result);
-          setActionError(null);
-        }
+        applyProgress(result);
+
+        return result;
       } catch (err) {
         if (isMountedRef.current) {
           setActionError(getErrorMessage(err));
         }
+
+        return null;
       }
     },
-    [id, mode],
+    [applyProgress, id, mode],
   );
 
-  const startInterval = useCallback(() => {
-    if (intervalRef.current !== null) {
+  useEffect(() => {
+    if (!playing) {
       return;
     }
 
-    intervalRef.current = setInterval(() => {
+    const timer = setInterval(() => {
       reportProgress(true);
     }, PROGRESS_INTERVAL_MS);
-  }, [reportProgress]);
 
-  const stopInterval = useCallback(() => {
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    return () => clearInterval(timer);
+  }, [playing, reportProgress]);
+
+  useEffect(() => {
+    if (timerDeadline === null) {
+      return;
     }
-  }, []);
+
+    const update = () => setDisplayRemaining(countdownFromDeadline(timerDeadline));
+
+    update();
+
+    const timer = setInterval(update, TICK_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [timerDeadline]);
 
   const handlePlaybackStarted = useCallback(async () => {
-    setActionError(null);
+    if (playingRef.current || claiming) {
+      return;
+    }
+
+    playingRef.current = true;
     setPlaying(true);
+    setActionError(null);
     await reportProgress(true);
-    startInterval();
-  }, [reportProgress, startInterval]);
+  }, [claiming, reportProgress]);
 
   const handlePaused = useCallback(async () => {
-    stopInterval();
+    if (!playingRef.current || claiming) {
+      return;
+    }
+
+    playingRef.current = false;
     setPlaying(false);
     await reportProgress(false);
-  }, [reportProgress, stopInterval]);
+  }, [claiming, reportProgress]);
+
+  const handleWebViewMessage = useCallback(
+    (event: WebViewMessageEvent) => {
+      const playerEvent = parsePlayerMessage(event.nativeEvent.data);
+
+      if (playerEvent === 'playing') {
+        handlePlaybackStarted();
+      } else if (playerEvent === 'paused') {
+        handlePaused();
+      }
+    },
+    [handlePaused, handlePlaybackStarted],
+  );
 
   const handleClaim = useCallback(async () => {
-    stopInterval();
-    setPlaying(false);
+    if (claiming) {
+      return;
+    }
+
     setClaiming(true);
     setActionError(null);
 
@@ -190,6 +249,8 @@ export function TaskRunScreen({ route, navigation }: TaskRunProps) {
       } else {
         await endpoints.completeCampaign(id, { playing: true });
       }
+
+      playingRef.current = false;
 
       if (isMountedRef.current) {
         navigation.goBack();
@@ -203,9 +264,10 @@ export function TaskRunScreen({ route, navigation }: TaskRunProps) {
         setClaiming(false);
       }
     }
-  }, [id, mode, navigation, reportProgress, stopInterval]);
+  }, [claiming, id, mode, navigation, reportProgress]);
 
   const resolvedEmbedUrl = route.params.embedUrl ?? itemEmbedUrl;
+  const webViewUrl = stripEmbedOrigin(resolvedEmbedUrl);
   const resolvedTargetUrl = route.params.targetUrl ?? itemUrl;
 
   const handleOpenExternal = useCallback(() => {
@@ -224,7 +286,6 @@ export function TaskRunScreen({ route, navigation }: TaskRunProps) {
   const canClaim = progress?.can_claim === true;
   const watchedSeconds = progress?.watched_seconds ?? 0;
   const requiredSeconds = progress?.required_seconds ?? 0;
-  const timerRemainingSeconds = progress?.timer_remaining_seconds ?? 0;
 
   return (
     <Screen>
@@ -235,14 +296,16 @@ export function TaskRunScreen({ route, navigation }: TaskRunProps) {
             <Text style={styles.reward}>Reward {formatMoney(reward)}</Text>
           ) : null}
 
-          {resolvedEmbedUrl ? (
+          {webViewUrl ? (
             <View style={styles.player}>
               <WebView
-                source={{ uri: resolvedEmbedUrl }}
+                source={{ uri: webViewUrl }}
                 style={styles.webView}
                 allowsFullscreenVideo
                 javaScriptEnabled
                 domStorageEnabled
+                injectedJavaScriptBeforeContentLoaded={PLAYER_BRIDGE_SCRIPT}
+                onMessage={handleWebViewMessage}
               />
             </View>
           ) : (
@@ -258,6 +321,11 @@ export function TaskRunScreen({ route, navigation }: TaskRunProps) {
             </View>
           )}
 
+          <Text style={styles.playerHint}>
+            The timer starts when the video plays. If it does not start, tap
+            "Playback started".
+          </Text>
+
           <View style={styles.stats}>
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>Watch progress</Text>
@@ -268,9 +336,14 @@ export function TaskRunScreen({ route, navigation }: TaskRunProps) {
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>Timer remaining</Text>
               <Text style={styles.statValue}>
-                {formatDuration(timerRemainingSeconds)}
+                {formatDuration(displayRemaining)}
               </Text>
             </View>
+            {progress?.timer_paused ? (
+              <Text style={styles.pauseNote}>
+                Timer paused — start the video playback to resume.
+              </Text>
+            ) : null}
           </View>
 
           <View style={styles.controls}>
@@ -283,7 +356,7 @@ export function TaskRunScreen({ route, navigation }: TaskRunProps) {
             </View>
             <View style={styles.control}>
               <PrimaryButton
-                title="Paused"
+                title="Playback paused"
                 variant="secondary"
                 onPress={handlePaused}
                 disabled={!playing || claiming}
@@ -346,6 +419,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 12,
   },
+  playerHint: {
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 10,
+  },
   stats: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -367,6 +446,11 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 13,
     fontWeight: '700',
+  },
+  pauseNote: {
+    color: colors.orange,
+    fontSize: 12,
+    marginTop: 8,
   },
   controls: {
     flexDirection: 'row',

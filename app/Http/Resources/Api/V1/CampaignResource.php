@@ -19,6 +19,8 @@ class CampaignResource extends JsonResource
             'title' => $this->title,
             'description' => $this->instructions,
             'reward' => (float) $this->reward,
+            'duration_seconds' => (int) $this->duration_seconds,
+            'remaining_seconds' => (int) ($this->api_remaining_seconds ?? $this->duration_seconds),
             'admin_fee' => (float) ($this->api_admin_fee ?? 0),
             'total_actions' => (int) $this->target_quantity,
             'completed_actions' => (int) $this->completed_quantity,
